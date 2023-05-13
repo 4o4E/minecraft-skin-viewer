@@ -8,6 +8,6 @@ import kotlin.test.Test
 class TestServer {
     @Test
     fun test() {
-        runBlocking(Dispatchers.IO) { main("2345") }
+        runBlocking(Dispatchers.IO) { main() }
     }
 }
