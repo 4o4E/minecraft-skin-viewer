@@ -10,7 +10,8 @@ application {
     applicationDefaultJvmArgs = listOf(
         "-Dio.netty.tryReflectionSetAccessible=true",
         "--add-opens",
-        "java.base/jdk.internal.misc=ALL-UNNAMED"
+        "java.base/jdk.internal.misc=ALL-UNNAMED",
+        "-Dprism.forceGPU=true"
     )
 }
 
@@ -83,9 +84,18 @@ tasks {
         jvmArgs = listOf(
             "-Dio.netty.tryReflectionSetAccessible=true",
             "--add-opens",
-            "java.base/jdk.internal.misc=ALL-UNNAMED"
+            "java.base/jdk.internal.misc=ALL-UNNAMED",
+            "-Dprism.forceGPU=true"
         )
         useJUnitPlatform()
+        workingDir = project.projectDir.resolve("run")
+        doFirst {
+            if (workingDir.isFile) workingDir.delete()
+            workingDir.mkdirs()
+        }
+    }
+
+    runShadow {
         workingDir = project.projectDir.resolve("run")
         doFirst {
             if (workingDir.isFile) workingDir.delete()
