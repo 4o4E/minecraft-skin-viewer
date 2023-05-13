@@ -21,6 +21,12 @@ proxy:
   port: 7890
 ```
 
+### 使用方式
+
+```shell
+java -jar http-server-all.jar
+```
+
 ### api接口
 
 url /render/{type}/{content}/{position}
