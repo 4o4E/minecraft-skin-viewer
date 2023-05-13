@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+    <!--引入外部属性配置文件-->
+    <properties url="file:./db.properties"/>
+
+    <settings>
+        <!--指定日志实现-->
+        <setting name="logImpl" value="SLF4J"/>
+        <!--自动转换驼峰命名法-->
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+        <!--显式启用全局缓存-->
+        <setting name="cacheEnabled" value="true"/>
+    </settings>
+
+    <typeAliases>
+        <package name="top.e404.skin.server.sql.pojo"/>
+    </typeAliases>
+
+    <environments default="default">
+        <environment id="default">
+            <transactionManager type="JDBC"/>
+            <dataSource type="top.e404.skin.server.sql.HikariDataSourceFactory">
+                <property name="jdbcUrl" value="${jdbcUrl}"/>
+                <property name="username" value="${username}"/>
+                <property name="password" value="${password}"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <mappers>
+        <mapper resource="mapper/SkinMapper.xml"/>
+    </mappers>
+</configuration>
