@@ -1,27 +1,14 @@
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
-    id("com.github.johnrengelman.shadow") version "7.1.2"
-    application
-}
-
-application {
-    mainClass.set("top.e404.skin.server.App")
-    applicationDefaultJvmArgs = listOf(
-        "-Dio.netty.tryReflectionSetAccessible=true",
-        "--add-opens",
-        "java.base/jdk.internal.misc=ALL-UNNAMED",
-        "-Dprism.forceGPU=true"
-    )
 }
 
 repositories {
     mavenCentral()
-    mavenLocal()
 }
 
 dependencies {
-    implementation(project(":"))
+    implementation(rootProject)
     // slf4j
     implementation("org.slf4j:slf4j-api:2.0.7")
     // log4j2
@@ -34,14 +21,12 @@ dependencies {
 
     // gif
     implementation("top.e404:skiko-util-gif-codec:1.0.0")
-    implementation("top.e404:skiko-util-util:1.0.0")
     // skiko
-    api(skiko("windows-x64"))
-    api(skiko("linux-x64"))
+    compileOnly("org.jetbrains.skiko:skiko-awt:0.7.58")
 
     // serialization
-    implementation(kotlinx("serialization-core-jvm", "1.4.0"))
-    implementation(kotlinx("serialization-json", "1.4.0"))
+    implementation(kotlinx("serialization-core-jvm", "1.5.0"))
+    implementation(kotlinx("serialization-json", "1.5.0"))
     // kaml
     implementation(kaml)
 
@@ -58,8 +43,6 @@ dependencies {
 
     // coroutines
     implementation(kotlinx("coroutines-core-jvm", "1.6.4"))
-    implementation(kotlin("stdlib-jdk8"))
-    implementation("io.ktor:ktor-client-okhttp-jvm:2.2.3")
 
     // mysql
     implementation("mysql:mysql-connector-java:8.0.30")
@@ -76,30 +59,4 @@ dependencies {
 
 repositories {
     mavenCentral()
-}
-
-
-tasks {
-    test {
-        jvmArgs = listOf(
-            "-Dio.netty.tryReflectionSetAccessible=true",
-            "--add-opens",
-            "java.base/jdk.internal.misc=ALL-UNNAMED",
-            "-Dprism.forceGPU=true"
-        )
-        useJUnitPlatform()
-        workingDir = project.projectDir.resolve("run")
-        doFirst {
-            if (workingDir.isFile) workingDir.delete()
-            workingDir.mkdirs()
-        }
-    }
-
-    runShadow {
-        workingDir = project.projectDir.resolve("run")
-        doFirst {
-            if (workingDir.isFile) workingDir.delete()
-            workingDir.mkdirs()
-        }
-    }
 }
