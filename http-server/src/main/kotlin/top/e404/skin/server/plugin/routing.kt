@@ -19,28 +19,12 @@ import top.e404.skin.server.Skin
 private val defaultBgColor = Color.web("#1F1B1D")
 
 fun Application.routing() = routing {
-    get("/about") {
-        call.respond(
-            """GET /render/{type}/{content}/{position} 
-            |  type: id/name // 通过何种方式指定玩家
-            |  content: id/name // 内容
-            |  position: sneak/sk/dsk/head/dhead/homo
-            |  query param: 生成的参数
-            |
-        """.trimMargin()
-        )
-    }
-
-    // type: id/name // 通过何种方式指定玩家
-    // content: id/name // 内容
-    // position: sneak/sk/dsk/head/dhead/homo
-    // query param: 生成的参数
     get("/render/{type}/{content}/{position}") {
         val data = when (call.parameters["type"]!!.lowercase()) {
-            "id" -> Skin.getDataById(call.parameters["content"]!!)
-            "name" -> Skin.getDataByName(call.parameters["content"]!!)
+            "id" -> Skin.getById(call.parameters["content"]!!)
+            "name" -> Skin.getByName(call.parameters["content"]!!)
             else -> {
-                call.respond(HttpStatusCode.BadRequest)
+                call.respond(HttpStatusCode.BadRequest, "type must be 'id' or 'name'")
                 return@get
             }
         }
@@ -51,26 +35,29 @@ fun Application.routing() = routing {
         val skinBytes = data.skinBytes
 
         val parameters = call.request.queryParameters
-        val bg = parameters["bg"]?.let { Color.web(it) } ?: defaultBgColor
+        val bg = parameters["bg"]?.runCatching { Color.web(this) }?.getOrNull() ?: defaultBgColor
         val light = parameters["light"]?.let { Color.web(it) }
         when (call.parameters["position"]!!.lowercase()) {
             "sneak" -> {
-                val (first, second) = SneakView.getSneak(skinBytes, data.slim, bg, light, parameters["head"]?.toDoubleOrNull() ?: 1.0)
+                val slim = parameters["t"]?.toBoolean() ?: data.slim
+                val (first, second) = SneakView.getSneak(skinBytes, slim, bg, light, parameters["head"]?.toDoubleOrNull() ?: 1.0)
+                val d = parameters["duration"]?.toIntOrNull() ?: 40
                 val bytes = gif(600, 900) {
                     options {
                         disposalMethod = AnimationDisposalMode.RESTORE_BG_COLOR
                         alphaType = ColorAlphaType.OPAQUE
                     }
-                    frame(Bitmap.makeFromImage(Image.makeFromEncoded(first))) { duration = 40 }
-                    frame(Bitmap.makeFromImage(Image.makeFromEncoded(second))) { duration = 40 }
+                    frame(Bitmap.makeFromImage(Image.makeFromEncoded(first))) { duration = d }
+                    frame(Bitmap.makeFromImage(Image.makeFromEncoded(second))) { duration = d }
                 }.bytes
                 call.respondBytes(bytes, ContentType.Image.GIF)
             }
 
             "sk" -> {
+                val slim = parameters["t"]?.toBoolean() ?: data.slim
                 val bytes = SkinView.getSkin(
                     skinBytes,
-                    data.slim,
+                    slim,
                     bg,
                     light,
                     parameters["head"]?.toDoubleOrNull() ?: 1.0
@@ -79,22 +66,24 @@ fun Application.routing() = routing {
             }
 
             "dsk" -> {
+                val slim = parameters["t"]?.toBoolean() ?: data.slim
                 val bytes = SkinView.getSkinRotate(
                     skinBytes,
-                    data.slim,
+                    slim,
                     bg,
                     parameters["x"]?.toIntOrNull() ?: 20,
                     parameters["y"]?.toIntOrNull() ?: 20,
                     light,
                     parameters["head"]?.toDoubleOrNull() ?: 1.0
                 ).let { frames ->
+                    val d = parameters["duration"]?.toIntOrNull() ?: 40
                     gif(600, 900) {
                         options {
                             disposalMethod = AnimationDisposalMode.RESTORE_BG_COLOR
                             alphaType = ColorAlphaType.OPAQUE
                         }
                         frames.forEach {
-                            frame(Bitmap.makeFromImage(Image.makeFromEncoded(it))) { duration = 40 }
+                            frame(Bitmap.makeFromImage(Image.makeFromEncoded(it))) { duration = d }
                         }
                     }.bytes
                 }
@@ -114,13 +103,14 @@ fun Application.routing() = routing {
                     parameters["y"]?.toIntOrNull() ?: 20,
                     light
                 ).let { frames ->
+                    val d = parameters["duration"]?.toIntOrNull() ?: 40
                     gif(400, 400) {
                         options {
                             disposalMethod = AnimationDisposalMode.RESTORE_BG_COLOR
                             alphaType = ColorAlphaType.OPAQUE
                         }
                         frames.forEach {
-                            frame(Bitmap.makeFromImage(Image.makeFromEncoded(it))) { duration = 40 }
+                            frame(Bitmap.makeFromImage(Image.makeFromEncoded(it))) { duration = d }
                         }
                     }.bytes
                 }
@@ -134,5 +124,17 @@ fun Application.routing() = routing {
 
             else -> call.respond(HttpStatusCode.NotFound)
         }
+    }
+
+    get("/refresh/{type}/{content}") {
+        val success = when (call.parameters["type"]!!.lowercase()) {
+            "id" -> Skin.refreshById(call.parameters["content"]!!)
+            "name" -> Skin.refreshByName(call.parameters["content"]!!)
+            else -> {
+                call.respond(HttpStatusCode.BadRequest, "type must be 'id' or 'name'")
+                return@get
+            }
+        }
+        call.respond(if (success) HttpStatusCode.OK else HttpStatusCode.NotFound)
     }
 }
