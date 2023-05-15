@@ -57,7 +57,7 @@ url: `/render/{type}/{content}/{position}`
 | x        | 旋转时的速度          | 默认值`20`        |                    |                    | :heavy_check_mark: |                    | :heavy_check_mark: |                    |
 | y        | 俯仰角             | 默认值`20`        |                    |                    | :heavy_check_mark: |                    | :heavy_check_mark: |                    |
 | slim     | 是否使用alex模型      | 默认值空(跟随mc皮肤设置) | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
-| duration | gif的帧持续时长, 单位ms | 默认值`20`        | :heavy_check_mark: |                    | :heavy_check_mark: |                    | :heavy_check_mark: |                    |
+| duration | gif的帧持续时长, 单位ms | 默认值`40`        | :heavy_check_mark: |                    | :heavy_check_mark: |                    | :heavy_check_mark: |                    |
 
 **duration的精度为10ms(gif仅支持此精度)**
 
