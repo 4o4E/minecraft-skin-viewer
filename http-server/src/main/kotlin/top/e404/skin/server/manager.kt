@@ -24,8 +24,10 @@ object Mojang {
      * @param uuid 玩家uuid
      * @return 皮肤数据
      */
-    suspend fun getSkinById(uuid: String): SkinData {
-        val jo = client.get("${profileUrl}$uuid").bodyAsText().let { Json.parseToJsonElement(it) }.jsonObject
+    suspend fun getById(uuid: String): SkinData? {
+        val json = client.get("${profileUrl}$uuid").bodyAsText()
+        if (json.isBlank()) return null
+        val jo = json.let { Json.parseToJsonElement(it) }.jsonObject
         val skinJson = jo["properties"]!!
             .jsonArray
             .asSequence()
@@ -84,14 +86,22 @@ val client = HttpClient(OkHttp) {
 }
 
 object Skin {
-    suspend fun getDataByName(name: String): SkinData? {
-        useSkinMapper { it.getByName(name) }?.let { return it }
+    suspend fun getByName(name: String): SkinData? {
+        val exists = useSkinMapper { it.getByName(name) }
+        if (exists != null && System.currentTimeMillis() - exists.update > ConfigManager.config.timeout) return exists
         val id = Mojang.getIdByName(name) ?: return null
-        return Mojang.getSkinById(id).also { data -> useSkinMapper { it.add(data) } }
+        return Mojang.getById(id)?.also { data -> useSkinMapper { it.add(data) } }
     }
 
-    suspend fun getDataById(id: String): SkinData {
-        useSkinMapper { it.getById(id) }?.let { return it }
-        return Mojang.getSkinById(id).also { data -> useSkinMapper { it.add(data) } }
+    suspend fun getById(id: String): SkinData? {
+        val exists = useSkinMapper { it.getById(id) }
+        if (exists != null && System.currentTimeMillis() - exists.update > ConfigManager.config.timeout) return exists
+        return Mojang.getById(id)?.also { data -> useSkinMapper { it.add(data) } }
     }
+    suspend fun refreshByName(name: String): Boolean {
+        val id = Mojang.getIdByName(name) ?: return false
+        return Mojang.getById(id)?.also { data -> useSkinMapper { it.add(data) } } != null
+    }
+
+    suspend fun refreshById(id: String) = Mojang.getById(id)?.also { data -> useSkinMapper { it.add(data) } } != null
 }
