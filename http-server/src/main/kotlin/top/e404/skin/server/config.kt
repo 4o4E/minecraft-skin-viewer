@@ -34,6 +34,7 @@ data class Config(
     val address: String = "127.0.0.1",
     val port: Int = 2345,
     val proxy: Proxy? = null,
+    val timeout: Long = 86400
 )
 
 @Serializable
