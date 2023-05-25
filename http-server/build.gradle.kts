@@ -56,7 +56,3 @@ dependencies {
     // test
     testImplementation(kotlin("test", Versions.kotlin))
 }
-
-repositories {
-    mavenCentral()
-}
