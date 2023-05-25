@@ -137,4 +137,20 @@ fun Application.routing() = routing {
         }
         call.respond(if (success) HttpStatusCode.OK else HttpStatusCode.NotFound)
     }
+
+    get("/data/{type}/{content}") {
+        val data = when (call.parameters["type"]!!.lowercase()) {
+            "id" -> Skin.getById(call.parameters["content"]!!)
+            "name" -> Skin.getByName(call.parameters["content"]!!)
+            else -> {
+                call.respond(HttpStatusCode.BadRequest, "type must be 'id' or 'name'")
+                return@get
+            }
+        }
+        if (data == null) {
+            call.respond(HttpStatusCode.NotFound)
+            return@get
+        }
+        call.respond(data)
+    }
 }

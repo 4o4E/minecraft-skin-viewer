@@ -81,3 +81,25 @@ url: `/refresh/{type}/{content}`
 ```http request
 GET http://localhost:2345/refresh/name/404E
 ```
+
+#### 获取原始数据
+
+url: `/data/{type}/{content}`
+
+| url参数   | 含义        | 示例           |
+|---------|-----------|--------------|
+| type    | 以何种方式指定玩家 | `name`/`id`  |
+| content | 指定玩家的内容   | `玩家名`/`uuid` |
+
+**示例请求**
+
+```http request
+GET http://localhost:2345/data/name/404E
+```
+
+**示例响应**
+```json
+{"uuid":"22df77dd37b0414b8f1e3c7d2585fc79","name":"404E","slim":true,"update":1683961680455,"hash":"4daa024bc2d35de2b26025051817d04491ad586e5a2ab85f9dad608b009ac7d"}
+```
+
+
