@@ -9,16 +9,16 @@ interface SkinMapper {
      */
     @Update(
         """
-        CREATE TABLE IF NOT EXISTS skin
-        (
-            `uuid`   CHAR(36)        NOT NULL PRIMARY KEY COMMENT '玩家uuid, 唯一且不可变',
-            `name`   VARCHAR(16)     NOT NULL COMMENT '玩家名, 可变',
-            `slim`   BOOLEAN         NOT NULL COMMENT '玩家皮肤模型',
-            `update` BIGINT UNSIGNED NOT NULL COMMENT '最后更新时间',
-            `hash` CHAR(64) NOT NULL COMMENT '用于获取皮肤的url后的hash值'
-        ) ENGINE InnoDB
-          DEFAULT CHARSET UTF8MB4
-    """
+            CREATE TABLE IF NOT EXISTS skin
+            (
+                `uuid`   CHAR(36)        NOT NULL PRIMARY KEY COMMENT '玩家uuid, 唯一且不可变',
+                `name`   VARCHAR(16)     NOT NULL COMMENT '玩家名, 可变',
+                `slim`   BOOLEAN         NOT NULL COMMENT '玩家皮肤模型',
+                `update` BIGINT UNSIGNED NOT NULL COMMENT '最后更新时间',
+                `hash` CHAR(64) NOT NULL COMMENT '用于获取皮肤的url后的hash值'
+            ) ENGINE InnoDB
+              DEFAULT CHARSET UTF8MB4
+        """
     )
     fun initTable()
 
