@@ -1,6 +1,6 @@
 object Versions {
     const val group = "top.e404"
-    const val version = "1.2.0"
+    const val version = "1.3.0"
     const val kotlin = "1.8.10"
     const val javafx = "11.0.2"
     const val log4j = "2.20.0"
