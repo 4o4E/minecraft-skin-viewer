@@ -67,6 +67,29 @@ url: `/render/{type}/{content}/{position}`
 GET http://localhost:2345/render/name/404E/sk?head=1.5
 ```
 
+#### 通过皮肤生成头像
+
+url: `/facr/{type}/{content}`
+
+| url参数    | 含义        | 示例                                       |
+|----------|-----------|------------------------------------------|
+| type     | 以何种方式指定玩家 | `name`/`id`                              |
+| content  | 指定玩家的内容   | `玩家名`/`uuid`                             |\
+
+**获取头像时的可用参数(打勾的参数意味支持get参数设置)**
+
+| 请求参数     | 含义     | 默认值     |
+|----------|--------|---------|
+| bg       | 背景颜色   | `#0000` |
+| scale    | 头像缩放倍率 | `5`     |
+| margin   | 头像边距   | `40`    |
+
+**示例请求**
+
+```http request
+GET http://localhost:2345/face/name/404E?bg=%23ffff&scale=5&margin=40
+```
+
 #### 刷新皮肤缓存
 
 url: `/refresh/{type}/{content}`
