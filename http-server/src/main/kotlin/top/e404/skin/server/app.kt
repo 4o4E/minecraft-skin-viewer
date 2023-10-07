@@ -61,9 +61,16 @@ suspend fun main() {
     engine.start(true)
 }
 
+
 private fun stop() {
-    appLog.info("正在关闭")
-    engine.stop()
+    try {
+        appLog.info("正在关闭")
+        engine.stop()
+    } catch (e: Exception) {
+        appLog.warn("关闭应用时出现异常", e)
+    } finally {
+        exitProcess(0)
+    }
 }
 
 fun Application.module() {
