@@ -5,6 +5,8 @@ plugins {
 
 repositories {
     mavenCentral()
+    // sonatype
+    maven("https://s01.oss.sonatype.org/content/groups/public/")
 }
 
 dependencies {
@@ -20,7 +22,7 @@ dependencies {
     implementation("com.lmax:disruptor:3.4.4")
 
     // gif
-    implementation("top.e404:skiko-util-gif-codec:1.0.0")
+    implementation("top.e404:skiko-util-gif-codec:1.1.1")
     // skiko
     compileOnly("org.jetbrains.skiko:skiko-awt:0.7.58")
 
