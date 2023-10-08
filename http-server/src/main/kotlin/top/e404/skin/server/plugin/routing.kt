@@ -171,8 +171,7 @@ fun Application.routing() = routing {
             call.respond(HttpStatusCode.NotFound)
             return@get
         }
-        val bytes = data.skinFile.readBytes()
-        val image = Image.makeFromEncoded(bytes)
+        val image = Image.makeFromEncoded(data.skinBytes)
         val layer1 = image.sub(8, 8, 8, 8)
         val layer2 = image.sub(40, 8, 8, 8)
         val parameters = call.request.queryParameters
