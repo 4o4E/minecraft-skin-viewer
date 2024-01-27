@@ -1,12 +1,12 @@
 object Versions {
     const val group = "top.e404"
-    const val version = "1.3.1"
-    const val kotlin = "1.8.10"
+    const val version = "1.3.2"
+    const val kotlin = "1.9.20"
     const val javafx = "11.0.2"
-    const val log4j = "2.20.0"
-    const val ktor = "2.2.3"
-    const val kaml = "0.52.0"
-    const val skiko = "0.7.58"
+    const val log4j = "2.22.1"
+    const val ktor = "2.3.7"
+    const val kaml = "0.57.0"
+    const val skiko = "0.7.90"
 }
 
 fun kotlinx(id: String, version: String) = "org.jetbrains.kotlinx:kotlinx-$id:$version"

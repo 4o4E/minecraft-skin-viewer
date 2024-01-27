@@ -24,11 +24,11 @@ dependencies {
     // gif
     implementation("top.e404:skiko-util-gif-codec:1.1.1")
     // skiko
-    compileOnly("org.jetbrains.skiko:skiko-awt:0.7.58")
+    compileOnly("org.jetbrains.skiko:skiko-awt:0.7.90")
 
     // serialization
-    implementation(kotlinx("serialization-core-jvm", "1.5.0"))
-    implementation(kotlinx("serialization-json", "1.5.0"))
+    implementation(kotlinx("serialization-core-jvm", "1.6.2"))
+    implementation(kotlinx("serialization-json", "1.6.2"))
     // kaml
     implementation(kaml)
 
