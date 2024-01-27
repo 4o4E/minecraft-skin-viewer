@@ -5,6 +5,8 @@ import io.ktor.client.engine.okhttp.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import top.e404.skin.server.sql.pojo.SkinData
@@ -98,10 +100,17 @@ object Skin {
         if (exists != null && System.currentTimeMillis() - exists.update > ConfigManager.config.timeout) return exists
         return Mojang.getById(id)?.also { data -> useSkinMapper { it.add(data) } }
     }
+
     suspend fun refreshByName(name: String): Boolean {
         val id = Mojang.getIdByName(name) ?: return false
-        return Mojang.getById(id)?.also { data -> useSkinMapper { it.add(data) } } != null
+        return Mojang.getById(id)?.also { data ->
+            withContext(Dispatchers.IO) { data.skinFile.delete() }
+            useSkinMapper { it.add(data) }
+        } != null
     }
 
-    suspend fun refreshById(id: String) = Mojang.getById(id)?.also { data -> useSkinMapper { it.add(data) } } != null
+    suspend fun refreshById(id: String) = Mojang.getById(id)?.also { data ->
+        withContext(Dispatchers.IO) { data.skinFile.delete() }
+        useSkinMapper { it.add(data) }
+    } != null
 }
