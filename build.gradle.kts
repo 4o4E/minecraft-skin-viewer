@@ -29,8 +29,8 @@ allprojects {
         // slf4j
         implementation("org.slf4j:slf4j-api:2.0.17")
         // skiko-util
-        implementation("top.e404.skiko-util:skiko-util-draw:1.9.3-SNAPSHOT")
-        implementation("top.e404.skiko-util:skiko-util-gif-codec:1.9.3-SNAPSHOT")
+        implementation("top.e404.skiko-util:skiko-util-draw:${Versions.SKIKO_UTILS}")
+        implementation("top.e404.skiko-util:skiko-util-gif-codec:${Versions.SKIKO_UTILS}")
         // coroutines
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
         // test

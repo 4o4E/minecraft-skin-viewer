@@ -613,9 +613,6 @@ internal fun createMinecraftPlayer(
 
         // 创建并添加外层
         overlayUVs?.let { uvs ->
-            if (part == BodyPart.HEAD) {
-                println("head")
-            }
             val overlayMesh = if (use3DOverlay) {
                 val overlayDepth = if (part == BodyPart.HEAD) .5f else 0.25f
                 create3DOverlay(skin, dims, overlayDepth, uvs, texW, texH)
@@ -651,6 +648,7 @@ fun renderMinecraftView(
     height: Int,
     backgroundColor: Int,
     camera: OrbitCamera,
+    lightDirection: Vec3 = Vec3(-0.7f, 1.0f, 0.5f).normalized(),
     pose: Map<BodyPart, List<Transformation>> = emptyMap(),
     use3DOverlay: Boolean = false
 ): Image {
@@ -660,7 +658,7 @@ fun renderMinecraftView(
     val cameraForward = (camera.target - eyePosition).normalized()
     return renderToImage(
         playerMesh, width, height, viewMatrix, cameraForward, camera.distance,
-        true, true, backgroundColor, useBackFaceCulling = false
+        true, true, backgroundColor, useBackFaceCulling = false, lightDirection = lightDirection
     )
 }
 
