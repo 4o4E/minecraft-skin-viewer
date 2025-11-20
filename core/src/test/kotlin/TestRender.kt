@@ -2,12 +2,16 @@ package top.e404.skin.core.test
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.skia.Color
 import org.jetbrains.skia.Image
 import org.junit.jupiter.api.Test
+import top.e404.skiko.draw.render3d.Mesh
 import top.e404.skiko.draw.render3d.OrbitCamera
 import top.e404.skiko.draw.render3d.RenderConfig
 import top.e404.skiko.draw.render3d.Transformation
+import top.e404.skiko.draw.render3d.Vec2
 import top.e404.skiko.draw.render3d.Vec3
+import top.e404.skiko.draw.render3d.createPlane
 import top.e404.skiko.util.Colors
 import top.e404.skin.core.BodyPart
 import top.e404.skin.core.PosePresets
@@ -31,8 +35,9 @@ class TestRender {
         width: Int,
         height: Int,
         camera: OrbitCamera,
-        lightDirection: Vec3 = Vec3(-0.7f, 1.0f, 0.5f).normalized(),
-        lightIntensity: Float = .9f,
+        backgroundMeshes: List<Mesh> = emptyList(),
+        lightDirection: Vec3 = Vec3(1f, 1.0f, 1f).normalized(),
+        lightIntensity: Float = .8f,
         pose: Map<BodyPart, List<Transformation>> = emptyMap()
     ): Image {
         val skin = Image.makeFromEncoded(file.readBytes())
@@ -48,6 +53,7 @@ class TestRender {
             skin,
             isSlim,
             renderConfig,
+            backgroundMeshes,
             pose,
             true
         )
@@ -55,7 +61,20 @@ class TestRender {
 
     @Test
     fun test_render() {
-        val lightIntensity = 1f
+        val lightIntensity = .7f
+
+        val ground = createPlane(
+            center = Vec3(-60f, -40f, 0f), // 脚下
+            size = Vec2(160f, 160f),
+            color = Color.WHITE,
+            normalDirection = Vec3(0f, 1f, 0f)
+        )
+        val wall = createPlane(
+            center = Vec3(-50f, 10f, -50f), // 身后背景墙
+            size = Vec2(200f, 200f),
+            color = Color.makeRGB(220, 220, 255),
+            normalDirection = Vec3(0f, 0f, 1f) // 面向 Z 轴正向
+        )
         for ((fileName, isSlim) in files) {
             val camera = OrbitCamera(
                 target = Vec3(0f, 10f, 0f),
@@ -69,8 +88,9 @@ class TestRender {
                 800,
                 1200,
                 camera,
+                listOf(ground, wall),
                 lightIntensity = lightIntensity,
-                lightDirection = Vec3(-45f, 50f, 0f)
+                lightDirection = Vec3(.5f, .5f, .5f).normalized()
             ).encodeToData()!!.let { data ->
                 File("rendered_$fileName").writeBytes(data.bytes)
             }
@@ -83,12 +103,33 @@ class TestRender {
         val camera = OrbitCamera(
             target = Vec3(0f, 12f, 0f),
             yaw = -40f,
-            pitch = 0f,
-            distance = 60f
+            pitch = 10f,
+            distance = 90f
+        )
+        val ground = createPlane(
+            center = Vec3(20f, -10f, 20f), // 脚下
+            size = Vec2(130f, 130f),
+            color = Color.makeRGB(200, 200, 200), // 灰色地面
+            normalDirection = Vec3(0f, .5f, 0f).normalized()
+        )
+        val wall = createPlane(
+            center = Vec3(20f, 10f, -20f), // 身后背景墙
+            size = Vec2(80f, 80f),
+            color = Color.makeRGB(220, 220, 255),
+            normalDirection = Vec3(-.5f, 0f, 1f).normalized() // 面向 Z 轴正向
         )
         for ((fileName, isSlim) in files) {
             val pose = PosePresets.withScale(isSlim, 1.5f, 1.2f, 1.2f)
-            renderFile(File(fileName), isSlim, 800, 1200, camera, pose = pose).encodeToData()!!.let { data ->
+            renderFile(
+                File(fileName),
+                isSlim,
+                800,
+                1200,
+                camera,
+                listOf(ground, wall),
+                lightDirection = Vec3(.5f, 1.0f, 1f).normalized(),
+                pose = pose
+            ).encodeToData()!!.let { data ->
                 File("${posName}_rendered_$fileName").writeBytes(data.bytes)
             }
         }

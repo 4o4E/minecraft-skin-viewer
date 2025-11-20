@@ -20,6 +20,7 @@ allprojects {
     version = Versions.VERSION
 
     repositories {
+        mavenLocal()
         maven("https://nexus.e404.top:3443/repository/maven-snapshots/")
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
         mavenCentral()
