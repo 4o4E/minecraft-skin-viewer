@@ -48,10 +48,7 @@ class TestRender {
             backgroundColor = backgroundColor,
             lightDirection = lightDirection,
             lightIntensity = lightIntensity,
-            antiAliasingLevel = 4,
-            shadowMapSize = 4096,
-            shadowBias = 0.002f,
-            shadowOrthoSize = 30f
+            antiAliasingLevel = 4
         )
         return renderMinecraftView(
             skin,

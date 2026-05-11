@@ -50,5 +50,6 @@ class Overlay3DTest {
 
         assertEquals(8, mesh.vertices.size)
         assertEquals(6, mesh.faces.size)
+        assertEquals(Color.WHITE, mesh.faces.first().baseColor)
     }
 }

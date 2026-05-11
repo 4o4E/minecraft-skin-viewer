@@ -150,7 +150,8 @@ fun create3DOverlay(
 
         for (px in 0 until uvW) {
             for (py in 0 until uvH) {
-                if (Color.getA(skin.getColor(uvRect.left.toInt() + px, uvRect.top.toInt() + py)) <= 0) continue
+                val pixelColor = skin.getColor(uvRect.left.toInt() + px, uvRect.top.toInt() + py)
+                if (Color.getA(pixelColor) <= 0) continue
 
                 val pixelUV = Vec2(
                     (uvRect.left + px + 0.5f) / textureWidth,
@@ -208,12 +209,12 @@ fun create3DOverlay(
                 vertices.addAll(finalVoxelVertices.map { Vertex(it, pixelUV) })
 
                 faces.addAll(listOf(
-                    Face(listOf(baseIndex + 4, baseIndex + 7, baseIndex + 6, baseIndex + 5), Color.WHITE),
-                    Face(listOf(baseIndex + 0, baseIndex + 3, baseIndex + 2, baseIndex + 1), Color.WHITE),
-                    Face(listOf(baseIndex + 5, baseIndex + 6, baseIndex + 2, baseIndex + 1), Color.WHITE),
-                    Face(listOf(baseIndex + 4, baseIndex + 0, baseIndex + 3, baseIndex + 7), Color.WHITE),
-                    Face(listOf(baseIndex + 7, baseIndex + 3, baseIndex + 2, baseIndex + 6), Color.WHITE),
-                    Face(listOf(baseIndex + 4, baseIndex + 5, baseIndex + 1, baseIndex + 0), Color.WHITE)
+                    Face(listOf(baseIndex + 4, baseIndex + 7, baseIndex + 6, baseIndex + 5), pixelColor),
+                    Face(listOf(baseIndex + 0, baseIndex + 3, baseIndex + 2, baseIndex + 1), pixelColor),
+                    Face(listOf(baseIndex + 5, baseIndex + 6, baseIndex + 2, baseIndex + 1), pixelColor),
+                    Face(listOf(baseIndex + 4, baseIndex + 0, baseIndex + 3, baseIndex + 7), pixelColor),
+                    Face(listOf(baseIndex + 7, baseIndex + 3, baseIndex + 2, baseIndex + 6), pixelColor),
+                    Face(listOf(baseIndex + 4, baseIndex + 5, baseIndex + 1, baseIndex + 0), pixelColor)
                 ))
             }
         }

@@ -21,10 +21,18 @@ fun createMinecraftPlayer(
     isSlim: Boolean,
     pose: Map<BodyPart, List<Transformation>> = emptyMap(),
     use3DOverlay: Boolean = false
-): Mesh {
+): Mesh = combineMeshes(createMinecraftPlayerMeshes(skin, isSlim, pose, use3DOverlay), skin)
+
+fun createMinecraftPlayerMeshes(
+    skin: Bitmap,
+    isSlim: Boolean,
+    pose: Map<BodyPart, List<Transformation>> = emptyMap(),
+    use3DOverlay: Boolean = false
+): List<Mesh> {
     val texW = skin.width.toFloat()
     val texH = skin.height.toFloat()
-    val componentMeshes = mutableListOf<Mesh>()
+    val texturedComponentMeshes = mutableListOf<Mesh>()
+    val solidComponentMeshes = mutableListOf<Mesh>()
     val playerModel = PlayerModel(isSlim)
 
     for (partId in BodyPart.entries) {
@@ -49,7 +57,7 @@ fun createMinecraftPlayer(
         }
 
         val baseMesh = createMinecraftUVCuboid(partDims, partUvs, texW, texH)
-        componentMeshes.add(Mesh(baseMesh.vertices.map {
+        texturedComponentMeshes.add(Mesh(baseMesh.vertices.map {
             Vertex(transform(it.position) + partCube.pos, it.uv)
         }, baseMesh.faces))
 
@@ -62,19 +70,29 @@ fun createMinecraftPlayer(
                 val overlaySize = if (partId == BodyPart.HEAD) 1.0f else 0.5f
                 createMinecraftUVCuboid(partDims + Vec3(overlaySize, overlaySize, overlaySize), overlayUvs, texW, texH)
             }
-            componentMeshes.add(Mesh(overlayMesh.vertices.map { vertex ->
+            val transformedOverlayMesh = Mesh(overlayMesh.vertices.map { vertex ->
                 Vertex(transform(vertex.position) + partCube.pos, vertex.uv)
-            }, overlayMesh.faces))
+            }, overlayMesh.faces)
+            if (use3DOverlay) solidComponentMeshes.add(transformedOverlayMesh)
+            else texturedComponentMeshes.add(transformedOverlayMesh)
         }
     }
-    return combineMeshes(componentMeshes, skin)
+    return listOf(combineMeshes(texturedComponentMeshes, skin)) + solidComponentMeshes
 }
 
 fun createSkinPlatform(topY: Float = -8.2f, thickness: Float = 2f): Mesh =
     createCuboid(
         dimensions = Vec3(24f, thickness, 24f),
         baseColor = Color.makeRGB(90, 105, 125)
-    ).translate(Vec3(0f, topY - thickness / 2f, 0f))
+    ).copy(castsShadow = false, receivesShadow = true)
+        .translate(Vec3(0f, topY - thickness / 2f, 0f))
+
+fun cameraRelativeUpperLeftLight(camera: OrbitCamera): Vec3 {
+    val (_, cameraForward) = camera.createViewMatrix()
+    val cameraRight = cameraForward.cross(camera.upVector).normalized()
+    val cameraUp = cameraRight.cross(cameraForward).normalized()
+    return ((-cameraRight * 0.9f) + (cameraUp * 1.1f) + (-cameraForward * 0.45f)).normalized()
+}
 
 /**
  * 渲染Minecraft皮肤为图像的函数 (API无变化)
@@ -88,8 +106,8 @@ fun renderMinecraftView(
     use3DOverlay: Boolean = true,
 ): Image {
     val skinBitmap = Bitmap.makeFromImage(skin)
-    val playerMesh = createMinecraftPlayer(skinBitmap, isSlim, pose, use3DOverlay)
-    val scene = Scene(listOf(playerMesh) + backgroundMeshes)
+    val playerMeshes = createMinecraftPlayerMeshes(skinBitmap, isSlim, pose, use3DOverlay)
+    val scene = Scene(playerMeshes + backgroundMeshes)
     return renderSceneToImage(scene, renderConfig)
 }
 
@@ -108,19 +126,22 @@ suspend fun renderRotate(
     val frames = frameCount.coerceAtLeast(1)
     val unitAngle = 360f / frames
     val skinBitmap = Bitmap.makeFromImage(skin)
-    val playerMesh = createMinecraftPlayer(skinBitmap, isSlim, pose, use3DOverlay)
+    val playerMeshes = createMinecraftPlayerMeshes(skinBitmap, isSlim, pose, use3DOverlay)
     val platform = createSkinPlatform()
     return coroutineScope {
         withContext(Dispatchers.Default) {
-            (0 until frames).map { i ->
-                async {
-                    val angle = i * unitAngle
-                    renderSceneToImage(
-                        Scene(listOf(playerMesh.rotateY(angle), platform)),
-                        config
-                    ).let { Frame(frameDuration, it) }
-                }
-            }.awaitAll()
+            (0 until frames).chunked(2).flatMap { chunk ->
+                chunk.map { i ->
+                    async {
+                        val angle = i * unitAngle
+                        val frameConfig = config.copy(lightDirection = cameraRelativeUpperLeftLight(config.camera))
+                        renderSceneToImage(
+                            Scene(playerMeshes.map { it.rotateY(angle) } + platform),
+                            frameConfig
+                        ).let { Frame(frameDuration, it) }
+                    }
+                }.awaitAll()
+            }
         }.encodeToBytes()
     }
 }

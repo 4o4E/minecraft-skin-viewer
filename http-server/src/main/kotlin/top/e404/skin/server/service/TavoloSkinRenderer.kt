@@ -11,7 +11,8 @@ import org.jetbrains.skia.EncodedImageFormat
 import org.jetbrains.skia.Image
 import top.e404.skin.core.BodyPart
 import top.e404.skin.core.PosePresets
-import top.e404.skin.core.createMinecraftPlayer
+import top.e404.skin.core.cameraRelativeUpperLeftLight
+import top.e404.skin.core.createMinecraftPlayerMeshes
 import top.e404.skin.core.createSkinPlatform
 import top.e404.skin.core.renderMinecraftView
 import top.e404.tavolo.draw.render3d.Mesh
@@ -188,7 +189,7 @@ object TavoloSkinRenderer {
             height = height,
             camera = camera,
             backgroundColor = backgroundColor,
-            lightDirection = Vec3(0.5f, 1f, 1f).normalized(),
+            lightDirection = cameraRelativeUpperLeftLight(camera),
             lightIntensity = lightIntensity(lightColor),
             antiAliasingLevel = antiAliasingLevel
         ),
@@ -213,27 +214,29 @@ object TavoloSkinRenderer {
         antiAliasingLevel: Int,
     ): ByteArray {
         val frames = frameCount.coerceAtLeast(1)
-        val playerMesh = createMinecraftPlayer(skin.toBitmap(), slim, pose, use3DOverlay = true)
+        val playerMeshes = createMinecraftPlayerMeshes(skin.toBitmap(), slim, pose, use3DOverlay = true)
         val camera = OrbitCamera(target, yaw = 45f, pitch = pitchAmplitude.toFloat(), distance = distance)
         return coroutineScope {
             withContext(Dispatchers.Default) {
-                (0 until frames).map { index ->
-                    async {
-                        val yaw = 360f * index / frames
-                        Frame(
-                            duration,
-                            renderScene(
-                                scene = Scene(listOf(playerMesh.rotateY(yaw)) + backgroundMeshes),
-                                width = width,
-                                height = height,
-                                backgroundColor = backgroundColor,
-                                lightColor = lightColor,
-                                camera = camera,
-                                antiAliasingLevel = antiAliasingLevel
+                (0 until frames).chunked(2).flatMap { chunk ->
+                    chunk.map { index ->
+                        async {
+                            val yaw = 360f * index / frames
+                            Frame(
+                                duration,
+                                renderScene(
+                                    scene = Scene(playerMeshes.map { it.rotateY(yaw) } + backgroundMeshes),
+                                    width = width,
+                                    height = height,
+                                    backgroundColor = backgroundColor,
+                                    lightColor = lightColor,
+                                    camera = camera,
+                                    antiAliasingLevel = antiAliasingLevel
+                                )
                             )
-                        )
-                    }
-                }.awaitAll()
+                        }
+                    }.awaitAll()
+                }
             }
         }.encodeToBytes()
     }
@@ -258,7 +261,7 @@ object TavoloSkinRenderer {
             height = height,
             camera = camera,
             backgroundColor = backgroundColor,
-            lightDirection = Vec3(0.5f, 1f, 1f).normalized(),
+            lightDirection = cameraRelativeUpperLeftLight(camera),
             lightIntensity = lightIntensity(lightColor),
             antiAliasingLevel = antiAliasingLevel
         )
