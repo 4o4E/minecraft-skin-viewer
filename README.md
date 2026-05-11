@@ -18,6 +18,12 @@
 2. 从[release](https://github.com/4o4E/minecraft-skin-viewer/releases/latest)下载对应操作系统的jar文件
 3. 在控制台中使用`java -jar http-server-${plateform}.jar`启动服务
 
+### 测试
+
+- `./gradlew test`：运行不依赖外部服务、本地图片或数据库的单元测试。
+- `./gradlew manualTest`：运行需要人工准备环境的测试，例如 Mojang API、MySQL DAO 和本地皮肤渲染样例。
+- `./gradlew manualTestClasses`：只编译人工测试，不实际连接外部环境。
+
 ### 示例配置文件
 
 ```yaml

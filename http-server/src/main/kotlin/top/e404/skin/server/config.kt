@@ -34,7 +34,7 @@ object ConfigManager {
         return loaded
     }
 
-    private fun normalizeConfigText(text: String): String =
+    internal fun normalizeConfigText(text: String): String =
         Regex("(?m)^(\\s*)address:").replace(text, "\$1host:")
 }
 

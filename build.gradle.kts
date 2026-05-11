@@ -10,12 +10,7 @@ kotlin {
 }
 
 allprojects {
-    apply(plugin = "org.gradle.maven-publish")
-    apply(plugin = "org.gradle.java-library")
-    apply(plugin = "org.gradle.application")
     apply(plugin = "org.jetbrains.kotlin.jvm")
-    apply(plugin = "com.github.johnrengelman.shadow")
-
     group = Versions.GROUP
     version = Versions.VERSION
 
@@ -51,6 +46,24 @@ allprojects {
             }
         ))
     }
+}
+
+subprojects {
+    apply(plugin = "org.gradle.maven-publish")
+    apply(plugin = "org.gradle.java-library")
+    apply(plugin = "org.gradle.application")
+    apply(plugin = "org.jetbrains.kotlin.jvm")
+    apply(plugin = "com.github.johnrengelman.shadow")
+
+    val manualTestSourceSet = sourceSets.create("manualTest") {
+        java.srcDir("src/manualTest/kotlin")
+        resources.srcDir("src/manualTest/resources")
+        compileClasspath += sourceSets["main"].output + sourceSets["test"].output + configurations["testRuntimeClasspath"]
+        runtimeClasspath += output + compileClasspath
+    }
+
+    configurations["manualTestImplementation"].extendsFrom(configurations["testImplementation"])
+    configurations["manualTestRuntimeOnly"].extendsFrom(configurations["testRuntimeOnly"])
 
     application {
         mainClass.set("top.e404.skin.server.App")
@@ -83,6 +96,16 @@ allprojects {
         test {
             useJUnitPlatform()
             workingDir = rootDir.resolve("run")
+        }
+
+        register<Test>("manualTest") {
+            description = "运行需要人工准备环境、外部服务或本地资产的测试"
+            group = "verification"
+            testClassesDirs = manualTestSourceSet.output.classesDirs
+            classpath = manualTestSourceSet.runtimeClasspath
+            useJUnitPlatform()
+            workingDir = rootDir.resolve("run")
+            shouldRunAfter(test)
         }
     }
 }

@@ -82,7 +82,7 @@ class PlayerModel(val isSlim: Boolean) {
                 BodyPart.BODY to SkinCube(16f, 16f, BodyPart.BODY.getDims(true), Vec3(0f, 10f, 0f)),
                 BodyPart.RIGHT_ARM to SkinCube(40f, 16f, BodyPart.RIGHT_ARM.getDims(true), Vec3(-5.5f, 10f, 0f), Vec3(0f, 6f, 0f)),
                 BodyPart.LEFT_ARM to SkinCube(32f, 48f, BodyPart.LEFT_ARM.getDims(true), Vec3(5.5f, 10f, 0f), Vec3(0f, 6f, 0f), mirrored = true),
-                BodyPart.RIGHT_LEG to SkinCube(0f, 16f, BodyPart.RIGHT_LEG.getDims(true), Vec3(-2f, -2f, 0f), Vec3(0f, 6f, 0f)),
+                BodyPart.RIGHT_LEG to SkinCube(0f, 16f, BodyPart.RIGHT_LEG.getDims(true), Vec3(-2f, -2f, 0f), Vec3(0f, 6f, 0f), mirrored = true),
                 BodyPart.LEFT_LEG to SkinCube(16f, 48f, BodyPart.LEFT_LEG.getDims(true), Vec3(2f, -2f, 0f), Vec3(0f, 6f, 0f), mirrored = true)
             )
             overlays = mapOf(
@@ -90,7 +90,7 @@ class PlayerModel(val isSlim: Boolean) {
                 BodyPart.BODY to SkinCube(16f, 32f, BodyPart.BODY.getDims(true), Vec3(0f, 10f, 0f)),
                 BodyPart.RIGHT_ARM to SkinCube(40f, 32f, BodyPart.RIGHT_ARM.getDims(true), Vec3(-5.5f, 10f, 0f), Vec3(0f, 6f, 0f)),
                 BodyPart.LEFT_ARM to SkinCube(48f, 48f, BodyPart.LEFT_ARM.getDims(true), Vec3(5.5f, 10f, 0f), Vec3(0f, 6f, 0f), mirrored = true),
-                BodyPart.RIGHT_LEG to SkinCube(0f, 32f, BodyPart.RIGHT_LEG.getDims(true), Vec3(-2f, -2f, 0f), Vec3(0f, 6f, 0f)),
+                BodyPart.RIGHT_LEG to SkinCube(0f, 32f, BodyPart.RIGHT_LEG.getDims(true), Vec3(-2f, -2f, 0f), Vec3(0f, 6f, 0f), mirrored = true),
                 BodyPart.LEFT_LEG to SkinCube(0f, 48f, BodyPart.LEFT_LEG.getDims(true), Vec3(2f, -2f, 0f), Vec3(0f, 6f, 0f), mirrored = true)
             )
         } else {
@@ -100,7 +100,7 @@ class PlayerModel(val isSlim: Boolean) {
                 BodyPart.BODY to SkinCube(16f, 16f, BodyPart.BODY.getDims(false), Vec3(0f, 10f, 0f)),
                 BodyPart.RIGHT_ARM to SkinCube(40f, 16f, BodyPart.RIGHT_ARM.getDims(false), Vec3(-6f, 10f, 0f), Vec3(0f, 6f, 0f)),
                 BodyPart.LEFT_ARM to SkinCube(32f, 48f, BodyPart.LEFT_ARM.getDims(false), Vec3(6f, 10f, 0f), Vec3(0f, 6f, 0f), mirrored = true),
-                BodyPart.RIGHT_LEG to SkinCube(0f, 16f, BodyPart.RIGHT_LEG.getDims(false), Vec3(-2f, -2f, 0f), Vec3(0f, 6f, 0f)),
+                BodyPart.RIGHT_LEG to SkinCube(0f, 16f, BodyPart.RIGHT_LEG.getDims(false), Vec3(-2f, -2f, 0f), Vec3(0f, 6f, 0f), mirrored = true),
                 BodyPart.LEFT_LEG to SkinCube(16f, 48f, BodyPart.LEFT_LEG.getDims(false), Vec3(2f, -2f, 0f), Vec3(0f, 6f, 0f), mirrored = true)
             )
             overlays = mapOf(
@@ -108,7 +108,7 @@ class PlayerModel(val isSlim: Boolean) {
                 BodyPart.BODY to SkinCube(16f, 32f, BodyPart.BODY.getDims(false), Vec3(0f, 10f, 0f)),
                 BodyPart.RIGHT_ARM to SkinCube(40f, 32f, BodyPart.RIGHT_ARM.getDims(false), Vec3(-6f, 10f, 0f), Vec3(0f, 6f, 0f)),
                 BodyPart.LEFT_ARM to SkinCube(48f, 48f, BodyPart.LEFT_ARM.getDims(false), Vec3(6f, 10f, 0f), Vec3(0f, 6f, 0f), mirrored = true),
-                BodyPart.RIGHT_LEG to SkinCube(0f, 32f, BodyPart.RIGHT_LEG.getDims(false), Vec3(-2f, -2f, 0f), Vec3(0f, 6f, 0f)),
+                BodyPart.RIGHT_LEG to SkinCube(0f, 32f, BodyPart.RIGHT_LEG.getDims(false), Vec3(-2f, -2f, 0f), Vec3(0f, 6f, 0f), mirrored = true),
                 BodyPart.LEFT_LEG to SkinCube(0f, 48f, BodyPart.LEFT_LEG.getDims(false), Vec3(2f, -2f, 0f), Vec3(0f, 6f, 0f), mirrored = true)
             )
         }

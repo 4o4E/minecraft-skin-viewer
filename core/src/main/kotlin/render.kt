@@ -8,6 +8,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Color
 import org.jetbrains.skia.Image
+import org.jetbrains.skia.Rect
 import top.e404.tavolo.draw.render3d.*
 import top.e404.tavolo.frame.Frame
 import top.e404.tavolo.frame.encodeToBytes
@@ -46,7 +47,7 @@ fun createMinecraftPlayer(
             }
         }
 
-        val baseMesh = createUVCuboid(partDims, partCube.uvs, texW, texH)
+        val baseMesh = createMinecraftUVCuboid(partDims, partCube.uvs, texW, texH)
         componentMeshes.add(Mesh(baseMesh.vertices.map {
             Vertex(transform(it.position) + partCube.pos, it.uv)
         }, baseMesh.faces))
@@ -57,7 +58,7 @@ fun createMinecraftPlayer(
                 create3DOverlay(skin, partDims, overlayDepth, it.uvs, texW, texH)
             } else {
                 val overlaySize = if (partId == BodyPart.HEAD) 1.0f else 0.5f
-                createUVCuboid(partDims + Vec3(overlaySize, overlaySize, overlaySize), it.uvs, texW, texH)
+                createMinecraftUVCuboid(partDims + Vec3(overlaySize, overlaySize, overlaySize), it.uvs, texW, texH)
             }
             componentMeshes.add(Mesh(overlayMesh.vertices.map { vertex ->
                 Vertex(transform(vertex.position) + partCube.pos, vertex.uv)
@@ -126,4 +127,60 @@ suspend fun renderRotate(
             }.awaitAll()
         }.encodeToBytes()
     }
+}
+
+private fun createMinecraftUVCuboid(
+    dims: Vec3,
+    faceUVs: Map<FaceDirection, Rect>,
+    textureWidth: Float,
+    textureHeight: Float,
+): Mesh {
+    val (w, h, d) = dims
+    val vertices = mutableListOf<Vertex>()
+    val faces = mutableListOf<Face>()
+    val v = listOf(
+        Vec3(-w / 2, -h / 2, d / 2),
+        Vec3(w / 2, -h / 2, d / 2),
+        Vec3(w / 2, h / 2, d / 2),
+        Vec3(-w / 2, h / 2, d / 2),
+        Vec3(w / 2, -h / 2, -d / 2),
+        Vec3(-w / 2, -h / 2, -d / 2),
+        Vec3(-w / 2, h / 2, -d / 2),
+        Vec3(w / 2, h / 2, -d / 2)
+    )
+
+    fun u(px: Float) = px / textureWidth
+    fun v(py: Float) = py / textureHeight
+
+    fun addFace(direction: FaceDirection, vIndices: List<Int>, uvRect: Rect) {
+        val texelCenterOffset = 0.5f
+        val centeredRect = Rect.makeLTRB(
+            uvRect.left + texelCenterOffset,
+            uvRect.top + texelCenterOffset,
+            uvRect.right - texelCenterOffset,
+            uvRect.bottom - texelCenterOffset
+        )
+        val bottomLeft = Vec2(u(centeredRect.left), v(centeredRect.bottom))
+        val bottomRight = Vec2(u(centeredRect.right), v(centeredRect.bottom))
+        val topRight = Vec2(u(centeredRect.right), v(centeredRect.top))
+        val topLeft = Vec2(u(centeredRect.left), v(centeredRect.top))
+        val uvs = when {
+            direction == FaceDirection.BOTTOM -> listOf(topLeft, topRight, bottomRight, bottomLeft)
+            else -> listOf(bottomLeft, bottomRight, topRight, topLeft)
+        }
+        val faceIndices = mutableListOf<Int>()
+        for (i in vIndices.indices) {
+            vertices.add(Vertex(v[vIndices[i]], uvs[i]))
+            faceIndices.add(vertices.size - 1)
+        }
+        faces.add(Face(faceIndices, Color.WHITE))
+    }
+
+    faceUVs[FaceDirection.FRONT]?.let { addFace(FaceDirection.FRONT, listOf(0, 1, 2, 3), it) }
+    faceUVs[FaceDirection.BACK]?.let { addFace(FaceDirection.BACK, listOf(4, 5, 6, 7), it) }
+    faceUVs[FaceDirection.RIGHT]?.let { addFace(FaceDirection.RIGHT, listOf(1, 4, 7, 2), it) }
+    faceUVs[FaceDirection.LEFT]?.let { addFace(FaceDirection.LEFT, listOf(5, 0, 3, 6), it) }
+    faceUVs[FaceDirection.TOP]?.let { addFace(FaceDirection.TOP, listOf(3, 2, 7, 6), it) }
+    faceUVs[FaceDirection.BOTTOM]?.let { addFace(FaceDirection.BOTTOM, listOf(5, 4, 1, 0), it) }
+    return Mesh(vertices, faces)
 }
