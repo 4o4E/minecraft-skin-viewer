@@ -70,6 +70,12 @@ fun createMinecraftPlayer(
     return combineMeshes(componentMeshes, skin)
 }
 
+fun createSkinPlatform(topY: Float = -8.2f, thickness: Float = 2f): Mesh =
+    createCuboid(
+        dimensions = Vec3(24f, thickness, 24f),
+        baseColor = Color.makeRGB(90, 105, 125)
+    ).translate(Vec3(0f, topY - thickness / 2f, 0f))
+
 /**
  * 渲染Minecraft皮肤为图像的函数 (API无变化)
  */
@@ -99,37 +105,35 @@ suspend fun renderRotate(
     pose: Map<BodyPart, List<Transformation>> = emptyMap(),
     use3DOverlay: Boolean = true
 ): ByteArray {
-    val unitAngel = 360f / frameCount
+    val frames = frameCount.coerceAtLeast(1)
+    val unitAngle = 360f / frames
     val skinBitmap = Bitmap.makeFromImage(skin)
     val playerMesh = createMinecraftPlayer(skinBitmap, isSlim, pose, use3DOverlay)
-    val ground = createPlane(
-        center = Vec3(0f, -15f, 0f), // 脚下
-        size = Vec2(100f, 100f),
-        color = Color.makeRGB(200, 200, 200), // 灰色地面
-        normalDirection = Vec3(0f, 1f, 0f)
-    )
-    val wall = createPlane(
-        center = Vec3(0f, 10f, -30f), // 身后背景墙
-        size = Vec2(100f, 100f),
-        color = Color.makeRGB(220, 220, 255),
-        normalDirection = Vec3(0f, 0f, 1f) // 面向 Z 轴正向
-    )
-    val scene = Scene(listOf(playerMesh, ground, wall))
+    val platform = createSkinPlatform()
     return coroutineScope {
         withContext(Dispatchers.Default) {
-            (0 until frameCount).map { i ->
+            (0 until frames).map { i ->
                 async {
-                    val angle = i * unitAngel
-                    val rotatedCamera = config.camera.copy(yaw = config.camera.yaw + angle)
+                    val angle = i * unitAngle
                     renderSceneToImage(
-                        scene,
-                        config.copy(camera = rotatedCamera)
+                        Scene(listOf(playerMesh.rotateY(angle), platform)),
+                        config
                     ).let { Frame(frameDuration, it) }
                 }
             }.awaitAll()
         }.encodeToBytes()
     }
 }
+
+private fun Mesh.rotateY(angle: Float): Mesh =
+    copy(vertices = vertices.map { vertex ->
+        vertex.copy(position = vertex.position.rotate(Transformation.Rotate(y = angle)))
+    })
+
+private fun Mesh.translate(offset: Vec3): Mesh =
+    copy(vertices = vertices.map { vertex ->
+        vertex.copy(position = vertex.position + offset)
+    })
 
 private fun Map<SkinFace, Rect>.toGeometryFaceUvs(): Map<FaceDirection, Rect> = mapOf(
     // Tavolo 的 RIGHT/LEFT 是几何 +X/-X；Minecraft 语义 RIGHT/LEFT 是玩家右/左侧。

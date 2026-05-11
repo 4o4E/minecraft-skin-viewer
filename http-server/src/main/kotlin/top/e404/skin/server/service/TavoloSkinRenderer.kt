@@ -12,7 +12,9 @@ import org.jetbrains.skia.Image
 import top.e404.skin.core.BodyPart
 import top.e404.skin.core.PosePresets
 import top.e404.skin.core.createMinecraftPlayer
+import top.e404.skin.core.createSkinPlatform
 import top.e404.skin.core.renderMinecraftView
+import top.e404.tavolo.draw.render3d.Mesh
 import top.e404.tavolo.draw.render3d.OrbitCamera
 import top.e404.tavolo.draw.render3d.RenderConfig
 import top.e404.tavolo.draw.render3d.Scene
@@ -23,8 +25,6 @@ import top.e404.tavolo.frame.Frame
 import top.e404.tavolo.frame.encodeToBytes
 import top.e404.tavolo.util.bytes
 import top.e404.tavolo.util.toBitmap
-import kotlin.math.PI
-import kotlin.math.cos
 
 object TavoloSkinRenderer {
     private const val FULL_WIDTH = 600
@@ -80,6 +80,7 @@ object TavoloSkinRenderer {
             duration = duration,
             target = Vec3(0f, 10f, 0f),
             distance = 65f,
+            backgroundMeshes = listOf(createSkinPlatform()),
             pose = pose,
             antiAliasingLevel = 1
         )
@@ -125,6 +126,7 @@ object TavoloSkinRenderer {
             duration = duration,
             target = Vec3(0f, 20f, 0f),
             distance = 30f,
+            backgroundMeshes = emptyList(),
             pose = PosePresets.HEAD_ONLY,
             antiAliasingLevel = 1
         )
@@ -206,26 +208,27 @@ object TavoloSkinRenderer {
         duration: Int,
         target: Vec3,
         distance: Float,
+        backgroundMeshes: List<Mesh>,
         pose: Map<BodyPart, List<Transformation>>,
         antiAliasingLevel: Int,
     ): ByteArray {
         val frames = frameCount.coerceAtLeast(1)
-        val scene = Scene(listOf(createMinecraftPlayer(skin.toBitmap(), slim, pose, use3DOverlay = true)))
+        val playerMesh = createMinecraftPlayer(skin.toBitmap(), slim, pose, use3DOverlay = true)
+        val camera = OrbitCamera(target, yaw = 45f, pitch = pitchAmplitude.toFloat(), distance = distance)
         return coroutineScope {
             withContext(Dispatchers.Default) {
                 (0 until frames).map { index ->
                     async {
                         val yaw = 360f * index / frames
-                        val pitch = (cos(yaw * PI / 180.0) * pitchAmplitude).toFloat()
                         Frame(
                             duration,
                             renderScene(
-                                scene = scene,
+                                scene = Scene(listOf(playerMesh.rotateY(yaw)) + backgroundMeshes),
                                 width = width,
                                 height = height,
                                 backgroundColor = backgroundColor,
                                 lightColor = lightColor,
-                                camera = OrbitCamera(target, yaw = -yaw, pitch = pitch, distance = distance),
+                                camera = camera,
                                 antiAliasingLevel = antiAliasingLevel
                             )
                         )
@@ -234,6 +237,11 @@ object TavoloSkinRenderer {
             }
         }.encodeToBytes()
     }
+
+    private fun Mesh.rotateY(angle: Float): Mesh =
+        copy(vertices = vertices.map { vertex ->
+            vertex.copy(position = vertex.position.rotate(Transformation.Rotate(y = angle)))
+        })
 
     private fun renderScene(
         scene: Scene,
