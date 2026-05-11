@@ -36,4 +36,15 @@ class RenderFileCacheTest {
 
         assertNotEquals(png, gif)
     }
+
+    @Test
+    fun `参数类型不同会生成不同摘要`() {
+        val nullValue = RenderFileCache.paramsMd5(mapOf("light" to null))
+        val nullText = RenderFileCache.paramsMd5(mapOf("light" to "null"))
+        val numericValue = RenderFileCache.paramsMd5(mapOf("aa" to 1))
+        val numericText = RenderFileCache.paramsMd5(mapOf("aa" to "1"))
+
+        assertNotEquals(nullValue, nullText)
+        assertNotEquals(numericValue, numericText)
+    }
 }

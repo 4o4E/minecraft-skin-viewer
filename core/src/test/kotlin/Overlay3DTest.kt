@@ -52,4 +52,25 @@ class Overlay3DTest {
         assertEquals(6, mesh.faces.size)
         assertEquals(Color.WHITE, mesh.faces.first().baseColor)
     }
+
+    @Test
+    fun `体素面颜色来自对应皮肤像素`() {
+        val expectedColor = Color.makeRGB(120, 30, 220)
+        val skin = Bitmap().apply {
+            allocN32Pixels(1, 1)
+            erase(expectedColor)
+        }
+
+        val mesh = create3DOverlay(
+            skin = skin,
+            dims = Vec3(1f, 1f, 1f),
+            overlayDepth = 0.25f,
+            faceUVs = mapOf(FaceDirection.FRONT to Rect.makeXYWH(0f, 0f, 1f, 1f)),
+            textureWidth = 1f,
+            textureHeight = 1f
+        )
+
+        assertEquals(6, mesh.faces.size)
+        mesh.faces.forEach { face -> assertEquals(expectedColor, face.baseColor) }
+    }
 }

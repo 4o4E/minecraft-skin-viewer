@@ -10,7 +10,7 @@ import java.io.File
 import java.security.MessageDigest
 
 object RenderFileCache {
-    private const val CACHE_VERSION = 1
+    private const val CACHE_VERSION = 2
 
     fun paramsMd5(values: Map<String, Any?>): String {
         val normalized = buildString {
@@ -18,10 +18,17 @@ object RenderFileCache {
             values.toSortedMap().forEach { (key, value) ->
                 append(key)
                 append('=')
-                appendLine(value ?: "null")
+                appendLine(value.cacheDigestValue())
             }
         }
         return normalized.md5()
+    }
+
+    private fun Any?.cacheDigestValue(): String = when (this) {
+        null -> "null:"
+        is Boolean -> "boolean:$this"
+        is Number -> "number:$this"
+        else -> "string:$this"
     }
 
     suspend fun getOrRender(
