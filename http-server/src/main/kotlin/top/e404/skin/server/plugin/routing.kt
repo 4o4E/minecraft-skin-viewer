@@ -1,15 +1,19 @@
 package top.e404.skin.server.plugin
 
 import io.ktor.http.*
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.jetbrains.skia.*
 import top.e404.skin.server.Skin
+import top.e404.skin.server.sql.pojo.SkinData
+import top.e404.skin.server.service.RenderFileCache
 import top.e404.skin.server.service.TavoloSkinRenderer
 import top.e404.tavolo.util.*
 
 private const val DEFAULT_BG_COLOR = 0xFF1F1B1D.toInt()
+private const val RENDERER_ID = "tavolo-cpu-v1"
 
 fun Application.routing() = routing {
     get("/render/{type}/{content}/{position}") {
@@ -33,75 +37,149 @@ fun Application.routing() = routing {
         when (call.parameters["position"]!!.lowercase()) {
             "sneak" -> {
                 val slim = parameters["slim"]?.toBoolean() ?: parameters["t"]?.toBoolean() ?: data.slim
-                val bytes = TavoloSkinRenderer.renderSneak(
-                    bytes = skinBytes,
-                    slim = slim,
-                    backgroundColor = bg,
-                    lightColor = light,
-                    headScale = parameters["head"]?.toDoubleOrNull() ?: 1.0,
-                    duration = parameters["duration"]?.toIntOrNull() ?: 40
-                )
-                call.respondBytes(bytes, ContentType.Image.GIF)
+                val headScale = parameters["head"]?.toDoubleOrNull() ?: 1.0
+                val duration = parameters["duration"]?.toIntOrNull() ?: 40
+                call.respondCachedRender(data, "sneak", "gif", ContentType.Image.GIF, mapOf(
+                    "slim" to slim,
+                    "bg" to bg.hexColor(),
+                    "light" to light?.hexColor(),
+                    "head" to headScale,
+                    "duration" to duration,
+                    "width" to 600,
+                    "height" to 900,
+                    "aa" to 1,
+                    "voxelOverlay" to true,
+                )) {
+                    TavoloSkinRenderer.renderSneak(
+                        bytes = skinBytes,
+                        slim = slim,
+                        backgroundColor = bg,
+                        lightColor = light,
+                        headScale = headScale,
+                        duration = duration
+                    )
+                }
             }
 
             "sk" -> {
                 val slim = parameters["slim"]?.toBoolean() ?: parameters["t"]?.toBoolean() ?: data.slim
-                val bytes = TavoloSkinRenderer.renderSkin(
-                    bytes = skinBytes,
-                    slim = slim,
-                    backgroundColor = bg,
-                    lightColor = light,
-                    headScale = parameters["head"]?.toDoubleOrNull() ?: 1.0
-                )
-                call.respondBytes(bytes, ContentType.Image.PNG)
+                val headScale = parameters["head"]?.toDoubleOrNull() ?: 1.0
+                call.respondCachedRender(data, "sk", "png", ContentType.Image.PNG, mapOf(
+                    "slim" to slim,
+                    "bg" to bg.hexColor(),
+                    "light" to light?.hexColor(),
+                    "head" to headScale,
+                    "width" to 600,
+                    "height" to 900,
+                    "aa" to 2,
+                    "voxelOverlay" to true,
+                )) {
+                    TavoloSkinRenderer.renderSkin(
+                        bytes = skinBytes,
+                        slim = slim,
+                        backgroundColor = bg,
+                        lightColor = light,
+                        headScale = headScale
+                    )
+                }
             }
 
             "dsk" -> {
                 val slim = parameters["slim"]?.toBoolean() ?: parameters["t"]?.toBoolean() ?: data.slim
-                val bytes = TavoloSkinRenderer.renderSkinRotate(
-                    bytes = skinBytes,
-                    slim = slim,
-                    backgroundColor = bg,
-                    frameCount = parameters["x"]?.toIntOrNull() ?: 20,
-                    pitchAmplitude = parameters["y"]?.toIntOrNull() ?: 20,
-                    lightColor = light,
-                    headScale = parameters["head"]?.toDoubleOrNull() ?: 1.0,
-                    duration = parameters["duration"]?.toIntOrNull() ?: 40
-                )
-                call.respondBytes(bytes, ContentType.Image.GIF)
+                val frameCount = parameters["x"]?.toIntOrNull() ?: 20
+                val pitchAmplitude = parameters["y"]?.toIntOrNull() ?: 20
+                val headScale = parameters["head"]?.toDoubleOrNull() ?: 1.0
+                val duration = parameters["duration"]?.toIntOrNull() ?: 40
+                call.respondCachedRender(data, "dsk", "gif", ContentType.Image.GIF, mapOf(
+                    "slim" to slim,
+                    "bg" to bg.hexColor(),
+                    "light" to light?.hexColor(),
+                    "head" to headScale,
+                    "frameCount" to frameCount,
+                    "pitchAmplitude" to pitchAmplitude,
+                    "duration" to duration,
+                    "width" to 600,
+                    "height" to 900,
+                    "aa" to 1,
+                    "voxelOverlay" to true,
+                )) {
+                    TavoloSkinRenderer.renderSkinRotate(
+                        bytes = skinBytes,
+                        slim = slim,
+                        backgroundColor = bg,
+                        frameCount = frameCount,
+                        pitchAmplitude = pitchAmplitude,
+                        lightColor = light,
+                        headScale = headScale,
+                        duration = duration
+                    )
+                }
             }
 
             "head" -> {
-                val bytes = TavoloSkinRenderer.renderHead(
-                    bytes = skinBytes,
-                    backgroundColor = bg,
-                    lightColor = light
-                )
-                call.respondBytes(bytes, ContentType.Image.PNG)
+                call.respondCachedRender(data, "head", "png", ContentType.Image.PNG, mapOf(
+                    "bg" to bg.hexColor(),
+                    "light" to light?.hexColor(),
+                    "width" to 400,
+                    "height" to 400,
+                    "aa" to 2,
+                    "voxelOverlay" to true,
+                )) {
+                    TavoloSkinRenderer.renderHead(
+                        bytes = skinBytes,
+                        backgroundColor = bg,
+                        lightColor = light
+                    )
+                }
             }
 
             "dhead" -> {
-                val bytes = TavoloSkinRenderer.renderHeadRotate(
-                    bytes = skinBytes,
-                    backgroundColor = bg,
-                    frameCount = parameters["x"]?.toIntOrNull() ?: 20,
-                    pitchAmplitude = parameters["y"]?.toIntOrNull() ?: 20,
-                    lightColor = light,
-                    duration = parameters["duration"]?.toIntOrNull() ?: 40
-                )
-                call.respondBytes(bytes, ContentType.Image.GIF)
+                val frameCount = parameters["x"]?.toIntOrNull() ?: 20
+                val pitchAmplitude = parameters["y"]?.toIntOrNull() ?: 20
+                val duration = parameters["duration"]?.toIntOrNull() ?: 40
+                call.respondCachedRender(data, "dhead", "gif", ContentType.Image.GIF, mapOf(
+                    "bg" to bg.hexColor(),
+                    "light" to light?.hexColor(),
+                    "frameCount" to frameCount,
+                    "pitchAmplitude" to pitchAmplitude,
+                    "duration" to duration,
+                    "width" to 400,
+                    "height" to 400,
+                    "aa" to 1,
+                    "voxelOverlay" to true,
+                )) {
+                    TavoloSkinRenderer.renderHeadRotate(
+                        bytes = skinBytes,
+                        backgroundColor = bg,
+                        frameCount = frameCount,
+                        pitchAmplitude = pitchAmplitude,
+                        lightColor = light,
+                        duration = duration
+                    )
+                }
             }
 
             "homo" -> {
                 val slim = parameters["slim"]?.toBoolean() ?: parameters["t"]?.toBoolean() ?: data.slim
-                val bytes = TavoloSkinRenderer.renderHomo(
-                    bytes = skinBytes,
-                    slim = slim,
-                    backgroundColor = bg,
-                    lightColor = light,
-                    headScale = parameters["head"]?.toDoubleOrNull() ?: 1.0
-                )
-                call.respondBytes(bytes, ContentType.Image.PNG)
+                val headScale = parameters["head"]?.toDoubleOrNull() ?: 1.0
+                call.respondCachedRender(data, "homo", "png", ContentType.Image.PNG, mapOf(
+                    "slim" to slim,
+                    "bg" to bg.hexColor(),
+                    "light" to light?.hexColor(),
+                    "head" to headScale,
+                    "width" to 1024,
+                    "height" to 768,
+                    "aa" to 2,
+                    "voxelOverlay" to true,
+                )) {
+                    TavoloSkinRenderer.renderHomo(
+                        bytes = skinBytes,
+                        slim = slim,
+                        backgroundColor = bg,
+                        lightColor = light,
+                        headScale = headScale
+                    )
+                }
             }
 
             else -> call.respond(HttpStatusCode.NotFound)
@@ -165,3 +243,25 @@ fun Application.routing() = routing {
         call.respondBytes(result.bytes(format = EncodedImageFormat.PNG), ContentType.Image.PNG)
     }
 }
+
+private suspend fun ApplicationCall.respondCachedRender(
+    data: SkinData,
+    position: String,
+    ext: String,
+    contentType: ContentType,
+    params: Map<String, Any?>,
+    render: suspend () -> ByteArray,
+) {
+    val paramsMd5 = RenderFileCache.paramsMd5(
+        params + mapOf(
+            "renderer" to RENDERER_ID,
+            "position" to position,
+            "ext" to ext,
+        )
+    )
+    val bytes = RenderFileCache.getOrRender(data, paramsMd5, ext, render)
+    respondBytes(bytes, contentType)
+}
+
+private fun Int.hexColor(): String =
+    toUInt().toString(16).padStart(8, '0')

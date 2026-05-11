@@ -13,7 +13,7 @@ import sun.misc.SignalHandler
 import top.e404.skin.server.plugin.logging
 import top.e404.skin.server.plugin.negotiation
 import top.e404.skin.server.plugin.routing
-import top.e404.skin.server.sql.useSkinMapper
+import top.e404.skin.server.sql.Database
 import java.io.FileOutputStream
 import java.nio.channels.FileChannel
 import java.nio.channels.FileLock
@@ -36,11 +36,8 @@ suspend fun main() {
         exitProcess(1)
     }
 
-    useSkinMapper {
-        it.initTable()
-    }
-
     ConfigManager.load()
+    Database.initTables()
 
     SignalHandler { stop() }.let {
         // ctrl + c

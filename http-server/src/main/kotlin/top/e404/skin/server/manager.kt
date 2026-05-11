@@ -8,8 +8,9 @@ import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.*
+import top.e404.skin.server.service.RenderFileCache
+import top.e404.skin.server.sql.SkinDao
 import top.e404.skin.server.sql.pojo.SkinData
-import top.e404.skin.server.sql.useSkinMapper
 import java.util.*
 
 object Mojang {
@@ -88,28 +89,55 @@ val client = HttpClient(OkHttp) {
 
 object Skin {
     suspend fun getByName(name: String): SkinData? {
-        val exists = useSkinMapper { it.getByName(name) }
-        if (exists != null && System.currentTimeMillis() - exists.update > ConfigManager.config.timeout) return exists
+        val exists = SkinDao.getByName(name)
+        if (exists != null && !exists.isExpired()) return exists
         val id = Mojang.getIdByName(name) ?: return null
-        return Mojang.getById(id)?.also { data -> useSkinMapper { it.add(data) } }
+        return Mojang.getById(id)?.also { data -> saveRefreshedSkin(exists, data) }
     }
 
     suspend fun getById(id: String): SkinData? {
-        val exists = useSkinMapper { it.getById(id) }
-        if (exists != null && System.currentTimeMillis() - exists.update > ConfigManager.config.timeout) return exists
-        return Mojang.getById(id)?.also { data -> useSkinMapper { it.add(data) } }
+        val exists = SkinDao.getById(id)
+        if (exists != null && !exists.isExpired()) return exists
+        return Mojang.getById(id)?.also { data -> saveRefreshedSkin(exists, data) }
     }
 
     suspend fun refreshByName(name: String): Boolean {
+        val old = SkinDao.getByName(name)
         val id = Mojang.getIdByName(name) ?: return false
         return Mojang.getById(id)?.also { data ->
-            withContext(Dispatchers.IO) { data.skinFile.delete() }
-            useSkinMapper { it.add(data) }
+            clearSkinFilesAndRenderCache(old, data, force = true)
+            SkinDao.add(data)
         } != null
     }
 
-    suspend fun refreshById(id: String) = Mojang.getById(id)?.also { data ->
-        withContext(Dispatchers.IO) { data.skinFile.delete() }
-        useSkinMapper { it.add(data) }
-    } != null
+    suspend fun refreshById(id: String): Boolean {
+        val old = SkinDao.getById(id)
+        return Mojang.getById(id)?.also { data ->
+            clearSkinFilesAndRenderCache(old, data, force = true)
+            SkinDao.add(data)
+        } != null
+    }
+
+    private suspend fun saveRefreshedSkin(old: SkinData?, data: SkinData) {
+        clearSkinFilesAndRenderCache(old, data, force = false)
+        SkinDao.add(data)
+    }
+
+    private suspend fun clearSkinFilesAndRenderCache(old: SkinData?, data: SkinData, force: Boolean) {
+        val hashChanged = old?.hash != null && old.hash != data.hash
+        val uuidChanged = old?.uuid != null && old.uuid != data.uuid
+        if (force || hashChanged || uuidChanged) {
+            old?.uuid?.let { RenderFileCache.clearUuid(it) }
+            if (old?.uuid != data.uuid) RenderFileCache.clearUuid(data.uuid)
+            withContext(Dispatchers.IO) {
+                old?.skinFile?.delete()
+                data.skinFile.delete()
+            }
+        }
+    }
+
+    private fun SkinData.isExpired(): Boolean {
+        val timeoutMillis = ConfigManager.config.timeout * 1000L
+        return System.currentTimeMillis() - update > timeoutMillis
+    }
 }

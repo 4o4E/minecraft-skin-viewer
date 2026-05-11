@@ -22,17 +22,24 @@
 
 ```yaml
 # http服务绑定地址
-address: "127.0.0.1"
+host: "127.0.0.1"
 # http服务绑定端口
 port: 80
 # 请求mojang服务器时使用的代理, 设置为null则不使用代理
 proxy:
   # 代理地址
-  address: localhost
+  host: localhost
   # 代理端口
   port: 7890
 # 缓存超时时长(超时后获取时将重新从mojang服务器获取, 包括uuid对应的用户名和皮肤, 服务不会主动移除过期缓存, 仅在获取时检测超时)
 timeout: 86400
+# 渲染结果文件缓存
+renderCache:
+  enabled: true
+  dir: render-cache
+  maxBytes: 2147483648
+  maxEntries: 10000
+  lowWatermarkRatio: 0.9
 ```
 
 ### api接口

@@ -11,7 +11,9 @@ import java.io.File
 
 object ConfigManager {
     private val file = File("config.yml")
-    lateinit var config: Config
+    private var loadedConfig: Config? = null
+    val config: Config
+        get() = loadedConfig ?: load()
 
     fun saveDefault(): Config? {
         if (file.isDirectory) file.deleteRecursively()
@@ -21,14 +23,19 @@ object ConfigManager {
         return default
     }
 
-    fun load() {
+    fun load(): Config {
         val default = saveDefault()
         if (default != null) {
-            config = default
-            return
+            loadedConfig = default
+            return default
         }
-        config = Yaml.default.decodeFromString(file.readText())
+        val loaded = Yaml.default.decodeFromString<Config>(normalizeConfigText(file.readText()))
+        loadedConfig = loaded
+        return loaded
     }
+
+    private fun normalizeConfigText(text: String): String =
+        Regex("(?m)^(\\s*)address:").replace(text, "\$1host:")
 }
 
 @Serializable
@@ -36,7 +43,17 @@ data class Config(
     val host: String = "127.0.0.1",
     val port: Int = 2345,
     val proxy: Proxy? = null,
-    val timeout: Long = 86400
+    val timeout: Long = 86400,
+    val renderCache: RenderCacheConfig = RenderCacheConfig()
+)
+
+@Serializable
+data class RenderCacheConfig(
+    val enabled: Boolean = true,
+    val dir: String = "render-cache",
+    val maxBytes: Long = 2147483648L,
+    val maxEntries: Int = 10000,
+    val lowWatermarkRatio: Double = 0.9,
 )
 
 @Serializable

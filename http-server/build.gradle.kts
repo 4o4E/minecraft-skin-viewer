@@ -39,8 +39,6 @@ dependencies {
     implementation("mysql:mysql-connector-java:8.0.33")
     // hikari
     implementation("com.zaxxer:HikariCP:5.0.1")
-    // mybatis
-    implementation("org.mybatis:mybatis:3.5.11")
 
     // test
     testImplementation(kotlin("test", Versions.KOTLIN))
