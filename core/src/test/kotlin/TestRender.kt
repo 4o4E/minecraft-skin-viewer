@@ -47,7 +47,11 @@ class TestRender {
             camera,
             backgroundColor = backgroundColor,
             lightDirection = lightDirection,
-            lightIntensity = lightIntensity
+            lightIntensity = lightIntensity,
+            antiAliasingLevel = 4,
+            shadowMapSize = 4096,
+            shadowBias = 0.002f,
+            shadowOrthoSize = 30f
         )
         return renderMinecraftView(
             skin,
@@ -90,9 +94,36 @@ class TestRender {
                 camera,
                 listOf(ground, wall),
                 lightIntensity = lightIntensity,
-                lightDirection = Vec3(.5f, .5f, .5f).normalized()
+                lightDirection = Vec3(.5f, .3f, .3f).normalized()
             ).encodeToData()!!.let { data ->
                 File("rendered_$fileName").writeBytes(data.bytes)
+            }
+        }
+    }
+
+    @Test
+    fun test_render_head() {
+        val lightIntensity = .7f
+        val pose = PosePresets.HEAD_ONLY
+
+        for ((fileName, isSlim) in files) {
+            val camera = OrbitCamera(
+                target = Vec3(0f, 20f, 0f),
+                yaw = 45f,
+                pitch = 20f,
+                distance = 30f
+            )
+            renderFile(
+                File(fileName),
+                isSlim,
+                1800,
+                1800,
+                camera,
+                lightDirection = Vec3(.3f, .3f, .3f).normalized(),
+                lightIntensity = lightIntensity,
+                pose = pose,
+            ).encodeToData()!!.let { data ->
+                File("head_$fileName").writeBytes(data.bytes)
             }
         }
     }
@@ -126,7 +157,7 @@ class TestRender {
                 800,
                 1200,
                 camera,
-                listOf(ground, wall),
+                // listOf(ground, wall),
                 lightDirection = Vec3(.5f, 1.0f, 1f).normalized(),
                 pose = pose
             ).encodeToData()!!.let { data ->

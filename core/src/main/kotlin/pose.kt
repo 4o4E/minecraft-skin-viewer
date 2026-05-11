@@ -25,6 +25,14 @@ object PosePresets {
         BodyPart.RIGHT_LEG to listOf(Transformation.Rotate(x = -80f, z = -20f)),
         BodyPart.LEFT_LEG to listOf(Transformation.Rotate(x = -80f, z = 20f)),
     )
+    val HEAD_ONLY = mapOf(
+        BodyPart.HEAD to listOf(),
+        BodyPart.BODY to listOf(Transformation.Scale(0f, 0f, 0f)),
+        BodyPart.RIGHT_ARM to listOf(Transformation.Scale(0f, 0f, 0f)),
+        BodyPart.LEFT_ARM to listOf(Transformation.Scale(0f, 0f, 0f)),
+        BodyPart.RIGHT_LEG to listOf(Transformation.Scale(0f, 0f, 0f)),
+        BodyPart.LEFT_LEG to listOf(Transformation.Scale(0f, 0f, 0f)),
+    )
     fun withScale(
         isSlim: Boolean,
         headScale: Float = 1f,
