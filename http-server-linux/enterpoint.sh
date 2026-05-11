@@ -28,4 +28,4 @@ chown -R java /app
 if [ ! -n "$START_CMD" ]; then
   START_CMD="java -jar app.jar"
 fi
-gosu java xvfb-run $START_CMD
+gosu java $START_CMD

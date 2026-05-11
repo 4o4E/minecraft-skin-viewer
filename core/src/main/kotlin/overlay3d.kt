@@ -3,12 +3,12 @@ package top.e404.skin.core
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Color
 import org.jetbrains.skia.Rect
-import top.e404.skiko.draw.render3d.Face
-import top.e404.skiko.draw.render3d.FaceDirection
-import top.e404.skiko.draw.render3d.Mesh
-import top.e404.skiko.draw.render3d.Vec2
-import top.e404.skiko.draw.render3d.Vec3
-import top.e404.skiko.draw.render3d.Vertex
+import top.e404.tavolo.draw.render3d.Face
+import top.e404.tavolo.draw.render3d.FaceDirection
+import top.e404.tavolo.draw.render3d.Mesh
+import top.e404.tavolo.draw.render3d.Vec2
+import top.e404.tavolo.draw.render3d.Vec3
+import top.e404.tavolo.draw.render3d.Vertex
 
 private enum class PixelPosition {
     INNER, TOP, BOTTOM, LEFT, RIGHT, TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT

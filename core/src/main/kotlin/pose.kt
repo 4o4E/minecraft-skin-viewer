@@ -1,6 +1,6 @@
 package top.e404.skin.core
 
-import top.e404.skiko.draw.render3d.Transformation
+import top.e404.tavolo.draw.render3d.Transformation
 
 /**
  * 预设的玩家姿势

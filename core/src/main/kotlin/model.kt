@@ -1,8 +1,8 @@
 package top.e404.skin.core
 
 import org.jetbrains.skia.Rect
-import top.e404.skiko.draw.render3d.FaceDirection
-import top.e404.skiko.draw.render3d.Vec3
+import top.e404.tavolo.draw.render3d.FaceDirection
+import top.e404.tavolo.draw.render3d.Vec3
 
 /**
  * 封装 Minecraft 皮肤模型的一个立方体部件。

@@ -8,9 +8,9 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Color
 import org.jetbrains.skia.Image
-import top.e404.skiko.draw.render3d.*
-import top.e404.skiko.frame.Frame
-import top.e404.skiko.frame.encodeToBytes
+import top.e404.tavolo.draw.render3d.*
+import top.e404.tavolo.frame.Frame
+import top.e404.tavolo.frame.encodeToBytes
 
 /**
  * 根据皮肤贴图和模型类型创建完整的Minecraft玩家模型。

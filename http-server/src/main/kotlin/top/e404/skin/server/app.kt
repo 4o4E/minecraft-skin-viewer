@@ -10,7 +10,6 @@ import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
 import sun.misc.Signal
 import sun.misc.SignalHandler
-import top.e404.skin.jfx.view.SkinApp
 import top.e404.skin.server.plugin.logging
 import top.e404.skin.server.plugin.negotiation
 import top.e404.skin.server.plugin.routing
@@ -49,8 +48,6 @@ suspend fun main() {
         // alt + f4
         Signal.handle(Signal("TERM"), it)
     }
-
-    SkinApp.launch()
 
     engine = embeddedServer(
         factory = Netty,

@@ -11,9 +11,9 @@ services:
       PROXY_TYPE: HTTP
       PROXY_HOST: 172.17.0.1 # 宿主机代理地址
       PROXY_PORT: 7890
-      START_CMD: "java -Dprism.forceGPU=true -Djdk.gtk.version=3 -jar app.jar"
     volumes:
       - ./skin:/app/skin
+      - ./render-cache:/app/render-cache
       - /dev/null:/app/logs # 禁用日志
     restart: unless-stopped
     ports:

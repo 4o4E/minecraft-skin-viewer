@@ -10,7 +10,7 @@
 
 1. 此http服务使用mysql来储存玩家`uuid`和`name`, 请在部署后配置db.properties, 默认使用名为`skin`的数据库
 2. `config.yml`可以设置http服务的地址和端口, 以及代理(用于从mojang的服务器获取玩家数据, 没有可以留空)
-3. 对于linux, 此应用需要`xserver`, 你可以使用`gnome`/`kde`/`xvfb`, 另外我自己在`ubuntu`上使用的时候, 需要添加`-Dprism.forceGPU=true`以及`-Djdk.gtk.version=3`
+3. 渲染实现已迁移到 `Tavolo`，不再依赖 JavaFX 或 `xserver`
 
 ### 使用
 

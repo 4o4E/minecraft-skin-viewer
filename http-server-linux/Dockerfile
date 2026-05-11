@@ -11,10 +11,9 @@ RUN sed -i s/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/i /etc/apt/sources.
     DEBIAN_FRONTEND=noninteractive \
     apt-get update && \
     apt-get install -y --no-install-recommends \
-    xvfb \
     gosu \
     ca-certificates \
-    libgl1 libgtk-3-dev \
+    fontconfig libfreetype6 \
     && rm -rf /var/lib/apt/lists/*
 
 ENV JAVA_HOME=/usr/local/openjdk-11
@@ -33,6 +32,8 @@ COPY build/libs/http-server-linux.jar app.jar
 
 # 皮肤缓存
 VOLUME /app/skin
+# 渲染结果缓存
+VOLUME /app/render-cache
 
 # 容器启动时执行的命令
 ENTRYPOINT ["/enterpoint.sh"]

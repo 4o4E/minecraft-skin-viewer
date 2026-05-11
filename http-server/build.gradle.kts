@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    implementation(rootProject)
+    implementation(project(":core"))
     // slf4j
     implementation("org.slf4j:slf4j-api:2.0.17")
     // log4j2
@@ -26,8 +26,8 @@ dependencies {
     implementation(ktor("server-netty"))
 
     implementation(ktor("server-call-logging"))
-    implementation(ktor("server-content-negotiation"))
-    implementation(ktor("serialization-kotlinx-json"))
+    implementation(ktor("server-content-negotiation-jvm"))
+    implementation(ktor("serialization-kotlinx-json-jvm"))
 
     implementation(ktor("client-core-jvm"))
     implementation(ktor("client-okhttp"))
