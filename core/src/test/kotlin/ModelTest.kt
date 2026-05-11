@@ -7,7 +7,7 @@ import kotlin.test.assertNull
 import top.e404.skin.core.BodyPart
 import top.e404.skin.core.PlayerModel
 import top.e404.skin.core.SkinCube
-import top.e404.tavolo.draw.render3d.FaceDirection
+import top.e404.skin.core.SkinFace
 import top.e404.tavolo.draw.render3d.Vec3
 
 class ModelTest {
@@ -20,16 +20,15 @@ class ModelTest {
     }
 
     @Test
-    fun `SkinCube 生成标准和镜像 UV`() {
+    fun `SkinCube 生成 Minecraft 语义面 UV`() {
         val standard = SkinCube(0f, 0f, Vec3(8f, 8f, 8f), Vec3(0f, 0f, 0f))
-        val mirrored = SkinCube(0f, 0f, Vec3(8f, 8f, 8f), Vec3(0f, 0f, 0f), mirrored = true)
 
-        assertRect(0f, 8f, 8f, 8f, standard.uvs.getValue(FaceDirection.RIGHT))
-        assertRect(16f, 8f, 8f, 8f, standard.uvs.getValue(FaceDirection.LEFT))
-        assertRect(16f, 8f, 8f, 8f, mirrored.uvs.getValue(FaceDirection.RIGHT))
-        assertRect(0f, 8f, 8f, 8f, mirrored.uvs.getValue(FaceDirection.LEFT))
-        assertRect(8f, 8f, 8f, 8f, standard.uvs.getValue(FaceDirection.FRONT))
-        assertRect(24f, 8f, 8f, 8f, standard.uvs.getValue(FaceDirection.BACK))
+        assertRect(0f, 8f, 8f, 8f, standard.uvs.getValue(SkinFace.RIGHT))
+        assertRect(16f, 8f, 8f, 8f, standard.uvs.getValue(SkinFace.LEFT))
+        assertRect(8f, 0f, 8f, 8f, standard.uvs.getValue(SkinFace.TOP))
+        assertRect(16f, 0f, 8f, 8f, standard.uvs.getValue(SkinFace.BOTTOM))
+        assertRect(8f, 8f, 8f, 8f, standard.uvs.getValue(SkinFace.FRONT))
+        assertRect(24f, 8f, 8f, 8f, standard.uvs.getValue(SkinFace.BACK))
     }
 
     @Test
@@ -46,8 +45,8 @@ class ModelTest {
 
         assertEquals(Vec3(-6f, 10f, 0f), classic.parts.getValue(BodyPart.RIGHT_ARM).pos)
         assertEquals(Vec3(-5.5f, 10f, 0f), slim.parts.getValue(BodyPart.RIGHT_ARM).pos)
-        assertRect(8f, 20f, 4f, 12f, classic.parts.getValue(BodyPart.RIGHT_LEG).uvs.getValue(FaceDirection.RIGHT))
-        assertRect(0f, 20f, 4f, 12f, classic.parts.getValue(BodyPart.RIGHT_LEG).uvs.getValue(FaceDirection.LEFT))
+        assertRect(0f, 20f, 4f, 12f, classic.parts.getValue(BodyPart.RIGHT_LEG).uvs.getValue(SkinFace.RIGHT))
+        assertRect(8f, 20f, 4f, 12f, classic.parts.getValue(BodyPart.RIGHT_LEG).uvs.getValue(SkinFace.LEFT))
         assertNull(BodyPart.HEAD.slimDims)
     }
 

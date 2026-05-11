@@ -1,8 +1,14 @@
 package top.e404.skin.core
 
 import org.jetbrains.skia.Rect
-import top.e404.tavolo.draw.render3d.FaceDirection
 import top.e404.tavolo.draw.render3d.Vec3
+
+/**
+ * Minecraft 皮肤模板中的语义面方向。
+ */
+enum class SkinFace {
+    RIGHT, LEFT, TOP, BOTTOM, FRONT, BACK
+}
 
 /**
  * 封装 Minecraft 皮肤模型的一个立方体部件。
@@ -12,29 +18,24 @@ import top.e404.tavolo.draw.render3d.Vec3
  * @param dims 部件的尺寸 (宽度, 高度, 深度)，用于计算UV。
  * @param pos 部件在模型坐标系中的位置。
  * @param pivot 部件进行旋转和缩放时的轴心点（相对于部件几何中心）。
- * @param mirrored 如果为 true，则交换左右两个面的UV贴图，以适应Minecraft左侧肢体的布局。
  */
 class SkinCube(
     u: Float, v: Float,
     dims: Vec3,
     val pos: Vec3,
     val pivot: Vec3 = Vec3(0f, 0f, 0f),
-    mirrored: Boolean = false
 ) {
-    val uvs: Map<FaceDirection, Rect>
+    val uvs: Map<SkinFace, Rect>
 
     init {
         val (w, h, d) = dims
-        val standardRight = Rect.makeXYWH(u, v + d, d, h)
-        val standardLeft = Rect.makeXYWH(u + d + w, v + d, d, h)
-
         uvs = mapOf(
-            FaceDirection.RIGHT to if (mirrored) standardLeft else standardRight,
-            FaceDirection.LEFT to if (mirrored) standardRight else standardLeft,
-            FaceDirection.TOP to Rect.makeXYWH(u + d, v, w, d),
-            FaceDirection.BOTTOM to Rect.makeXYWH(u + d + w, v, w, d),
-            FaceDirection.FRONT to Rect.makeXYWH(u + d, v + d, w, h),
-            FaceDirection.BACK to Rect.makeXYWH(u + d + w + d, v + d, w, h)
+            SkinFace.RIGHT to Rect.makeXYWH(u, v + d, d, h),
+            SkinFace.LEFT to Rect.makeXYWH(u + d + w, v + d, d, h),
+            SkinFace.TOP to Rect.makeXYWH(u + d, v, w, d),
+            SkinFace.BOTTOM to Rect.makeXYWH(u + d + w, v, w, d),
+            SkinFace.FRONT to Rect.makeXYWH(u + d, v + d, w, h),
+            SkinFace.BACK to Rect.makeXYWH(u + d + w + d, v + d, w, h)
         )
     }
 }
@@ -78,38 +79,38 @@ class PlayerModel(val isSlim: Boolean) {
         if (isSlim) {
             // Alex (Slim) 模型定义
             parts = mapOf(
-                BodyPart.HEAD to SkinCube(0f, 0f, BodyPart.HEAD.getDims(true), Vec3(0f, 20f, 0f), mirrored = true),
+                BodyPart.HEAD to SkinCube(0f, 0f, BodyPart.HEAD.getDims(true), Vec3(0f, 20f, 0f)),
                 BodyPart.BODY to SkinCube(16f, 16f, BodyPart.BODY.getDims(true), Vec3(0f, 10f, 0f)),
                 BodyPart.RIGHT_ARM to SkinCube(40f, 16f, BodyPart.RIGHT_ARM.getDims(true), Vec3(-5.5f, 10f, 0f), Vec3(0f, 6f, 0f)),
-                BodyPart.LEFT_ARM to SkinCube(32f, 48f, BodyPart.LEFT_ARM.getDims(true), Vec3(5.5f, 10f, 0f), Vec3(0f, 6f, 0f), mirrored = true),
-                BodyPart.RIGHT_LEG to SkinCube(0f, 16f, BodyPart.RIGHT_LEG.getDims(true), Vec3(-2f, -2f, 0f), Vec3(0f, 6f, 0f), mirrored = true),
-                BodyPart.LEFT_LEG to SkinCube(16f, 48f, BodyPart.LEFT_LEG.getDims(true), Vec3(2f, -2f, 0f), Vec3(0f, 6f, 0f), mirrored = true)
+                BodyPart.LEFT_ARM to SkinCube(32f, 48f, BodyPart.LEFT_ARM.getDims(true), Vec3(5.5f, 10f, 0f), Vec3(0f, 6f, 0f)),
+                BodyPart.RIGHT_LEG to SkinCube(0f, 16f, BodyPart.RIGHT_LEG.getDims(true), Vec3(-2f, -2f, 0f), Vec3(0f, 6f, 0f)),
+                BodyPart.LEFT_LEG to SkinCube(16f, 48f, BodyPart.LEFT_LEG.getDims(true), Vec3(2f, -2f, 0f), Vec3(0f, 6f, 0f))
             )
             overlays = mapOf(
-                BodyPart.HEAD to SkinCube(32f, 0f, BodyPart.HEAD.getDims(true), Vec3(0f, 20f, 0f), mirrored = true),
+                BodyPart.HEAD to SkinCube(32f, 0f, BodyPart.HEAD.getDims(true), Vec3(0f, 20f, 0f)),
                 BodyPart.BODY to SkinCube(16f, 32f, BodyPart.BODY.getDims(true), Vec3(0f, 10f, 0f)),
                 BodyPart.RIGHT_ARM to SkinCube(40f, 32f, BodyPart.RIGHT_ARM.getDims(true), Vec3(-5.5f, 10f, 0f), Vec3(0f, 6f, 0f)),
-                BodyPart.LEFT_ARM to SkinCube(48f, 48f, BodyPart.LEFT_ARM.getDims(true), Vec3(5.5f, 10f, 0f), Vec3(0f, 6f, 0f), mirrored = true),
-                BodyPart.RIGHT_LEG to SkinCube(0f, 32f, BodyPart.RIGHT_LEG.getDims(true), Vec3(-2f, -2f, 0f), Vec3(0f, 6f, 0f), mirrored = true),
-                BodyPart.LEFT_LEG to SkinCube(0f, 48f, BodyPart.LEFT_LEG.getDims(true), Vec3(2f, -2f, 0f), Vec3(0f, 6f, 0f), mirrored = true)
+                BodyPart.LEFT_ARM to SkinCube(48f, 48f, BodyPart.LEFT_ARM.getDims(true), Vec3(5.5f, 10f, 0f), Vec3(0f, 6f, 0f)),
+                BodyPart.RIGHT_LEG to SkinCube(0f, 32f, BodyPart.RIGHT_LEG.getDims(true), Vec3(-2f, -2f, 0f), Vec3(0f, 6f, 0f)),
+                BodyPart.LEFT_LEG to SkinCube(0f, 48f, BodyPart.LEFT_LEG.getDims(true), Vec3(2f, -2f, 0f), Vec3(0f, 6f, 0f))
             )
         } else {
             // Steve (Classic) 模型定义
             parts = mapOf(
-                BodyPart.HEAD to SkinCube(0f, 0f, BodyPart.HEAD.getDims(false), Vec3(0f, 20f, 0f), mirrored = true),
+                BodyPart.HEAD to SkinCube(0f, 0f, BodyPart.HEAD.getDims(false), Vec3(0f, 20f, 0f)),
                 BodyPart.BODY to SkinCube(16f, 16f, BodyPart.BODY.getDims(false), Vec3(0f, 10f, 0f)),
                 BodyPart.RIGHT_ARM to SkinCube(40f, 16f, BodyPart.RIGHT_ARM.getDims(false), Vec3(-6f, 10f, 0f), Vec3(0f, 6f, 0f)),
-                BodyPart.LEFT_ARM to SkinCube(32f, 48f, BodyPart.LEFT_ARM.getDims(false), Vec3(6f, 10f, 0f), Vec3(0f, 6f, 0f), mirrored = true),
-                BodyPart.RIGHT_LEG to SkinCube(0f, 16f, BodyPart.RIGHT_LEG.getDims(false), Vec3(-2f, -2f, 0f), Vec3(0f, 6f, 0f), mirrored = true),
-                BodyPart.LEFT_LEG to SkinCube(16f, 48f, BodyPart.LEFT_LEG.getDims(false), Vec3(2f, -2f, 0f), Vec3(0f, 6f, 0f), mirrored = true)
+                BodyPart.LEFT_ARM to SkinCube(32f, 48f, BodyPart.LEFT_ARM.getDims(false), Vec3(6f, 10f, 0f), Vec3(0f, 6f, 0f)),
+                BodyPart.RIGHT_LEG to SkinCube(0f, 16f, BodyPart.RIGHT_LEG.getDims(false), Vec3(-2f, -2f, 0f), Vec3(0f, 6f, 0f)),
+                BodyPart.LEFT_LEG to SkinCube(16f, 48f, BodyPart.LEFT_LEG.getDims(false), Vec3(2f, -2f, 0f), Vec3(0f, 6f, 0f))
             )
             overlays = mapOf(
-                BodyPart.HEAD to SkinCube(32f, 0f, BodyPart.HEAD.getDims(false), Vec3(0f, 20f, 0f), mirrored = true),
+                BodyPart.HEAD to SkinCube(32f, 0f, BodyPart.HEAD.getDims(false), Vec3(0f, 20f, 0f)),
                 BodyPart.BODY to SkinCube(16f, 32f, BodyPart.BODY.getDims(false), Vec3(0f, 10f, 0f)),
                 BodyPart.RIGHT_ARM to SkinCube(40f, 32f, BodyPart.RIGHT_ARM.getDims(false), Vec3(-6f, 10f, 0f), Vec3(0f, 6f, 0f)),
-                BodyPart.LEFT_ARM to SkinCube(48f, 48f, BodyPart.LEFT_ARM.getDims(false), Vec3(6f, 10f, 0f), Vec3(0f, 6f, 0f), mirrored = true),
-                BodyPart.RIGHT_LEG to SkinCube(0f, 32f, BodyPart.RIGHT_LEG.getDims(false), Vec3(-2f, -2f, 0f), Vec3(0f, 6f, 0f), mirrored = true),
-                BodyPart.LEFT_LEG to SkinCube(0f, 48f, BodyPart.LEFT_LEG.getDims(false), Vec3(2f, -2f, 0f), Vec3(0f, 6f, 0f), mirrored = true)
+                BodyPart.LEFT_ARM to SkinCube(48f, 48f, BodyPart.LEFT_ARM.getDims(false), Vec3(6f, 10f, 0f), Vec3(0f, 6f, 0f)),
+                BodyPart.RIGHT_LEG to SkinCube(0f, 32f, BodyPart.RIGHT_LEG.getDims(false), Vec3(-2f, -2f, 0f), Vec3(0f, 6f, 0f)),
+                BodyPart.LEFT_LEG to SkinCube(0f, 48f, BodyPart.LEFT_LEG.getDims(false), Vec3(2f, -2f, 0f), Vec3(0f, 6f, 0f))
             )
         }
     }

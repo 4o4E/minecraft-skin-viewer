@@ -32,6 +32,7 @@ fun createMinecraftPlayer(
         val overlayCube = playerModel.overlays[partId]
         val transformations = pose[partId]
         val partDims = partId.getDims(isSlim)
+        val partUvs = partCube.uvs.toGeometryFaceUvs()
 
         val transform: (Vec3) -> Vec3 = { vertexPos ->
             if (transformations.isNullOrEmpty()) {
@@ -47,18 +48,19 @@ fun createMinecraftPlayer(
             }
         }
 
-        val baseMesh = createMinecraftUVCuboid(partDims, partCube.uvs, texW, texH)
+        val baseMesh = createMinecraftUVCuboid(partDims, partUvs, texW, texH)
         componentMeshes.add(Mesh(baseMesh.vertices.map {
             Vertex(transform(it.position) + partCube.pos, it.uv)
         }, baseMesh.faces))
 
         overlayCube?.let {
+            val overlayUvs = it.uvs.toGeometryFaceUvs()
             val overlayMesh = if (use3DOverlay) {
                 val overlayDepth = if (partId == BodyPart.HEAD) 0.5f else 0.25f
-                create3DOverlay(skin, partDims, overlayDepth, it.uvs, texW, texH)
+                create3DOverlay(skin, partDims, overlayDepth, overlayUvs, texW, texH)
             } else {
                 val overlaySize = if (partId == BodyPart.HEAD) 1.0f else 0.5f
-                createMinecraftUVCuboid(partDims + Vec3(overlaySize, overlaySize, overlaySize), it.uvs, texW, texH)
+                createMinecraftUVCuboid(partDims + Vec3(overlaySize, overlaySize, overlaySize), overlayUvs, texW, texH)
             }
             componentMeshes.add(Mesh(overlayMesh.vertices.map { vertex ->
                 Vertex(transform(vertex.position) + partCube.pos, vertex.uv)
@@ -128,6 +130,16 @@ suspend fun renderRotate(
         }.encodeToBytes()
     }
 }
+
+private fun Map<SkinFace, Rect>.toGeometryFaceUvs(): Map<FaceDirection, Rect> = mapOf(
+    // Tavolo 的 RIGHT/LEFT 是几何 +X/-X；Minecraft 语义 RIGHT/LEFT 是玩家右/左侧。
+    FaceDirection.RIGHT to getValue(SkinFace.LEFT),
+    FaceDirection.LEFT to getValue(SkinFace.RIGHT),
+    FaceDirection.TOP to getValue(SkinFace.TOP),
+    FaceDirection.BOTTOM to getValue(SkinFace.BOTTOM),
+    FaceDirection.FRONT to getValue(SkinFace.FRONT),
+    FaceDirection.BACK to getValue(SkinFace.BACK),
+)
 
 private fun createMinecraftUVCuboid(
     dims: Vec3,
