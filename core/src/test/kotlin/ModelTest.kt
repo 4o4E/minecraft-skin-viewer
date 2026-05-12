@@ -8,20 +8,21 @@ import top.e404.skin.core.BodyPart
 import top.e404.skin.core.PlayerModel
 import top.e404.skin.core.SkinCube
 import top.e404.skin.core.SkinFace
-import top.e404.tavolo.draw.render3d.Vec3
+import top.e404.skin.core.SkinUvRect
+import top.e404.skin.core.SkinVec3
 
 class ModelTest {
     @Test
-    fun `BodyPart 根据模型类型返回正确尺寸`() {
-        assertEquals(Vec3(4f, 12f, 4f), BodyPart.RIGHT_ARM.getDims(false))
-        assertEquals(Vec3(3f, 12f, 4f), BodyPart.RIGHT_ARM.getDims(true))
-        assertEquals(Vec3(8f, 8f, 8f), BodyPart.HEAD.getDims(false))
-        assertEquals(Vec3(8f, 8f, 8f), BodyPart.HEAD.getDims(true))
+    fun `BodyPart returns dimensions by model type`() {
+        assertEquals(SkinVec3(4f, 12f, 4f), BodyPart.RIGHT_ARM.getDims(false))
+        assertEquals(SkinVec3(3f, 12f, 4f), BodyPart.RIGHT_ARM.getDims(true))
+        assertEquals(SkinVec3(8f, 8f, 8f), BodyPart.HEAD.getDims(false))
+        assertEquals(SkinVec3(8f, 8f, 8f), BodyPart.HEAD.getDims(true))
     }
 
     @Test
-    fun `SkinCube 生成 Minecraft 语义面 UV`() {
-        val standard = SkinCube(0f, 0f, Vec3(8f, 8f, 8f), Vec3(0f, 0f, 0f))
+    fun `SkinCube generates Minecraft face UVs`() {
+        val standard = SkinCube(0f, 0f, SkinVec3(8f, 8f, 8f), SkinVec3(0f, 0f, 0f))
 
         assertRect(0f, 8f, 8f, 8f, standard.uvs.getValue(SkinFace.RIGHT))
         assertRect(16f, 8f, 8f, 8f, standard.uvs.getValue(SkinFace.LEFT))
@@ -32,7 +33,7 @@ class ModelTest {
     }
 
     @Test
-    fun `PlayerModel 包含完整部件和覆盖层`() {
+    fun `PlayerModel contains all base and overlay parts`() {
         val classic = PlayerModel(isSlim = false)
         val slim = PlayerModel(isSlim = true)
 
@@ -43,8 +44,8 @@ class ModelTest {
             assertNotNull(slim.overlays[part])
         }
 
-        assertEquals(Vec3(-6f, 10f, 0f), classic.parts.getValue(BodyPart.RIGHT_ARM).pos)
-        assertEquals(Vec3(-5.5f, 10f, 0f), slim.parts.getValue(BodyPart.RIGHT_ARM).pos)
+        assertEquals(SkinVec3(-6f, 10f, 0f), classic.parts.getValue(BodyPart.RIGHT_ARM).pos)
+        assertEquals(SkinVec3(-5.5f, 10f, 0f), slim.parts.getValue(BodyPart.RIGHT_ARM).pos)
         assertRect(0f, 20f, 4f, 12f, classic.parts.getValue(BodyPart.RIGHT_LEG).uvs.getValue(SkinFace.RIGHT))
         assertRect(8f, 20f, 4f, 12f, classic.parts.getValue(BodyPart.RIGHT_LEG).uvs.getValue(SkinFace.LEFT))
         assertNull(BodyPart.HEAD.slimDims)
@@ -55,7 +56,7 @@ class ModelTest {
         top: Float,
         width: Float,
         height: Float,
-        actual: org.jetbrains.skia.Rect,
+        actual: SkinUvRect,
     ) {
         assertEquals(left, actual.left)
         assertEquals(top, actual.top)

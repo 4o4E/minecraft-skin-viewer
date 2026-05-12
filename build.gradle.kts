@@ -14,6 +14,10 @@ allprojects {
     group = Versions.GROUP
     version = Versions.VERSION
 
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+    }
+
     repositories {
         mavenLocal()
         maven("https://nexus.e404.top:3443/repository/maven-snapshots/")
@@ -24,10 +28,6 @@ allprojects {
     dependencies {
         // slf4j
         implementation("org.slf4j:slf4j-api:2.0.17")
-        // tavolo
-        implementation("top.e404.tavolo:tavolo-graphics:${Versions.TAVOLO}")
-        implementation("top.e404.tavolo:tavolo-gif-codec:${Versions.TAVOLO}")
-        implementation("top.e404.tavolo:tavolo-common:${Versions.TAVOLO}")
         // coroutines
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
         // test
@@ -54,6 +54,11 @@ subprojects {
     apply(plugin = "org.gradle.application")
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "com.github.johnrengelman.shadow")
+
+    extensions.configure<org.gradle.api.plugins.JavaPluginExtension> {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
 
     val manualTestSourceSet = sourceSets.create("manualTest") {
         java.srcDir("src/manualTest/kotlin")

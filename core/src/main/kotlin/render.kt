@@ -1,38 +1,28 @@
 package top.e404.skin.core
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Color
-import org.jetbrains.skia.Image
-import org.jetbrains.skia.Rect
-import top.e404.tavolo.draw.render3d.*
-import top.e404.tavolo.frame.Frame
-import top.e404.tavolo.frame.encodeToBytes
 
 /**
- * 根据皮肤贴图和模型类型创建完整的Minecraft玩家模型。
+ * Builds the complete Minecraft player model from a skin bitmap.
  */
 fun createMinecraftPlayer(
     skin: Bitmap,
     isSlim: Boolean,
-    pose: Map<BodyPart, List<Transformation>> = emptyMap(),
+    pose: Map<BodyPart, List<SkinTransform>> = emptyMap(),
     use3DOverlay: Boolean = false
-): Mesh = combineMeshes(createMinecraftPlayerMeshes(skin, isSlim, pose, use3DOverlay), skin)
+): SkinMesh = combineSkinMeshes(createMinecraftPlayerMeshes(skin, isSlim, pose, use3DOverlay), skin)
 
 fun createMinecraftPlayerMeshes(
     skin: Bitmap,
     isSlim: Boolean,
-    pose: Map<BodyPart, List<Transformation>> = emptyMap(),
+    pose: Map<BodyPart, List<SkinTransform>> = emptyMap(),
     use3DOverlay: Boolean = false
-): List<Mesh> {
+): List<SkinMesh> {
     val texW = skin.width.toFloat()
     val texH = skin.height.toFloat()
-    val texturedComponentMeshes = mutableListOf<Mesh>()
-    val solidComponentMeshes = mutableListOf<Mesh>()
+    val texturedComponentMeshes = mutableListOf<SkinMesh>()
+    val solidComponentMeshes = mutableListOf<SkinMesh>()
     val playerModel = PlayerModel(isSlim)
 
     for (partId in BodyPart.entries) {
@@ -42,24 +32,24 @@ fun createMinecraftPlayerMeshes(
         val partDims = partId.getDims(isSlim)
         val partUvs = partCube.uvs.toGeometryFaceUvs()
 
-        val transform: (Vec3) -> Vec3 = { vertexPos ->
+        val transform: (SkinVec3) -> SkinVec3 = { vertexPos ->
             if (transformations.isNullOrEmpty()) {
                 vertexPos
             } else {
                 transformations.fold(vertexPos) { currentPos, transformation ->
                     when (transformation) {
-                        is Transformation.Rotate -> (currentPos - partCube.pivot).rotate(transformation) + partCube.pivot
-                        is Transformation.Scale -> (currentPos - partCube.pivot).scale(transformation) + partCube.pivot
-                        is Transformation.Translate -> currentPos.translate(transformation)
+                        is SkinTransform.Rotate -> (currentPos - partCube.pivot).rotate(transformation) + partCube.pivot
+                        is SkinTransform.Scale -> (currentPos - partCube.pivot).scale(transformation) + partCube.pivot
+                        is SkinTransform.Translate -> currentPos.translate(transformation)
                     }
                 }
             }
         }
 
         val baseMesh = createMinecraftUVCuboid(partDims, partUvs, texW, texH)
-        texturedComponentMeshes.add(Mesh(baseMesh.vertices.map {
-            Vertex(transform(it.position) + partCube.pos, it.uv)
-        }, baseMesh.faces))
+        texturedComponentMeshes.add(baseMesh.copy(vertices = baseMesh.vertices.map {
+            SkinVertex(transform(it.position) + partCube.pos, it.uv)
+        }))
 
         overlayCube?.let {
             val overlayUvs = it.uvs.toGeometryFaceUvs()
@@ -68,156 +58,121 @@ fun createMinecraftPlayerMeshes(
                 create3DOverlay(skin, partDims, overlayDepth, overlayUvs, texW, texH)
             } else {
                 val overlaySize = if (partId == BodyPart.HEAD) 1.0f else 0.5f
-                createMinecraftUVCuboid(partDims + Vec3(overlaySize, overlaySize, overlaySize), overlayUvs, texW, texH)
+                createMinecraftUVCuboid(partDims + SkinVec3(overlaySize, overlaySize, overlaySize), overlayUvs, texW, texH)
             }
-            val transformedOverlayMesh = Mesh(overlayMesh.vertices.map { vertex ->
-                Vertex(transform(vertex.position) + partCube.pos, vertex.uv)
-            }, overlayMesh.faces)
+            val transformedOverlayMesh = overlayMesh.copy(vertices = overlayMesh.vertices.map { vertex ->
+                SkinVertex(transform(vertex.position) + partCube.pos, vertex.uv)
+            })
             if (use3DOverlay) solidComponentMeshes.add(transformedOverlayMesh)
             else texturedComponentMeshes.add(transformedOverlayMesh)
         }
     }
-    return listOf(combineMeshes(texturedComponentMeshes, skin)) + solidComponentMeshes
+    return listOf(combineSkinMeshes(texturedComponentMeshes, skin)) + solidComponentMeshes
 }
 
-fun createSkinPlatform(topY: Float = -8.2f, thickness: Float = 2f): Mesh =
-    createCuboid(
-        dimensions = Vec3(24f, thickness, 24f),
+fun createSkinPlatform(topY: Float = -8.2f, thickness: Float = 2f): SkinMesh =
+    createSolidCuboid(
+        dimensions = SkinVec3(24f, thickness, 24f),
         baseColor = Color.makeRGB(90, 105, 125)
     ).copy(castsShadow = false, receivesShadow = true)
-        .translate(Vec3(0f, topY - thickness / 2f, 0f))
+        .translate(SkinVec3(0f, topY - thickness / 2f, 0f))
 
-fun cameraRelativeUpperLeftLight(camera: OrbitCamera): Vec3 {
-    val (_, cameraForward) = camera.createViewMatrix()
-    val cameraRight = cameraForward.cross(camera.upVector).normalized()
-    val cameraUp = cameraRight.cross(cameraForward).normalized()
-    return ((-cameraRight * 0.9f) + (cameraUp * 1.1f) + (-cameraForward * 0.45f)).normalized()
-}
-
-/**
- * 渲染Minecraft皮肤为图像的函数 (API无变化)
- */
-fun renderMinecraftView(
-    skin: Image,
-    isSlim: Boolean,
-    renderConfig: RenderConfig,
-    backgroundMeshes: List<Mesh> = emptyList(),
-    pose: Map<BodyPart, List<Transformation>> = emptyMap(),
-    use3DOverlay: Boolean = true,
-): Image {
-    val skinBitmap = Bitmap.makeFromImage(skin)
-    val playerMeshes = createMinecraftPlayerMeshes(skinBitmap, isSlim, pose, use3DOverlay)
-    val scene = Scene(playerMeshes + backgroundMeshes)
-    return renderSceneToImage(scene, renderConfig)
-}
-
-/**
- * 渲染旋转动画的函数 (API无变化)
- */
-suspend fun renderRotate(
-    skin: Image,
-    isSlim: Boolean,
-    config: RenderConfig,
-    frameCount: Int,
-    frameDuration: Int,
-    pose: Map<BodyPart, List<Transformation>> = emptyMap(),
-    use3DOverlay: Boolean = true
-): ByteArray {
-    val frames = frameCount.coerceAtLeast(1)
-    val unitAngle = 360f / frames
-    val skinBitmap = Bitmap.makeFromImage(skin)
-    val playerMeshes = createMinecraftPlayerMeshes(skinBitmap, isSlim, pose, use3DOverlay)
-    val platform = createSkinPlatform()
-    return coroutineScope {
-        withContext(Dispatchers.Default) {
-            (0 until frames).chunked(2).flatMap { chunk ->
-                chunk.map { i ->
-                    async {
-                        val angle = i * unitAngle
-                        val frameConfig = config.copy(lightDirection = cameraRelativeUpperLeftLight(config.camera))
-                        renderSceneToImage(
-                            Scene(playerMeshes.map { it.rotateY(angle) } + platform),
-                            frameConfig
-                        ).let { Frame(frameDuration, it) }
-                    }
-                }.awaitAll()
-            }
-        }.encodeToBytes()
-    }
-}
-
-private fun Mesh.rotateY(angle: Float): Mesh =
+fun SkinMesh.rotateY(angle: Float): SkinMesh =
     copy(vertices = vertices.map { vertex ->
-        vertex.copy(position = vertex.position.rotate(Transformation.Rotate(y = angle)))
+        vertex.copy(position = vertex.position.rotate(SkinTransform.Rotate(y = angle)))
     })
 
-private fun Mesh.translate(offset: Vec3): Mesh =
+fun SkinMesh.translate(offset: SkinVec3): SkinMesh =
     copy(vertices = vertices.map { vertex ->
         vertex.copy(position = vertex.position + offset)
     })
 
-private fun Map<SkinFace, Rect>.toGeometryFaceUvs(): Map<FaceDirection, Rect> = mapOf(
-    // Tavolo 的 RIGHT/LEFT 是几何 +X/-X；Minecraft 语义 RIGHT/LEFT 是玩家右/左侧。
-    FaceDirection.RIGHT to getValue(SkinFace.LEFT),
-    FaceDirection.LEFT to getValue(SkinFace.RIGHT),
-    FaceDirection.TOP to getValue(SkinFace.TOP),
-    FaceDirection.BOTTOM to getValue(SkinFace.BOTTOM),
-    FaceDirection.FRONT to getValue(SkinFace.FRONT),
-    FaceDirection.BACK to getValue(SkinFace.BACK),
+private fun Map<SkinFace, SkinUvRect>.toGeometryFaceUvs(): Map<SkinFaceDirection, SkinUvRect> = mapOf(
+    // Geometry RIGHT/LEFT are +X/-X; Minecraft skin RIGHT/LEFT are player right/left.
+    SkinFaceDirection.RIGHT to getValue(SkinFace.LEFT),
+    SkinFaceDirection.LEFT to getValue(SkinFace.RIGHT),
+    SkinFaceDirection.TOP to getValue(SkinFace.TOP),
+    SkinFaceDirection.BOTTOM to getValue(SkinFace.BOTTOM),
+    SkinFaceDirection.FRONT to getValue(SkinFace.FRONT),
+    SkinFaceDirection.BACK to getValue(SkinFace.BACK),
 )
 
+private fun createSolidCuboid(dimensions: SkinVec3, baseColor: Int): SkinMesh {
+    val (w, h, d) = dimensions
+    val zeroUv = SkinVec2(0f, 0f)
+    val vertices = listOf(
+        SkinVertex(SkinVec3(-w / 2, -h / 2, -d / 2), zeroUv),
+        SkinVertex(SkinVec3(w / 2, -h / 2, -d / 2), zeroUv),
+        SkinVertex(SkinVec3(w / 2, h / 2, -d / 2), zeroUv),
+        SkinVertex(SkinVec3(-w / 2, h / 2, -d / 2), zeroUv),
+        SkinVertex(SkinVec3(-w / 2, -h / 2, d / 2), zeroUv),
+        SkinVertex(SkinVec3(w / 2, -h / 2, d / 2), zeroUv),
+        SkinVertex(SkinVec3(w / 2, h / 2, d / 2), zeroUv),
+        SkinVertex(SkinVec3(-w / 2, h / 2, d / 2), zeroUv)
+    )
+    val faces = listOf(
+        SkinMeshFace(listOf(0, 3, 2, 1), baseColor),
+        SkinMeshFace(listOf(1, 2, 6, 5), baseColor),
+        SkinMeshFace(listOf(5, 6, 7, 4), baseColor),
+        SkinMeshFace(listOf(4, 7, 3, 0), baseColor),
+        SkinMeshFace(listOf(3, 7, 6, 2), baseColor),
+        SkinMeshFace(listOf(4, 0, 1, 5), baseColor)
+    )
+    return SkinMesh(vertices, faces)
+}
+
 private fun createMinecraftUVCuboid(
-    dims: Vec3,
-    faceUVs: Map<FaceDirection, Rect>,
+    dims: SkinVec3,
+    faceUVs: Map<SkinFaceDirection, SkinUvRect>,
     textureWidth: Float,
     textureHeight: Float,
-): Mesh {
+): SkinMesh {
     val (w, h, d) = dims
-    val vertices = mutableListOf<Vertex>()
-    val faces = mutableListOf<Face>()
+    val vertices = mutableListOf<SkinVertex>()
+    val faces = mutableListOf<SkinMeshFace>()
     val v = listOf(
-        Vec3(-w / 2, -h / 2, d / 2),
-        Vec3(w / 2, -h / 2, d / 2),
-        Vec3(w / 2, h / 2, d / 2),
-        Vec3(-w / 2, h / 2, d / 2),
-        Vec3(w / 2, -h / 2, -d / 2),
-        Vec3(-w / 2, -h / 2, -d / 2),
-        Vec3(-w / 2, h / 2, -d / 2),
-        Vec3(w / 2, h / 2, -d / 2)
+        SkinVec3(-w / 2, -h / 2, d / 2),
+        SkinVec3(w / 2, -h / 2, d / 2),
+        SkinVec3(w / 2, h / 2, d / 2),
+        SkinVec3(-w / 2, h / 2, d / 2),
+        SkinVec3(w / 2, -h / 2, -d / 2),
+        SkinVec3(-w / 2, -h / 2, -d / 2),
+        SkinVec3(-w / 2, h / 2, -d / 2),
+        SkinVec3(w / 2, h / 2, -d / 2)
     )
 
     fun u(px: Float) = px / textureWidth
     fun v(py: Float) = py / textureHeight
 
-    fun addFace(direction: FaceDirection, vIndices: List<Int>, uvRect: Rect) {
+    fun addFace(direction: SkinFaceDirection, vIndices: List<Int>, uvRect: SkinUvRect) {
         val texelCenterOffset = 0.5f
-        val centeredRect = Rect.makeLTRB(
+        val centeredRect = SkinUvRect.makeLTRB(
             uvRect.left + texelCenterOffset,
             uvRect.top + texelCenterOffset,
             uvRect.right - texelCenterOffset,
             uvRect.bottom - texelCenterOffset
         )
-        val bottomLeft = Vec2(u(centeredRect.left), v(centeredRect.bottom))
-        val bottomRight = Vec2(u(centeredRect.right), v(centeredRect.bottom))
-        val topRight = Vec2(u(centeredRect.right), v(centeredRect.top))
-        val topLeft = Vec2(u(centeredRect.left), v(centeredRect.top))
+        val bottomLeft = SkinVec2(u(centeredRect.left), v(centeredRect.bottom))
+        val bottomRight = SkinVec2(u(centeredRect.right), v(centeredRect.bottom))
+        val topRight = SkinVec2(u(centeredRect.right), v(centeredRect.top))
+        val topLeft = SkinVec2(u(centeredRect.left), v(centeredRect.top))
         val uvs = when {
-            direction == FaceDirection.BOTTOM -> listOf(topLeft, topRight, bottomRight, bottomLeft)
+            direction == SkinFaceDirection.BOTTOM -> listOf(topLeft, topRight, bottomRight, bottomLeft)
             else -> listOf(bottomLeft, bottomRight, topRight, topLeft)
         }
         val faceIndices = mutableListOf<Int>()
         for (i in vIndices.indices) {
-            vertices.add(Vertex(v[vIndices[i]], uvs[i]))
+            vertices.add(SkinVertex(v[vIndices[i]], uvs[i]))
             faceIndices.add(vertices.size - 1)
         }
-        faces.add(Face(faceIndices, Color.WHITE))
+        faces.add(SkinMeshFace(faceIndices, Color.WHITE))
     }
 
-    faceUVs[FaceDirection.FRONT]?.let { addFace(FaceDirection.FRONT, listOf(0, 1, 2, 3), it) }
-    faceUVs[FaceDirection.BACK]?.let { addFace(FaceDirection.BACK, listOf(4, 5, 6, 7), it) }
-    faceUVs[FaceDirection.RIGHT]?.let { addFace(FaceDirection.RIGHT, listOf(1, 4, 7, 2), it) }
-    faceUVs[FaceDirection.LEFT]?.let { addFace(FaceDirection.LEFT, listOf(5, 0, 3, 6), it) }
-    faceUVs[FaceDirection.TOP]?.let { addFace(FaceDirection.TOP, listOf(3, 2, 7, 6), it) }
-    faceUVs[FaceDirection.BOTTOM]?.let { addFace(FaceDirection.BOTTOM, listOf(5, 4, 1, 0), it) }
-    return Mesh(vertices, faces)
+    faceUVs[SkinFaceDirection.FRONT]?.let { addFace(SkinFaceDirection.FRONT, listOf(0, 1, 2, 3), it) }
+    faceUVs[SkinFaceDirection.BACK]?.let { addFace(SkinFaceDirection.BACK, listOf(4, 5, 6, 7), it) }
+    faceUVs[SkinFaceDirection.RIGHT]?.let { addFace(SkinFaceDirection.RIGHT, listOf(1, 4, 7, 2), it) }
+    faceUVs[SkinFaceDirection.LEFT]?.let { addFace(SkinFaceDirection.LEFT, listOf(5, 0, 3, 6), it) }
+    faceUVs[SkinFaceDirection.TOP]?.let { addFace(SkinFaceDirection.TOP, listOf(3, 2, 7, 6), it) }
+    faceUVs[SkinFaceDirection.BOTTOM]?.let { addFace(SkinFaceDirection.BOTTOM, listOf(5, 4, 1, 0), it) }
+    return SkinMesh(vertices, faces)
 }

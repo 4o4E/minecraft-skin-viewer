@@ -8,15 +8,12 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Color
-import top.e404.skin.core.cameraRelativeUpperLeftLight
 import top.e404.skin.core.createMinecraftPlayerMeshes
 import top.e404.skin.core.createSkinPlatform
-import top.e404.tavolo.draw.render3d.OrbitCamera
-import top.e404.tavolo.draw.render3d.Vec3
 
 class RenderStructureTest {
     @Test
-    fun `地台接收阴影但不投射自身阴影`() {
+    fun `platform receives shadows but does not cast itself`() {
         val platform = createSkinPlatform(topY = -8.2f, thickness = 2f)
         val ys = platform.vertices.map { it.position.y }
 
@@ -27,22 +24,7 @@ class RenderStructureTest {
     }
 
     @Test
-    fun `相机相对光源来自画面左上方`() {
-        val camera = OrbitCamera(Vec3(0f, 10f, 0f), yaw = 45f, pitch = 15f, distance = 65f)
-        val (_, cameraForward) = camera.createViewMatrix()
-        val cameraRight = cameraForward.cross(camera.upVector).normalized()
-        val cameraUp = cameraRight.cross(cameraForward).normalized()
-
-        val light = cameraRelativeUpperLeftLight(camera)
-
-        assertEquals(1f, light.length(), 0.0001f)
-        assertTrue(light.dot(cameraUp) > 0.5f)
-        assertTrue(light.dot(cameraRight) < -0.4f)
-        assertTrue(light.dot(-cameraForward) > 0.2f)
-    }
-
-    @Test
-    fun `3D 外层皮肤会拆成独立纯色 Mesh`() {
+    fun `3D overlay skin is split into solid color meshes`() {
         val skin = Bitmap().apply {
             allocN32Pixels(64, 64)
             erase(Color.TRANSPARENT)

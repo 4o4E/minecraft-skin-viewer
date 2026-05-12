@@ -2,80 +2,73 @@ package top.e404.skin.core
 
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Color
-import org.jetbrains.skia.Rect
-import top.e404.tavolo.draw.render3d.Face
-import top.e404.tavolo.draw.render3d.FaceDirection
-import top.e404.tavolo.draw.render3d.Mesh
-import top.e404.tavolo.draw.render3d.Vec2
-import top.e404.tavolo.draw.render3d.Vec3
-import top.e404.tavolo.draw.render3d.Vertex
 
 private enum class PixelPosition {
     INNER, TOP, BOTTOM, LEFT, RIGHT, TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT
 }
 
-private val FACE_ADJACENCY: Map<Pair<FaceDirection, PixelPosition>, FaceDirection> = mapOf(
-    (FaceDirection.TOP to PixelPosition.TOP) to FaceDirection.BACK,
-    (FaceDirection.TOP to PixelPosition.BOTTOM) to FaceDirection.FRONT,
-    (FaceDirection.TOP to PixelPosition.LEFT) to FaceDirection.LEFT,
-    (FaceDirection.TOP to PixelPosition.RIGHT) to FaceDirection.RIGHT,
+private val FACE_ADJACENCY: Map<Pair<SkinFaceDirection, PixelPosition>, SkinFaceDirection> = mapOf(
+    (SkinFaceDirection.TOP to PixelPosition.TOP) to SkinFaceDirection.BACK,
+    (SkinFaceDirection.TOP to PixelPosition.BOTTOM) to SkinFaceDirection.FRONT,
+    (SkinFaceDirection.TOP to PixelPosition.LEFT) to SkinFaceDirection.LEFT,
+    (SkinFaceDirection.TOP to PixelPosition.RIGHT) to SkinFaceDirection.RIGHT,
 
-    (FaceDirection.BOTTOM to PixelPosition.TOP) to FaceDirection.FRONT,
-    (FaceDirection.BOTTOM to PixelPosition.BOTTOM) to FaceDirection.BACK,
-    (FaceDirection.BOTTOM to PixelPosition.LEFT) to FaceDirection.LEFT,
-    (FaceDirection.BOTTOM to PixelPosition.RIGHT) to FaceDirection.RIGHT,
+    (SkinFaceDirection.BOTTOM to PixelPosition.TOP) to SkinFaceDirection.FRONT,
+    (SkinFaceDirection.BOTTOM to PixelPosition.BOTTOM) to SkinFaceDirection.BACK,
+    (SkinFaceDirection.BOTTOM to PixelPosition.LEFT) to SkinFaceDirection.LEFT,
+    (SkinFaceDirection.BOTTOM to PixelPosition.RIGHT) to SkinFaceDirection.RIGHT,
 
-    (FaceDirection.FRONT to PixelPosition.TOP) to FaceDirection.TOP,
-    (FaceDirection.FRONT to PixelPosition.BOTTOM) to FaceDirection.BOTTOM,
-    (FaceDirection.FRONT to PixelPosition.LEFT) to FaceDirection.LEFT,
-    (FaceDirection.FRONT to PixelPosition.RIGHT) to FaceDirection.RIGHT,
+    (SkinFaceDirection.FRONT to PixelPosition.TOP) to SkinFaceDirection.TOP,
+    (SkinFaceDirection.FRONT to PixelPosition.BOTTOM) to SkinFaceDirection.BOTTOM,
+    (SkinFaceDirection.FRONT to PixelPosition.LEFT) to SkinFaceDirection.LEFT,
+    (SkinFaceDirection.FRONT to PixelPosition.RIGHT) to SkinFaceDirection.RIGHT,
 
-    (FaceDirection.BACK to PixelPosition.TOP) to FaceDirection.TOP,
-    (FaceDirection.BACK to PixelPosition.BOTTOM) to FaceDirection.BOTTOM,
-    (FaceDirection.BACK to PixelPosition.LEFT) to FaceDirection.RIGHT,
-    (FaceDirection.BACK to PixelPosition.RIGHT) to FaceDirection.LEFT,
+    (SkinFaceDirection.BACK to PixelPosition.TOP) to SkinFaceDirection.TOP,
+    (SkinFaceDirection.BACK to PixelPosition.BOTTOM) to SkinFaceDirection.BOTTOM,
+    (SkinFaceDirection.BACK to PixelPosition.LEFT) to SkinFaceDirection.RIGHT,
+    (SkinFaceDirection.BACK to PixelPosition.RIGHT) to SkinFaceDirection.LEFT,
 
-    (FaceDirection.LEFT to PixelPosition.TOP) to FaceDirection.TOP,
-    (FaceDirection.LEFT to PixelPosition.BOTTOM) to FaceDirection.BOTTOM,
-    (FaceDirection.LEFT to PixelPosition.LEFT) to FaceDirection.BACK,
-    (FaceDirection.LEFT to PixelPosition.RIGHT) to FaceDirection.FRONT,
+    (SkinFaceDirection.LEFT to PixelPosition.TOP) to SkinFaceDirection.TOP,
+    (SkinFaceDirection.LEFT to PixelPosition.BOTTOM) to SkinFaceDirection.BOTTOM,
+    (SkinFaceDirection.LEFT to PixelPosition.LEFT) to SkinFaceDirection.BACK,
+    (SkinFaceDirection.LEFT to PixelPosition.RIGHT) to SkinFaceDirection.FRONT,
 
-    (FaceDirection.RIGHT to PixelPosition.TOP) to FaceDirection.TOP,
-    (FaceDirection.RIGHT to PixelPosition.BOTTOM) to FaceDirection.BOTTOM,
-    (FaceDirection.RIGHT to PixelPosition.LEFT) to FaceDirection.FRONT,
-    (FaceDirection.RIGHT to PixelPosition.RIGHT) to FaceDirection.BACK
+    (SkinFaceDirection.RIGHT to PixelPosition.TOP) to SkinFaceDirection.TOP,
+    (SkinFaceDirection.RIGHT to PixelPosition.BOTTOM) to SkinFaceDirection.BOTTOM,
+    (SkinFaceDirection.RIGHT to PixelPosition.LEFT) to SkinFaceDirection.FRONT,
+    (SkinFaceDirection.RIGHT to PixelPosition.RIGHT) to SkinFaceDirection.BACK
 )
 
-private val ADJACENT_UV_MAPPING: Map<Pair<FaceDirection, PixelPosition>, (px: Int, py: Int, adjW: Int, adjH: Int) -> Pair<Int, Int>> = mapOf(
-    FaceDirection.FRONT to PixelPosition.TOP to { px, _, _, adjH -> px to adjH - 1 },
-    FaceDirection.FRONT to PixelPosition.BOTTOM to { px, _, _, _ -> px to 0 },
-    FaceDirection.FRONT to PixelPosition.LEFT to { _, py, adjW, _ -> adjW - 1 to py },
-    FaceDirection.FRONT to PixelPosition.RIGHT to { _, py, _, _ -> 0 to py },
+private val ADJACENT_UV_MAPPING: Map<Pair<SkinFaceDirection, PixelPosition>, (px: Int, py: Int, adjW: Int, adjH: Int) -> Pair<Int, Int>> = mapOf(
+    SkinFaceDirection.FRONT to PixelPosition.TOP to { px, _, _, adjH -> px to adjH - 1 },
+    SkinFaceDirection.FRONT to PixelPosition.BOTTOM to { px, _, _, _ -> px to 0 },
+    SkinFaceDirection.FRONT to PixelPosition.LEFT to { _, py, adjW, _ -> adjW - 1 to py },
+    SkinFaceDirection.FRONT to PixelPosition.RIGHT to { _, py, _, _ -> 0 to py },
 
-    FaceDirection.BACK to PixelPosition.TOP to { px, _, adjW, _ -> adjW - 1 - px to 0 },
-    FaceDirection.BACK to PixelPosition.BOTTOM to { px, _, adjW, adjH -> adjW - 1 - px to adjH - 1 },
-    FaceDirection.BACK to PixelPosition.LEFT to { _, py, adjW, _ -> adjW - 1 to py },
-    FaceDirection.BACK to PixelPosition.RIGHT to { _, py, _, _ -> 0 to py },
+    SkinFaceDirection.BACK to PixelPosition.TOP to { px, _, adjW, _ -> adjW - 1 - px to 0 },
+    SkinFaceDirection.BACK to PixelPosition.BOTTOM to { px, _, adjW, adjH -> adjW - 1 - px to adjH - 1 },
+    SkinFaceDirection.BACK to PixelPosition.LEFT to { _, py, adjW, _ -> adjW - 1 to py },
+    SkinFaceDirection.BACK to PixelPosition.RIGHT to { _, py, _, _ -> 0 to py },
 
-    FaceDirection.TOP to PixelPosition.TOP to { px, _, adjW, _ -> adjW - 1 - px to 0 },
-    FaceDirection.TOP to PixelPosition.BOTTOM to { px, _, _, _ -> px to 0 },
-    FaceDirection.TOP to PixelPosition.LEFT to { _, py, _, _ -> py to 0 },
-    FaceDirection.TOP to PixelPosition.RIGHT to { _, py, adjW, _ -> adjW - 1 - py to 0 },
+    SkinFaceDirection.TOP to PixelPosition.TOP to { px, _, adjW, _ -> adjW - 1 - px to 0 },
+    SkinFaceDirection.TOP to PixelPosition.BOTTOM to { px, _, _, _ -> px to 0 },
+    SkinFaceDirection.TOP to PixelPosition.LEFT to { _, py, _, _ -> py to 0 },
+    SkinFaceDirection.TOP to PixelPosition.RIGHT to { _, py, adjW, _ -> adjW - 1 - py to 0 },
 
-    FaceDirection.BOTTOM to PixelPosition.TOP to { px, _, _, adjH -> px to adjH - 1 },
-    FaceDirection.BOTTOM to PixelPosition.BOTTOM to { px, _, adjW, adjH -> adjW - 1 - px to adjH - 1 },
-    FaceDirection.BOTTOM to PixelPosition.LEFT to { _, py, adjW, adjH -> adjW - 1 - py to adjH - 1 },
-    FaceDirection.BOTTOM to PixelPosition.RIGHT to { _, py, _, adjH -> py to adjH - 1 },
+    SkinFaceDirection.BOTTOM to PixelPosition.TOP to { px, _, _, adjH -> px to adjH - 1 },
+    SkinFaceDirection.BOTTOM to PixelPosition.BOTTOM to { px, _, adjW, adjH -> adjW - 1 - px to adjH - 1 },
+    SkinFaceDirection.BOTTOM to PixelPosition.LEFT to { _, py, adjW, adjH -> adjW - 1 - py to adjH - 1 },
+    SkinFaceDirection.BOTTOM to PixelPosition.RIGHT to { _, py, _, adjH -> py to adjH - 1 },
 
-    FaceDirection.LEFT to PixelPosition.TOP to { px, _, _, _ -> 0 to px },
-    FaceDirection.LEFT to PixelPosition.BOTTOM to { px, _, _, adjH -> 0 to adjH - 1 - px },
-    FaceDirection.LEFT to PixelPosition.LEFT to { _, py, _, _ -> 0 to py },
-    FaceDirection.LEFT to PixelPosition.RIGHT to { _, py, _, _ -> 0 to py },
+    SkinFaceDirection.LEFT to PixelPosition.TOP to { px, _, _, _ -> 0 to px },
+    SkinFaceDirection.LEFT to PixelPosition.BOTTOM to { px, _, _, adjH -> 0 to adjH - 1 - px },
+    SkinFaceDirection.LEFT to PixelPosition.LEFT to { _, py, _, _ -> 0 to py },
+    SkinFaceDirection.LEFT to PixelPosition.RIGHT to { _, py, _, _ -> 0 to py },
 
-    FaceDirection.RIGHT to PixelPosition.TOP to { px, _, adjW, adjH -> adjW - 1 to adjH - 1 - px },
-    FaceDirection.RIGHT to PixelPosition.BOTTOM to { px, _, adjW, _ -> adjW - 1 to px },
-    FaceDirection.RIGHT to PixelPosition.LEFT to { _, py, _, _ -> 0 to py },
-    FaceDirection.RIGHT to PixelPosition.RIGHT to { _, py, adjW, _ -> adjW - 1 to py }
+    SkinFaceDirection.RIGHT to PixelPosition.TOP to { px, _, adjW, adjH -> adjW - 1 to adjH - 1 - px },
+    SkinFaceDirection.RIGHT to PixelPosition.BOTTOM to { px, _, adjW, _ -> adjW - 1 to px },
+    SkinFaceDirection.RIGHT to PixelPosition.LEFT to { _, py, _, _ -> 0 to py },
+    SkinFaceDirection.RIGHT to PixelPosition.RIGHT to { _, py, adjW, _ -> adjW - 1 to py }
 )
 
 private fun getPixelPosition(px: Int, py: Int, width: Int, height: Int): PixelPosition {
@@ -99,10 +92,10 @@ private fun getPixelPosition(px: Int, py: Int, width: Int, height: Int): PixelPo
 
 private fun isAdjacentTransparent(
     skin: Bitmap,
-    currentDirection: FaceDirection,
+    currentDirection: SkinFaceDirection,
     edge: PixelPosition,
     px: Int, py: Int,
-    faceUVs: Map<FaceDirection, Rect>
+    faceUVs: Map<SkinFaceDirection, SkinUvRect>
 ): Boolean {
     val adjFaceDir = FACE_ADJACENCY[currentDirection to edge] ?: return true
     val adjUvRect = faceUVs[adjFaceDir] ?: return true
@@ -122,27 +115,27 @@ private fun isAdjacentTransparent(
 }
 
 /**
- * 创建一个3D覆盖层网格，根据皮肤贴图的透明像素生成体素化的覆盖层效果
+ * 创建一�?D覆盖层网格，根据皮肤贴图的透明像素生成体素化的覆盖层效�?
  *
  * @param skin 皮肤贴图
  * @param dims 覆盖层对应的基础模型尺寸
  * @param overlayDepth 覆盖层的厚度
  * @param faceUVs 每个面对应的UV坐标矩形区域
- * @param textureWidth 皮肤贴图的总宽度
- * @param textureHeight 皮肤贴图的总高度
- * @return 返回生成的Mesh对象，包含顶点和面信息
+ * @param textureWidth 皮肤贴图的总宽�?
+ * @param textureHeight 皮肤贴图的总高�?
+ * @return 返回生成的Mesh对象，包含顶点和面信�?
  */
 fun create3DOverlay(
     skin: Bitmap,
-    dims: Vec3,
+    dims: SkinVec3,
     overlayDepth: Float,
-    faceUVs: Map<FaceDirection, Rect>,
+    faceUVs: Map<SkinFaceDirection, SkinUvRect>,
     textureWidth: Float,
     textureHeight: Float
-): Mesh {
-    val vertices = mutableListOf<Vertex>()
-    val faces = mutableListOf<Face>()
-    val effectiveDims = dims + Vec3(2 * overlayDepth, 2 * overlayDepth, 2 * overlayDepth)
+): SkinMesh {
+    val vertices = mutableListOf<SkinVertex>()
+    val faces = mutableListOf<SkinMeshFace>()
+    val effectiveDims = dims + SkinVec3(2 * overlayDepth, 2 * overlayDepth, 2 * overlayDepth)
 
     for ((direction, uvRect) in faceUVs) {
         val uvW = uvRect.width.toInt()
@@ -153,14 +146,14 @@ fun create3DOverlay(
                 val pixelColor = skin.getColor(uvRect.left.toInt() + px, uvRect.top.toInt() + py)
                 if (Color.getA(pixelColor) <= 0) continue
 
-                val pixelUV = Vec2(
+                val pixelUV = SkinVec2(
                     (uvRect.left + px + 0.5f) / textureWidth,
                     (uvRect.top + py + 0.5f) / textureHeight
                 )
 
                 val (voxelW, voxelH) = when (direction) {
-                    FaceDirection.RIGHT, FaceDirection.LEFT -> Pair(effectiveDims.z / uvW, effectiveDims.y / uvH)
-                    FaceDirection.TOP, FaceDirection.BOTTOM -> Pair(effectiveDims.x / uvW, effectiveDims.z / uvH)
+                    SkinFaceDirection.RIGHT, SkinFaceDirection.LEFT -> Pair(effectiveDims.z / uvW, effectiveDims.y / uvH)
+                    SkinFaceDirection.TOP, SkinFaceDirection.BOTTOM -> Pair(effectiveDims.x / uvW, effectiveDims.z / uvH)
                     else -> Pair(effectiveDims.x / uvW, effectiveDims.y / uvH)
                 }
                 val voxelD = voxelW
@@ -168,8 +161,8 @@ fun create3DOverlay(
                 val w = voxelW / 2; val h = voxelH / 2; val d = voxelD / 2
 
                 val v = mutableListOf(
-                    Vec3(-w, -h, -d), Vec3(w, -h, -d), Vec3(w, h, -d), Vec3(-w, h, -d),
-                    Vec3(-w, -h, d), Vec3(w, -h, d), Vec3(w, h, d), Vec3(-w, h, d)
+                    SkinVec3(-w, -h, -d), SkinVec3(w, -h, -d), SkinVec3(w, h, -d), SkinVec3(-w, h, -d),
+                    SkinVec3(-w, -h, d), SkinVec3(w, -h, d), SkinVec3(w, h, d), SkinVec3(-w, h, d)
                 )
 
                 val pixelPosition = getPixelPosition(px, py, uvW, uvH)
@@ -187,37 +180,37 @@ fun create3DOverlay(
 
                 val finalVoxelVertices = v.map { p ->
                     val rotatedP = when (direction) {
-                        FaceDirection.FRONT -> p
-                        FaceDirection.BACK -> Vec3(-p.x, p.y, -p.z)
-                        FaceDirection.RIGHT -> Vec3(p.z, p.y, -p.x)
-                        FaceDirection.LEFT -> Vec3(-p.z, p.y, p.x)
-                        FaceDirection.TOP -> Vec3(p.x, p.z, -p.y)
-                        FaceDirection.BOTTOM -> Vec3(p.x, -p.z, p.y)
+                        SkinFaceDirection.FRONT -> p
+                        SkinFaceDirection.BACK -> SkinVec3(-p.x, p.y, -p.z)
+                        SkinFaceDirection.RIGHT -> SkinVec3(p.z, p.y, -p.x)
+                        SkinFaceDirection.LEFT -> SkinVec3(-p.z, p.y, p.x)
+                        SkinFaceDirection.TOP -> SkinVec3(p.x, p.z, -p.y)
+                        SkinFaceDirection.BOTTOM -> SkinVec3(p.x, -p.z, p.y)
                     }
                     val voxelCenter = when (direction) {
-                        FaceDirection.FRONT -> Vec3(-effectiveDims.x / 2 + (px + 0.5f) * voxelW, effectiveDims.y / 2 - (py + 0.5f) * voxelH, dims.z / 2 + d - retractionDepth)
-                        FaceDirection.BACK -> Vec3(effectiveDims.x / 2 - (px + 0.5f) * voxelW, effectiveDims.y / 2 - (py + 0.5f) * voxelH, -dims.z / 2 - d + retractionDepth)
-                        FaceDirection.RIGHT -> Vec3(dims.x / 2 + d - retractionDepth, effectiveDims.y / 2 - (py + 0.5f) * voxelH, effectiveDims.z / 2 - (px + 0.5f) * voxelW)
-                        FaceDirection.LEFT -> Vec3(-dims.x / 2 - d + retractionDepth, effectiveDims.y / 2 - (py + 0.5f) * voxelH, -effectiveDims.z / 2 + (px + 0.5f) * voxelW)
-                        FaceDirection.TOP -> Vec3(-effectiveDims.x / 2 + (px + 0.5f) * voxelW, dims.y / 2 + d - retractionDepth, -effectiveDims.z / 2 + (py + 0.5f) * voxelH)
-                        FaceDirection.BOTTOM -> Vec3(-effectiveDims.x / 2 + (px + 0.5f) * voxelW, -dims.y / 2 - d + retractionDepth, effectiveDims.z / 2 - (py + 0.5f) * voxelH)
+                        SkinFaceDirection.FRONT -> SkinVec3(-effectiveDims.x / 2 + (px + 0.5f) * voxelW, effectiveDims.y / 2 - (py + 0.5f) * voxelH, dims.z / 2 + d - retractionDepth)
+                        SkinFaceDirection.BACK -> SkinVec3(effectiveDims.x / 2 - (px + 0.5f) * voxelW, effectiveDims.y / 2 - (py + 0.5f) * voxelH, -dims.z / 2 - d + retractionDepth)
+                        SkinFaceDirection.RIGHT -> SkinVec3(dims.x / 2 + d - retractionDepth, effectiveDims.y / 2 - (py + 0.5f) * voxelH, effectiveDims.z / 2 - (px + 0.5f) * voxelW)
+                        SkinFaceDirection.LEFT -> SkinVec3(-dims.x / 2 - d + retractionDepth, effectiveDims.y / 2 - (py + 0.5f) * voxelH, -effectiveDims.z / 2 + (px + 0.5f) * voxelW)
+                        SkinFaceDirection.TOP -> SkinVec3(-effectiveDims.x / 2 + (px + 0.5f) * voxelW, dims.y / 2 + d - retractionDepth, -effectiveDims.z / 2 + (py + 0.5f) * voxelH)
+                        SkinFaceDirection.BOTTOM -> SkinVec3(-effectiveDims.x / 2 + (px + 0.5f) * voxelW, -dims.y / 2 - d + retractionDepth, effectiveDims.z / 2 - (py + 0.5f) * voxelH)
                     }
                     rotatedP + voxelCenter
                 }
 
                 val baseIndex = vertices.size
-                vertices.addAll(finalVoxelVertices.map { Vertex(it, pixelUV) })
+                vertices.addAll(finalVoxelVertices.map { SkinVertex(it, pixelUV) })
 
                 faces.addAll(listOf(
-                    Face(listOf(baseIndex + 4, baseIndex + 7, baseIndex + 6, baseIndex + 5), pixelColor),
-                    Face(listOf(baseIndex + 0, baseIndex + 3, baseIndex + 2, baseIndex + 1), pixelColor),
-                    Face(listOf(baseIndex + 5, baseIndex + 6, baseIndex + 2, baseIndex + 1), pixelColor),
-                    Face(listOf(baseIndex + 4, baseIndex + 0, baseIndex + 3, baseIndex + 7), pixelColor),
-                    Face(listOf(baseIndex + 7, baseIndex + 3, baseIndex + 2, baseIndex + 6), pixelColor),
-                    Face(listOf(baseIndex + 4, baseIndex + 5, baseIndex + 1, baseIndex + 0), pixelColor)
+                    SkinMeshFace(listOf(baseIndex + 4, baseIndex + 7, baseIndex + 6, baseIndex + 5), pixelColor),
+                    SkinMeshFace(listOf(baseIndex + 0, baseIndex + 3, baseIndex + 2, baseIndex + 1), pixelColor),
+                    SkinMeshFace(listOf(baseIndex + 5, baseIndex + 6, baseIndex + 2, baseIndex + 1), pixelColor),
+                    SkinMeshFace(listOf(baseIndex + 4, baseIndex + 0, baseIndex + 3, baseIndex + 7), pixelColor),
+                    SkinMeshFace(listOf(baseIndex + 7, baseIndex + 3, baseIndex + 2, baseIndex + 6), pixelColor),
+                    SkinMeshFace(listOf(baseIndex + 4, baseIndex + 5, baseIndex + 1, baseIndex + 0), pixelColor)
                 ))
             }
         }
     }
-    return Mesh(vertices, faces)
+    return SkinMesh(vertices, faces)
 }

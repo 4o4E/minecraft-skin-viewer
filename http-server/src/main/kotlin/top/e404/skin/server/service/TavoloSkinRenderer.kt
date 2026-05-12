@@ -11,15 +11,17 @@ import org.jetbrains.skia.EncodedImageFormat
 import org.jetbrains.skia.Image
 import top.e404.skin.core.BodyPart
 import top.e404.skin.core.PosePresets
-import top.e404.skin.core.cameraRelativeUpperLeftLight
+import top.e404.skin.core.SkinMesh
+import top.e404.skin.core.SkinTransform
 import top.e404.skin.core.createMinecraftPlayerMeshes
 import top.e404.skin.core.createSkinPlatform
-import top.e404.skin.core.renderMinecraftView
-import top.e404.tavolo.draw.render3d.Mesh
+import top.e404.skin.core.rotateY
+import top.e404.skin.renderer.tavolo.cameraRelativeUpperLeftLight
+import top.e404.skin.renderer.tavolo.renderMinecraftViewTavolo
+import top.e404.skin.renderer.tavolo.toTavoloMesh
 import top.e404.tavolo.draw.render3d.OrbitCamera
 import top.e404.tavolo.draw.render3d.RenderConfig
 import top.e404.tavolo.draw.render3d.Scene
-import top.e404.tavolo.draw.render3d.Transformation
 import top.e404.tavolo.draw.render3d.Vec3
 import top.e404.tavolo.draw.render3d.renderSceneToImage
 import top.e404.tavolo.frame.Frame
@@ -179,9 +181,9 @@ object TavoloSkinRenderer {
         backgroundColor: Int,
         lightColor: Int?,
         camera: OrbitCamera,
-        pose: Map<BodyPart, List<Transformation>>,
+        pose: Map<BodyPart, List<SkinTransform>>,
         antiAliasingLevel: Int,
-    ): Image = renderMinecraftView(
+    ): Image = renderMinecraftViewTavolo(
         skin = skin,
         isSlim = slim,
         renderConfig = RenderConfig(
@@ -189,7 +191,7 @@ object TavoloSkinRenderer {
             height = height,
             camera = camera,
             backgroundColor = backgroundColor,
-            lightDirection = cameraRelativeUpperLeftLight(camera),
+            lightDirection = camera.cameraRelativeUpperLeftLight(),
             lightIntensity = lightIntensity(lightColor),
             antiAliasingLevel = antiAliasingLevel
         ),
@@ -209,8 +211,8 @@ object TavoloSkinRenderer {
         duration: Int,
         target: Vec3,
         distance: Float,
-        backgroundMeshes: List<Mesh>,
-        pose: Map<BodyPart, List<Transformation>>,
+        backgroundMeshes: List<SkinMesh>,
+        pose: Map<BodyPart, List<SkinTransform>>,
         antiAliasingLevel: Int,
     ): ByteArray {
         val frames = frameCount.coerceAtLeast(1)
@@ -225,7 +227,7 @@ object TavoloSkinRenderer {
                             Frame(
                                 duration,
                                 renderScene(
-                                    scene = Scene(playerMeshes.map { it.rotateY(yaw) } + backgroundMeshes),
+                                    scene = Scene((playerMeshes.map { it.rotateY(yaw) } + backgroundMeshes).map { it.toTavoloMesh() }),
                                     width = width,
                                     height = height,
                                     backgroundColor = backgroundColor,
@@ -240,11 +242,6 @@ object TavoloSkinRenderer {
             }
         }.encodeToBytes()
     }
-
-    private fun Mesh.rotateY(angle: Float): Mesh =
-        copy(vertices = vertices.map { vertex ->
-            vertex.copy(position = vertex.position.rotate(Transformation.Rotate(y = angle)))
-        })
 
     private fun renderScene(
         scene: Scene,
@@ -261,7 +258,7 @@ object TavoloSkinRenderer {
             height = height,
             camera = camera,
             backgroundColor = backgroundColor,
-            lightDirection = cameraRelativeUpperLeftLight(camera),
+            lightDirection = camera.cameraRelativeUpperLeftLight(),
             lightIntensity = lightIntensity(lightColor),
             antiAliasingLevel = antiAliasingLevel
         )
@@ -279,28 +276,28 @@ object TavoloSkinRenderer {
     private fun headScalePose(
         slim: Boolean,
         headScale: Double,
-    ): Map<BodyPart, List<Transformation>> {
+    ): Map<BodyPart, List<SkinTransform>> {
         val scale = headScale.toFloat()
         if (scale == 1f) return emptyMap()
         return mapOf(
             BodyPart.HEAD to listOf(
-                Transformation.Scale(scale, scale, scale),
-                Transformation.Translate(y = BodyPart.HEAD.getDims(slim).y * (scale - 1f) / 2f)
+                SkinTransform.Scale(scale, scale, scale),
+                SkinTransform.Translate(y = BodyPart.HEAD.getDims(slim).y * (scale - 1f) / 2f)
             )
         )
     }
 
-    private fun sneakPose(): Map<BodyPart, List<Transformation>> = mapOf(
-        BodyPart.HEAD to listOf(Transformation.Translate(y = 3f, z = -4.8f)),
-        BodyPart.BODY to listOf(Transformation.Rotate(x = 30f), Transformation.Translate(y = 0.8f, z = -2f)),
-        BodyPart.RIGHT_ARM to listOf(Transformation.Rotate(x = 30f), Transformation.Translate(y = 1.6f, z = -3f)),
-        BodyPart.LEFT_ARM to listOf(Transformation.Rotate(x = 30f), Transformation.Translate(y = 1.6f, z = -3f))
+    private fun sneakPose(): Map<BodyPart, List<SkinTransform>> = mapOf(
+        BodyPart.HEAD to listOf(SkinTransform.Translate(y = 3f, z = -4.8f)),
+        BodyPart.BODY to listOf(SkinTransform.Rotate(x = 30f), SkinTransform.Translate(y = 0.8f, z = -2f)),
+        BodyPart.RIGHT_ARM to listOf(SkinTransform.Rotate(x = 30f), SkinTransform.Translate(y = 1.6f, z = -3f)),
+        BodyPart.LEFT_ARM to listOf(SkinTransform.Rotate(x = 30f), SkinTransform.Translate(y = 1.6f, z = -3f))
     )
 
     private fun mergePose(
-        first: Map<BodyPart, List<Transformation>>,
-        second: Map<BodyPart, List<Transformation>>,
-    ): Map<BodyPart, List<Transformation>> {
+        first: Map<BodyPart, List<SkinTransform>>,
+        second: Map<BodyPart, List<SkinTransform>>,
+    ): Map<BodyPart, List<SkinTransform>> {
         if (first.isEmpty()) return second
         if (second.isEmpty()) return first
         return (first.keys + second.keys).associateWith { part ->
@@ -308,7 +305,7 @@ object TavoloSkinRenderer {
         }
     }
 
-    private fun Map<BodyPart, List<Transformation>>.orEmpty(part: BodyPart): List<Transformation> =
+    private fun Map<BodyPart, List<SkinTransform>>.orEmpty(part: BodyPart): List<SkinTransform> =
         this[part].orEmpty()
 
     private fun lightIntensity(color: Int?): Float {
