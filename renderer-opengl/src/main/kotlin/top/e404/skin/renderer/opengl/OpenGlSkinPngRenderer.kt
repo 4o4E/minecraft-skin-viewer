@@ -255,7 +255,7 @@ private class OpenGlSkinRenderer {
                 lightingMode = request.lightingMode
             )
 
-            if (request.showPlatform || request.shadows) {
+            if (request.showPlatform) {
                 floorShader.use(receiveShadow = request.shadows, useTexture = false)
                 drawFloor(settings.platformTopY)
             }

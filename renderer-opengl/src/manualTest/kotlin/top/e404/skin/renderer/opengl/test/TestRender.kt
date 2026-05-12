@@ -36,10 +36,42 @@ class TestRender {
                         lightDirection = SkinRenderVec3(.5f, .3f, .3f).normalized(),
                         lightIntensity = .7f,
                         overlayMode = SkinOverlayMode.THREE_D,
-                        shadows = true
+                        shadows = false
                     )
                 )
                 outputDir.resolve("rendered_$fileName").writeBytes(bytes)
+            }
+        } finally {
+            renderer.close()
+        }
+    }
+
+    @Test
+    fun testRenderWithShadowPlatform() {
+        val outputDir = File("manual-test-output/opengl/render").apply { mkdirs() }
+        renderer.startup()
+        try {
+            for ((fileName, isSlim) in files) {
+                val file = File(fileName)
+                assertTrue(file.isFile, "Put $fileName in the run directory first.")
+                val bytes = renderer.renderPng(
+                    renderRequest(
+                        skinFile = file,
+                        slim = isSlim,
+                        width = 800,
+                        height = 1200,
+                        target = SkinRenderVec3(0f, 10f, 0f),
+                        yaw = 45f,
+                        pitch = 20f,
+                        distance = 50f,
+                        lightDirection = SkinRenderVec3(.5f, .9f, .35f).normalized(),
+                        lightIntensity = .7f,
+                        overlayMode = SkinOverlayMode.THREE_D,
+                        shadows = true,
+                        showPlatform = true
+                    )
+                )
+                outputDir.resolve("shadow_platform_$fileName").writeBytes(bytes)
             }
         } finally {
             renderer.close()

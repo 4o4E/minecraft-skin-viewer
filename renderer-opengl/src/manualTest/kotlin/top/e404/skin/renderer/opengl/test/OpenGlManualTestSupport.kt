@@ -31,7 +31,7 @@ internal fun renderRequest(
     pose: Map<BodyPart, List<SkinTransform>> = emptyMap(),
     overlayMode: SkinOverlayMode = SkinOverlayMode.THREE_D,
     shadows: Boolean = true,
-    showPlatform: Boolean = shadows,
+    showPlatform: Boolean = false,
 ): SkinRenderRequest =
     SkinRenderRequest(
         skinPng = skinFile.readBytes(),

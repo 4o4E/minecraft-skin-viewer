@@ -17,7 +17,7 @@ import top.e404.tavolo.draw.render3d.Vec3
 import java.io.File
 
 class BodyPartMappingManualTest {
-    private val outputDir = File("manual-test-output/body-part-mapping")
+    private val outputDir = File("manual-test-output/tavolo/body-part-mapping")
     private val tileSize = 720
 
     @Test

@@ -39,12 +39,14 @@ fun Application.routing() = routing {
                 val slim = parameters["slim"]?.toBoolean() ?: parameters["t"]?.toBoolean() ?: data.slim
                 val headScale = parameters["head"]?.toDoubleOrNull() ?: 1.0
                 val duration = parameters["duration"]?.toIntOrNull() ?: 40
+                val platform = parameters["platform"]?.toBoolean() ?: false
                 call.respondCachedRender(data, "sneak", "gif", ContentType.Image.GIF, mapOf(
                     "slim" to slim,
                     "bg" to bg.hexColor(),
                     "light" to light?.hexColor(),
                     "head" to headScale,
                     "duration" to duration,
+                    "platform" to platform,
                     "width" to 600,
                     "height" to 900,
                     "aa" to 1,
@@ -56,7 +58,8 @@ fun Application.routing() = routing {
                         backgroundColor = bg,
                         lightColor = light,
                         headScale = headScale,
-                        duration = duration
+                        duration = duration,
+                        showPlatform = platform
                     )
                 }
             }
@@ -64,11 +67,13 @@ fun Application.routing() = routing {
             "sk" -> {
                 val slim = parameters["slim"]?.toBoolean() ?: parameters["t"]?.toBoolean() ?: data.slim
                 val headScale = parameters["head"]?.toDoubleOrNull() ?: 1.0
+                val platform = parameters["platform"]?.toBoolean() ?: false
                 call.respondCachedRender(data, "sk", "png", ContentType.Image.PNG, mapOf(
                     "slim" to slim,
                     "bg" to bg.hexColor(),
                     "light" to light?.hexColor(),
                     "head" to headScale,
+                    "platform" to platform,
                     "width" to 600,
                     "height" to 900,
                     "aa" to 2,
@@ -79,7 +84,8 @@ fun Application.routing() = routing {
                         slim = slim,
                         backgroundColor = bg,
                         lightColor = light,
-                        headScale = headScale
+                        headScale = headScale,
+                        showPlatform = platform
                     )
                 }
             }
@@ -90,6 +96,7 @@ fun Application.routing() = routing {
                 val pitchAmplitude = parameters["y"]?.toIntOrNull() ?: 20
                 val headScale = parameters["head"]?.toDoubleOrNull() ?: 1.0
                 val duration = parameters["duration"]?.toIntOrNull() ?: 40
+                val platform = parameters["platform"]?.toBoolean() ?: true
                 call.respondCachedRender(data, "dsk", "gif", ContentType.Image.GIF, mapOf(
                     "slim" to slim,
                     "bg" to bg.hexColor(),
@@ -98,6 +105,7 @@ fun Application.routing() = routing {
                     "frameCount" to frameCount,
                     "pitchAmplitude" to pitchAmplitude,
                     "duration" to duration,
+                    "platform" to platform,
                     "width" to 600,
                     "height" to 900,
                     "aa" to 1,
@@ -111,15 +119,18 @@ fun Application.routing() = routing {
                         pitchAmplitude = pitchAmplitude,
                         lightColor = light,
                         headScale = headScale,
-                        duration = duration
+                        duration = duration,
+                        showPlatform = platform
                     )
                 }
             }
 
             "head" -> {
+                val platform = parameters["platform"]?.toBoolean() ?: false
                 call.respondCachedRender(data, "head", "png", ContentType.Image.PNG, mapOf(
                     "bg" to bg.hexColor(),
                     "light" to light?.hexColor(),
+                    "platform" to platform,
                     "width" to 400,
                     "height" to 400,
                     "aa" to 2,
@@ -128,7 +139,8 @@ fun Application.routing() = routing {
                     TavoloSkinRenderer.renderHead(
                         bytes = skinBytes,
                         backgroundColor = bg,
-                        lightColor = light
+                        lightColor = light,
+                        showPlatform = platform
                     )
                 }
             }
@@ -137,12 +149,14 @@ fun Application.routing() = routing {
                 val frameCount = parameters["x"]?.toIntOrNull() ?: 20
                 val pitchAmplitude = parameters["y"]?.toIntOrNull() ?: 20
                 val duration = parameters["duration"]?.toIntOrNull() ?: 40
+                val platform = parameters["platform"]?.toBoolean() ?: false
                 call.respondCachedRender(data, "dhead", "gif", ContentType.Image.GIF, mapOf(
                     "bg" to bg.hexColor(),
                     "light" to light?.hexColor(),
                     "frameCount" to frameCount,
                     "pitchAmplitude" to pitchAmplitude,
                     "duration" to duration,
+                    "platform" to platform,
                     "width" to 400,
                     "height" to 400,
                     "aa" to 1,
@@ -154,7 +168,8 @@ fun Application.routing() = routing {
                         frameCount = frameCount,
                         pitchAmplitude = pitchAmplitude,
                         lightColor = light,
-                        duration = duration
+                        duration = duration,
+                        showPlatform = platform
                     )
                 }
             }
@@ -162,11 +177,13 @@ fun Application.routing() = routing {
             "homo" -> {
                 val slim = parameters["slim"]?.toBoolean() ?: parameters["t"]?.toBoolean() ?: data.slim
                 val headScale = parameters["head"]?.toDoubleOrNull() ?: 1.0
+                val platform = parameters["platform"]?.toBoolean() ?: false
                 call.respondCachedRender(data, "homo", "png", ContentType.Image.PNG, mapOf(
                     "slim" to slim,
                     "bg" to bg.hexColor(),
                     "light" to light?.hexColor(),
                     "head" to headScale,
+                    "platform" to platform,
                     "width" to 1024,
                     "height" to 768,
                     "aa" to 2,
@@ -177,7 +194,8 @@ fun Application.routing() = routing {
                         slim = slim,
                         backgroundColor = bg,
                         lightColor = light,
-                        headScale = headScale
+                        headScale = headScale,
+                        showPlatform = platform
                     )
                 }
             }

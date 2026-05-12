@@ -31,6 +31,7 @@ object SkinRenderUseCases {
         backgroundColor: Int,
         lightColor: Int?,
         headScale: Double,
+        showPlatform: Boolean = false,
     ): ByteArray =
         renderer.renderPng(
             request = request(
@@ -42,7 +43,8 @@ object SkinRenderUseCases {
                 lightColor = lightColor,
                 camera = SkinCamera(SkinRenderVec3(0f, 10f, 0f), yaw = 45f, pitch = 15f, distance = 65f),
                 pose = headScalePose(slim, headScale),
-                antiAliasingLevel = 2
+                antiAliasingLevel = 2,
+                showPlatform = showPlatform
             )
         )
 
@@ -56,6 +58,7 @@ object SkinRenderUseCases {
         lightColor: Int?,
         headScale: Double,
         duration: Int,
+        showPlatform: Boolean = true,
     ): ByteArray =
         renderRotate(
             renderer = renderer,
@@ -70,7 +73,7 @@ object SkinRenderUseCases {
             duration = duration,
             target = SkinRenderVec3(0f, 10f, 0f),
             distance = 65f,
-            showPlatform = true,
+            showPlatform = showPlatform,
             pose = headScalePose(slim, headScale),
             antiAliasingLevel = 1
         )
@@ -80,6 +83,7 @@ object SkinRenderUseCases {
         bytes: ByteArray,
         backgroundColor: Int,
         lightColor: Int?,
+        showPlatform: Boolean = false,
     ): ByteArray =
         renderer.renderPng(
             request = request(
@@ -91,7 +95,8 @@ object SkinRenderUseCases {
                 lightColor = lightColor,
                 camera = SkinCamera(SkinRenderVec3(0f, 20f, 0f), yaw = 45f, pitch = 15f, distance = 30f),
                 pose = PosePresets.HEAD_ONLY,
-                antiAliasingLevel = 2
+                antiAliasingLevel = 2,
+                showPlatform = showPlatform
             )
         )
 
@@ -103,6 +108,7 @@ object SkinRenderUseCases {
         pitchAmplitude: Int,
         lightColor: Int?,
         duration: Int,
+        showPlatform: Boolean = false,
     ): ByteArray =
         renderRotate(
             renderer = renderer,
@@ -117,7 +123,7 @@ object SkinRenderUseCases {
             duration = duration,
             target = SkinRenderVec3(0f, 20f, 0f),
             distance = 30f,
-            showPlatform = false,
+            showPlatform = showPlatform,
             pose = PosePresets.HEAD_ONLY,
             antiAliasingLevel = 1
         )
@@ -130,6 +136,7 @@ object SkinRenderUseCases {
         lightColor: Int?,
         headScale: Double,
         duration: Int,
+        showPlatform: Boolean = false,
     ): ByteArray {
         val skinPng = bytes.formatSkinPng()
         val normalPose = headScalePose(slim, headScale)
@@ -140,13 +147,13 @@ object SkinRenderUseCases {
                 SkinAnimationFrame(
                     durationMs = duration,
                     png = renderer.renderPng(
-                        request(skinPng, slim, FULL_WIDTH, FULL_HEIGHT, backgroundColor, lightColor, camera, normalPose, 1)
+                        request(skinPng, slim, FULL_WIDTH, FULL_HEIGHT, backgroundColor, lightColor, camera, normalPose, 1, showPlatform)
                     )
                 ),
                 SkinAnimationFrame(
                     durationMs = duration,
                     png = renderer.renderPng(
-                        request(skinPng, slim, FULL_WIDTH, FULL_HEIGHT, backgroundColor, lightColor, camera, sneakPose, 1)
+                        request(skinPng, slim, FULL_WIDTH, FULL_HEIGHT, backgroundColor, lightColor, camera, sneakPose, 1, showPlatform)
                     )
                 )
             )
@@ -160,6 +167,7 @@ object SkinRenderUseCases {
         backgroundColor: Int,
         lightColor: Int?,
         headScale: Double,
+        showPlatform: Boolean = false,
     ): ByteArray =
         renderer.renderPng(
             request = request(
@@ -171,7 +179,8 @@ object SkinRenderUseCases {
                 lightColor = lightColor,
                 camera = SkinCamera(SkinRenderVec3(0f, 8f, 0f), yaw = 30f, pitch = 0f, distance = 80f),
                 pose = PosePresets.withScale(slim, headScale = headScale.toFloat()),
-                antiAliasingLevel = 2
+                antiAliasingLevel = 2,
+                showPlatform = showPlatform
             )
         )
 

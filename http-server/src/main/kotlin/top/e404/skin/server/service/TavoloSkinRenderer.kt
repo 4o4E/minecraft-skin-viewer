@@ -12,8 +12,9 @@ object TavoloSkinRenderer {
         backgroundColor: Int,
         lightColor: Int?,
         headScale: Double,
+        showPlatform: Boolean = false,
     ): ByteArray =
-        SkinRenderUseCases.renderSkin(renderer, bytes, slim, backgroundColor, lightColor, headScale)
+        SkinRenderUseCases.renderSkin(renderer, bytes, slim, backgroundColor, lightColor, headScale, showPlatform)
 
     suspend fun renderSkinRotate(
         bytes: ByteArray,
@@ -24,6 +25,7 @@ object TavoloSkinRenderer {
         lightColor: Int?,
         headScale: Double,
         duration: Int,
+        showPlatform: Boolean = true,
     ): ByteArray =
         SkinRenderUseCases.renderSkinRotate(
             renderer = renderer,
@@ -34,15 +36,17 @@ object TavoloSkinRenderer {
             pitchAmplitude = pitchAmplitude,
             lightColor = lightColor,
             headScale = headScale,
-            duration = duration
+            duration = duration,
+            showPlatform = showPlatform
         )
 
     fun renderHead(
         bytes: ByteArray,
         backgroundColor: Int,
         lightColor: Int?,
+        showPlatform: Boolean = false,
     ): ByteArray =
-        SkinRenderUseCases.renderHead(renderer, bytes, backgroundColor, lightColor)
+        SkinRenderUseCases.renderHead(renderer, bytes, backgroundColor, lightColor, showPlatform)
 
     suspend fun renderHeadRotate(
         bytes: ByteArray,
@@ -51,6 +55,7 @@ object TavoloSkinRenderer {
         pitchAmplitude: Int,
         lightColor: Int?,
         duration: Int,
+        showPlatform: Boolean = false,
     ): ByteArray =
         SkinRenderUseCases.renderHeadRotate(
             renderer = renderer,
@@ -59,7 +64,8 @@ object TavoloSkinRenderer {
             frameCount = frameCount,
             pitchAmplitude = pitchAmplitude,
             lightColor = lightColor,
-            duration = duration
+            duration = duration,
+            showPlatform = showPlatform
         )
 
     suspend fun renderSneak(
@@ -69,8 +75,9 @@ object TavoloSkinRenderer {
         lightColor: Int?,
         headScale: Double,
         duration: Int,
+        showPlatform: Boolean = false,
     ): ByteArray =
-        SkinRenderUseCases.renderSneak(renderer, bytes, slim, backgroundColor, lightColor, headScale, duration)
+        SkinRenderUseCases.renderSneak(renderer, bytes, slim, backgroundColor, lightColor, headScale, duration, showPlatform)
 
     fun renderHomo(
         bytes: ByteArray,
@@ -78,6 +85,7 @@ object TavoloSkinRenderer {
         backgroundColor: Int,
         lightColor: Int?,
         headScale: Double,
+        showPlatform: Boolean = false,
     ): ByteArray =
-        SkinRenderUseCases.renderHomo(renderer, bytes, slim, backgroundColor, lightColor, headScale)
+        SkinRenderUseCases.renderHomo(renderer, bytes, slim, backgroundColor, lightColor, headScale, showPlatform)
 }

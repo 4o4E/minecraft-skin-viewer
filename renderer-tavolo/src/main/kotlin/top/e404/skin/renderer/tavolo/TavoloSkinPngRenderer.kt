@@ -41,7 +41,7 @@ class TavoloSkinPngRenderer : SkinPngRenderer {
                 lightIntensity = settings.lightIntensity,
                 enableShadows = request.shadows
             ),
-            backgroundMeshes = if (request.showPlatform || request.shadows) {
+            backgroundMeshes = if (request.showPlatform) {
                 listOf(createSkinPlatform(settings.platformTopY, settings.platformThickness))
             } else {
                 emptyList()
