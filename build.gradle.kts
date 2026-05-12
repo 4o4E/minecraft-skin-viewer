@@ -106,9 +106,16 @@ subprojects {
         register<Test>("manualTest") {
             description = "运行需要人工准备环境、外部服务或本地资产的测试"
             group = "verification"
-            testClassesDirs = manualTestSourceSet.output.classesDirs
+            testClassesDirs = files(
+                manualTestSourceSet.output.classesDirs,
+                layout.buildDirectory.dir("classes/kotlin/manualTest")
+            )
             classpath = manualTestSourceSet.runtimeClasspath
             useJUnitPlatform()
+            testLogging {
+                events("passed", "failed", "skipped", "standardOut", "standardError")
+                showStandardStreams = true
+            }
             workingDir = rootDir.resolve("run")
             shouldRunAfter(test)
         }

@@ -224,7 +224,7 @@ object RenderImageBenchmark {
             skinPng = if (scenario.overlayMode == OverlayMode.NONE) skinWithoutOverlay else skinWithOverlay,
             isSlim = true,
             yaw = yaw,
-            settings = settings.toSkinRenderSettings(),
+            settings = settings.toSkinRenderSettings(scenario.lightingMode),
             overlayMode = scenario.overlayMode.toSkinOverlayMode(),
             lightingMode = scenario.lightingMode.toSkinLightingMode(),
             shadows = scenario.shadows
@@ -293,7 +293,7 @@ private fun Long.toMs(): Double = this / 1_000_000.0
 private fun BenchmarkScenario.fileId(): String =
     "overlay-${overlayMode.label}-light-${lightingMode.label}-shadow-$shadows"
 
-private fun BenchmarkRenderSettings.toSkinRenderSettings(): SkinRenderSettings =
+private fun BenchmarkRenderSettings.toSkinRenderSettings(lightingMode: LightingMode): SkinRenderSettings =
     SkinRenderSettings(
         width = width,
         height = height,
@@ -303,7 +303,12 @@ private fun BenchmarkRenderSettings.toSkinRenderSettings(): SkinRenderSettings =
         backgroundColor = backgroundColor,
         lightDirection = lightDirection,
         platformTopY = platformTopY,
-        platformThickness = platformThickness
+        platformThickness = platformThickness,
+        lightIntensity = when (lightingMode) {
+            LightingMode.AMBIENT -> 1.0f
+            LightingMode.DIRECTIONAL -> 0.65f
+        },
+        antiAliasingLevel = 2
     )
 
 private fun OverlayMode.toSkinOverlayMode(): SkinOverlayMode = when (this) {

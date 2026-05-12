@@ -10,6 +10,7 @@ import top.e404.skin.core.SkinVec2
 import top.e404.skin.core.SkinVec3
 import top.e404.skin.core.SkinVertex
 import top.e404.skin.core.createMinecraftPlayerMeshes
+import top.e404.skin.core.rotateY
 import top.e404.tavolo.draw.render3d.Face
 import top.e404.tavolo.draw.render3d.Mesh
 import top.e404.tavolo.draw.render3d.OrbitCamera
@@ -27,9 +28,11 @@ fun renderMinecraftViewTavolo(
     backgroundMeshes: List<SkinMesh> = emptyList(),
     pose: Map<BodyPart, List<SkinTransform>> = emptyMap(),
     use3DOverlay: Boolean = true,
+    modelYaw: Float = 0f,
 ): Image {
     val skinBitmap = Bitmap.makeFromImage(skin)
     val playerMeshes = createMinecraftPlayerMeshes(skinBitmap, isSlim, pose, use3DOverlay)
+        .map { if (modelYaw == 0f) it else it.rotateY(modelYaw) }
     return renderSceneToImage(
         scene = Scene((playerMeshes + backgroundMeshes).map { it.toTavoloMesh() }),
         config = renderConfig

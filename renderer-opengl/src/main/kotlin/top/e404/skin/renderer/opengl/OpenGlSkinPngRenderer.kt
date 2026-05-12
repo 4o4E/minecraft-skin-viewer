@@ -120,6 +120,7 @@ import top.e404.skin.core.SkinRenderVec3
 import top.e404.skin.core.SkinMesh
 import top.e404.skin.core.SkinMeshFace
 import top.e404.skin.core.createMinecraftPlayerMeshes
+import top.e404.skin.core.rotateY
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
@@ -209,7 +210,12 @@ private class OpenGlSkinRenderer {
         val skinImage = SkiaImage.makeFromEncoded(request.skinPng)
         val skinBitmap = Bitmap.makeFromImage(skinImage)
         val use3DOverlay = request.overlayMode == SkinOverlayMode.THREE_D
-        val meshes = createMinecraftPlayerMeshes(skinBitmap, isSlim = request.isSlim, use3DOverlay = use3DOverlay)
+        val meshes = createMinecraftPlayerMeshes(
+            skin = skinBitmap,
+            isSlim = request.isSlim,
+            pose = request.pose,
+            use3DOverlay = use3DOverlay
+        ).map { if (request.modelYaw == 0f) it else it.rotateY(request.modelYaw) }
         val lightDir = settings.lightDirection.toGlVec3().normalized()
         val shadowCamera = createShadowCamera(settings, lightDir)
 
@@ -249,8 +255,8 @@ private class OpenGlSkinRenderer {
                 lightingMode = request.lightingMode
             )
 
-            if (request.shadows) {
-                floorShader.use(receiveShadow = true, useTexture = false)
+            if (request.showPlatform || request.shadows) {
+                floorShader.use(receiveShadow = request.shadows, useTexture = false)
                 drawFloor(settings.platformTopY)
             }
 

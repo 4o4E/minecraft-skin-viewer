@@ -32,24 +32,23 @@ class TavoloSkinPngRenderer : SkinPngRenderer {
                 ),
                 backgroundColor = settings.backgroundColor,
                 useBackFaceCulling = false,
-                antiAliasingLevel = 2,
+                antiAliasingLevel = settings.antiAliasingLevel,
                 lightDirection = Vec3(
                     settings.lightDirection.x,
                     settings.lightDirection.y,
                     settings.lightDirection.z
                 ),
-                lightIntensity = when (request.lightingMode) {
-                    SkinLightingMode.AMBIENT -> 1.0f
-                    SkinLightingMode.DIRECTIONAL -> 0.65f
-                },
+                lightIntensity = settings.lightIntensity,
                 enableShadows = request.shadows
             ),
-            backgroundMeshes = if (request.shadows) {
+            backgroundMeshes = if (request.showPlatform || request.shadows) {
                 listOf(createSkinPlatform(settings.platformTopY, settings.platformThickness))
             } else {
                 emptyList()
             },
-            use3DOverlay = request.overlayMode == SkinOverlayMode.THREE_D
+            pose = request.pose,
+            use3DOverlay = request.overlayMode == SkinOverlayMode.THREE_D,
+            modelYaw = request.modelYaw
         )
         return image.encodeToData(EncodedImageFormat.PNG)!!.bytes
     }
