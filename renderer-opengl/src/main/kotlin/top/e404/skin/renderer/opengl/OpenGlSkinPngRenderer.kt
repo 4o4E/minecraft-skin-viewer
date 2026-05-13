@@ -668,6 +668,7 @@ private data class GlShadowStyle(
 
 private class GlShadowShader private constructor(
     private val program: Int,
+    private val shadowTexture: Int,
     private val useTextureLocation: Int,
     private val receiveShadowLocation: Int,
 ) {
@@ -675,6 +676,8 @@ private class GlShadowShader private constructor(
         glUseProgram(program)
         glUniform1i(useTextureLocation, if (useTexture) 1 else 0)
         glUniform1i(receiveShadowLocation, if (receiveShadow) 1 else 0)
+        glActiveTexture(GL_TEXTURE1)
+        glBindTexture(GL_TEXTURE_2D, shadowTexture)
         glActiveTexture(GL_TEXTURE0)
         if (skinTexture != 0) glBindTexture(GL_TEXTURE_2D, skinTexture)
     }
@@ -783,6 +786,7 @@ private class GlShadowShader private constructor(
 
             return GlShadowShader(
                 program = program,
+                shadowTexture = shadowTexture,
                 useTextureLocation = glGetUniformLocation(program, "uUseTexture"),
                 receiveShadowLocation = glGetUniformLocation(program, "uReceiveShadow")
             )
