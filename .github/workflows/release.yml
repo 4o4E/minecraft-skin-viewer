@@ -79,9 +79,8 @@ jobs:
           docker build -t minecraft-skin-viewer:tavolo-smoke http-server-tavolo-linux
           docker build -t minecraft-skin-viewer:opengl-smoke http-server-opengl-linux
 
-      - name: Smoke test Tavolo Docker image
+      - name: Start Tavolo Docker image
         run: |
-          trap 'docker logs msv-tavolo-smoke 2>/dev/null || true; docker rm -f msv-tavolo-smoke 2>/dev/null || true' EXIT
           docker run -d --name msv-tavolo-smoke \
             -e SKIN_FIXTURE_FILE=/tmp/alex_skin.png \
             -e SKIN_FIXTURE_NAME=404E \
@@ -91,6 +90,9 @@ jobs:
             -v "$PWD/run/alex_skin.png:/tmp/alex_skin.png:ro" \
             -p 18080:8080 \
             minecraft-skin-viewer:tavolo-smoke
+
+      - name: Wait for Tavolo Docker data endpoint
+        run: |
           for i in {1..30}; do
             curl -fsS http://127.0.0.1:18080/data/name/404E && break
             if [ "$i" -eq 30 ]; then
@@ -98,13 +100,22 @@ jobs:
             fi
             sleep 1
           done
+
+      - name: Smoke test Tavolo Docker face endpoint
+        run: |
           curl -fsS http://127.0.0.1:18080/face/name/404E -o tavolo-face.png
-          curl -fsS http://127.0.0.1:18080/render/name/404E/head -o tavolo-head.png
           test -s tavolo-face.png
+
+      - name: Smoke test Tavolo Docker render endpoint
+        run: |
+          curl -fsS http://127.0.0.1:18080/render/name/404E/head -o tavolo-head.png
           test -s tavolo-head.png
-          docker logs msv-tavolo-smoke
-          docker rm -f msv-tavolo-smoke
-          trap - EXIT
+
+      - name: Stop Tavolo Docker image
+        if: always()
+        run: |
+          docker logs msv-tavolo-smoke 2>/dev/null || true
+          docker rm -f msv-tavolo-smoke 2>/dev/null || true
 
       - name: Smoke test OpenGL Docker image
         run: |
