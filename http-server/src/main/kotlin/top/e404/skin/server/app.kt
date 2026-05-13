@@ -13,6 +13,7 @@ import sun.misc.SignalHandler
 import top.e404.skin.server.plugin.logging
 import top.e404.skin.server.plugin.negotiation
 import top.e404.skin.server.plugin.routing
+import top.e404.skin.server.service.SkinRendererService
 import top.e404.skin.server.sql.Database
 import java.io.FileOutputStream
 import java.nio.channels.FileChannel
@@ -59,6 +60,7 @@ suspend fun main() {
 private fun stop() {
     try {
         appLog.info("正在关闭")
+        SkinRendererService.shutdown()
         engine.stop()
     } catch (e: Exception) {
         appLog.warn("关闭应用时出现异常", e)

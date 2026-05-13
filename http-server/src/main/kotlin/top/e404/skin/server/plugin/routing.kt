@@ -5,15 +5,17 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import org.jetbrains.skia.*
 import top.e404.skin.server.Skin
 import top.e404.skin.server.sql.pojo.SkinData
 import top.e404.skin.server.service.RenderFileCache
-import top.e404.skin.server.service.TavoloSkinRenderer
-import top.e404.tavolo.util.*
+import top.e404.skin.server.service.SkinRendererService
+import java.awt.RenderingHints
+import java.awt.image.BufferedImage
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import javax.imageio.ImageIO
 
 private const val DEFAULT_BG_COLOR = 0xFF1F1B1D.toInt()
-private const val RENDERER_ID = "tavolo-cpu-v1"
 
 fun Application.routing() = routing {
     get("/render/{type}/{content}/{position}") {
@@ -52,7 +54,7 @@ fun Application.routing() = routing {
                     "aa" to 1,
                     "voxelOverlay" to true,
                 )) {
-                    TavoloSkinRenderer.renderSneak(
+                    SkinRendererService.renderSneak(
                         bytes = skinBytes,
                         slim = slim,
                         backgroundColor = bg,
@@ -79,7 +81,7 @@ fun Application.routing() = routing {
                     "aa" to 2,
                     "voxelOverlay" to true,
                 )) {
-                    TavoloSkinRenderer.renderSkin(
+                    SkinRendererService.renderSkin(
                         bytes = skinBytes,
                         slim = slim,
                         backgroundColor = bg,
@@ -111,7 +113,7 @@ fun Application.routing() = routing {
                     "aa" to 1,
                     "voxelOverlay" to true,
                 )) {
-                    TavoloSkinRenderer.renderSkinRotate(
+                    SkinRendererService.renderSkinRotate(
                         bytes = skinBytes,
                         slim = slim,
                         backgroundColor = bg,
@@ -136,7 +138,7 @@ fun Application.routing() = routing {
                     "aa" to 2,
                     "voxelOverlay" to true,
                 )) {
-                    TavoloSkinRenderer.renderHead(
+                    SkinRendererService.renderHead(
                         bytes = skinBytes,
                         backgroundColor = bg,
                         lightColor = light,
@@ -162,7 +164,7 @@ fun Application.routing() = routing {
                     "aa" to 1,
                     "voxelOverlay" to true,
                 )) {
-                    TavoloSkinRenderer.renderHeadRotate(
+                    SkinRendererService.renderHeadRotate(
                         bytes = skinBytes,
                         backgroundColor = bg,
                         frameCount = frameCount,
@@ -189,7 +191,7 @@ fun Application.routing() = routing {
                     "aa" to 2,
                     "voxelOverlay" to true,
                 )) {
-                    TavoloSkinRenderer.renderHomo(
+                    SkinRendererService.renderHomo(
                         bytes = skinBytes,
                         slim = slim,
                         backgroundColor = bg,
@@ -245,20 +247,11 @@ fun Application.routing() = routing {
             call.respond(HttpStatusCode.NotFound)
             return@get
         }
-        val image = Image.makeFromEncoded(data.skinBytes)
-        val layer1 = image.sub(8, 8, 8, 8)
-        val layer2 = image.sub(40, 8, 8, 8)
         val parameters = call.request.queryParameters
         val bg = parameters["bg"]?.asColor() ?: 0
         val scale = parameters["scale"]?.toIntOrNull() ?: 5
         val margin = parameters["margin"]?.toIntOrNull() ?: 40
-        val size = 64 * scale + 2 * margin
-        val result = Surface.makeRasterN32Premul(size, size).withCanvas {
-            drawRect(Rect.makeWH(size.toFloat(), size.toFloat()), Paint().apply { color = bg })
-            drawImage(layer1.resize(-700 * scale, -700 * scale, true), margin + 4F * scale, margin + 4F * scale)
-            drawImage(layer2.resize(-800 * scale, -800 * scale, true), margin.toFloat(), margin.toFloat())
-        }
-        call.respondBytes(result.bytes(format = EncodedImageFormat.PNG), ContentType.Image.PNG)
+        call.respondBytes(renderFace(data.skinBytes, bg, scale, margin), ContentType.Image.PNG)
     }
 }
 
@@ -272,7 +265,7 @@ private suspend fun ApplicationCall.respondCachedRender(
 ) {
     val paramsMd5 = RenderFileCache.paramsMd5(
         params + mapOf(
-            "renderer" to RENDERER_ID,
+            "renderer" to SkinRendererService.rendererId,
             "position" to position,
             "ext" to ext,
         )
@@ -283,3 +276,38 @@ private suspend fun ApplicationCall.respondCachedRender(
 
 private fun Int.hexColor(): String =
     toUInt().toString(16).padStart(8, '0')
+
+private fun String.asColor(): Int {
+    val raw = trim().removePrefix("#").removePrefix("0x").removePrefix("0X")
+    val argb = when (raw.length) {
+        3 -> "ff" + raw.map { "$it$it" }.joinToString("")
+        4 -> raw.map { "$it$it" }.joinToString("")
+        6 -> "ff$raw"
+        8 -> raw
+        else -> error("Invalid color: $this")
+    }
+    return argb.toULong(16).toInt()
+}
+
+private fun renderFace(skinBytes: ByteArray, backgroundColor: Int, scale: Int, margin: Int): ByteArray {
+    val skin = ImageIO.read(ByteArrayInputStream(skinBytes))
+    val pixelScale = (skin.width / 64).coerceAtLeast(1)
+    val layer1 = skin.getSubimage(8 * pixelScale, 8 * pixelScale, 8 * pixelScale, 8 * pixelScale)
+    val layer2 = skin.getSubimage(40 * pixelScale, 8 * pixelScale, 8 * pixelScale, 8 * pixelScale)
+    val size = 64 * scale + 2 * margin
+    val result = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
+    val graphics = result.createGraphics()
+    try {
+        graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR)
+        graphics.color = java.awt.Color(backgroundColor, true)
+        graphics.fillRect(0, 0, size, size)
+        graphics.drawImage(layer1, margin + 4 * scale, margin + 4 * scale, 56 * scale, 56 * scale, null)
+        graphics.drawImage(layer2, margin, margin, 64 * scale, 64 * scale, null)
+    } finally {
+        graphics.dispose()
+    }
+    return ByteArrayOutputStream().use {
+        ImageIO.write(result, "png", it)
+        it.toByteArray()
+    }
+}

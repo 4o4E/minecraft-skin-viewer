@@ -5,7 +5,6 @@ plugins {
 
 dependencies {
     implementation(project(":core"))
-    implementation(project(":renderer-tavolo"))
     // slf4j
     implementation("org.slf4j:slf4j-api:2.0.17")
     // log4j2

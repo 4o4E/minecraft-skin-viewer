@@ -5,6 +5,43 @@ plugins {
     application
 }
 
+data class ServerPackageSpec(
+    val renderer: String,
+    val os: String,
+)
+
+fun serverPackageSpec(projectName: String): ServerPackageSpec? =
+    when (projectName) {
+        "http-server-win" -> ServerPackageSpec("tavolo", "win")
+        "http-server-linux" -> ServerPackageSpec("tavolo", "linux")
+        "http-server-mac" -> ServerPackageSpec("tavolo", "mac")
+        else -> Regex("""http-server-(tavolo|opengl)-(win|linux)""")
+            .matchEntire(projectName)
+            ?.destructured
+            ?.let { (renderer, os) -> ServerPackageSpec(renderer, os) }
+    }
+
+fun skikoOsClassifier(os: String): String =
+    when (os) {
+        "mac" -> "macos-x64"
+        "win" -> "windows-x64"
+        else -> "linux-x64"
+    }
+
+fun lwjglNativeClassifier(os: String): String =
+    when (os) {
+        "win" -> "natives-windows"
+        "linux" -> "natives-linux"
+        else -> error("LWJGL native classifier is not configured for $os")
+    }
+
+fun rendererClassName(renderer: String): String =
+    when (renderer) {
+        "tavolo" -> "top.e404.skin.renderer.tavolo.TavoloSkinPngRenderer"
+        "opengl" -> "top.e404.skin.renderer.opengl.OpenGlSkinPngRenderer"
+        else -> error("Unknown renderer $renderer")
+    }
+
 kotlin {
     jvmToolchain(11)
 }
@@ -33,18 +70,18 @@ allprojects {
         // test
         testImplementation(kotlin("test", Versions.KOTLIN))
 
-        if (!name.startsWith("http-server-")) return@dependencies
-        val os = name.removePrefix("http-server-")
+        val serverPackage = serverPackageSpec(name) ?: return@dependencies
         // impl
         implementation(project(":http-server"))
+        implementation(project(":renderer-${serverPackage.renderer}"))
         // skiko
-        implementation(skiko(
-            when (os) {
-                "mac" -> "macos-x64"
-                "win" -> "windows-x64"
-                else -> "linux-x64"
-            }
-        ))
+        implementation(skiko(skikoOsClassifier(serverPackage.os)))
+        if (serverPackage.renderer == "opengl") {
+            val nativeClassifier = lwjglNativeClassifier(serverPackage.os)
+            runtimeOnly("org.lwjgl:lwjgl:${Versions.LWJGL}:$nativeClassifier")
+            runtimeOnly("org.lwjgl:lwjgl-glfw:${Versions.LWJGL}:$nativeClassifier")
+            runtimeOnly("org.lwjgl:lwjgl-opengl:${Versions.LWJGL}:$nativeClassifier")
+        }
     }
 }
 
@@ -71,12 +108,17 @@ subprojects {
     configurations["manualTestRuntimeOnly"].extendsFrom(configurations["testRuntimeOnly"])
 
     application {
+        val serverPackage = serverPackageSpec(project.name)
         mainClass.set("top.e404.skin.server.App")
         applicationDefaultJvmArgs = listOf(
             "-Dio.netty.tryReflectionSetAccessible=true",
             "--add-opens",
-            "java.base/jdk.internal.misc=ALL-UNNAMED"
-        )
+            "java.base/jdk.internal.misc=ALL-UNNAMED",
+        ) + if (serverPackage != null) {
+            listOf("-Dskin.renderer.class=${rendererClassName(serverPackage.renderer)}")
+        } else {
+            emptyList()
+        }
     }
 
     tasks {

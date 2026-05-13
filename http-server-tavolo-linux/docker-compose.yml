@@ -1,0 +1,22 @@
+services:
+  minecraft-skin-viewer-tavolo:
+    container_name: minecraft-skin-viewer-tavolo
+    build:
+      context: .
+    image: minecraft-skin-viewer:tavolo-linux
+    environment:
+      DB_URL: jdbc:mysql://172.17.0.1:3306/skin?useSSL=false
+      DB_USERNAME: root
+      DB_PASSWORD: 123456
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 80
+      PROXY_TYPE: HTTP
+      PROXY_HOST: 172.17.0.1
+      PROXY_PORT: 7890
+    volumes:
+      - ./skin:/app/skin
+      - ./render-cache:/app/render-cache
+      - /dev/null:/app/logs
+    restart: unless-stopped
+    ports:
+      - "80:80"
