@@ -81,17 +81,21 @@ jobs:
 
       - name: Smoke test Tavolo Docker image
         run: |
+          trap 'docker logs msv-tavolo-smoke 2>/dev/null || true; docker rm -f msv-tavolo-smoke 2>/dev/null || true' EXIT
           docker run -d --name msv-tavolo-smoke \
             -e SKIN_FIXTURE_FILE=/tmp/alex_skin.png \
             -e SKIN_FIXTURE_NAME=404E \
             -e SKIN_FIXTURE_SLIM=true \
             -e SERVER_HOST=0.0.0.0 \
             -e SERVER_PORT=80 \
+            -v "$PWD/run/alex_skin.png:/tmp/alex_skin.png:ro" \
             -p 18080:80 \
             minecraft-skin-viewer:tavolo-smoke
-          docker cp run/alex_skin.png msv-tavolo-smoke:/tmp/alex_skin.png
           for i in {1..30}; do
             curl -fsS http://127.0.0.1:18080/data/name/404E && break
+            if [ "$i" -eq 30 ]; then
+              exit 1
+            fi
             sleep 1
           done
           curl -fsS http://127.0.0.1:18080/face/name/404E -o tavolo-face.png
@@ -100,20 +104,25 @@ jobs:
           test -s tavolo-head.png
           docker logs msv-tavolo-smoke
           docker rm -f msv-tavolo-smoke
+          trap - EXIT
 
       - name: Smoke test OpenGL Docker image
         run: |
+          trap 'docker logs msv-opengl-smoke 2>/dev/null || true; docker rm -f msv-opengl-smoke 2>/dev/null || true' EXIT
           docker run -d --name msv-opengl-smoke \
             -e SKIN_FIXTURE_FILE=/tmp/alex_skin.png \
             -e SKIN_FIXTURE_NAME=404E \
             -e SKIN_FIXTURE_SLIM=true \
             -e SERVER_HOST=0.0.0.0 \
             -e SERVER_PORT=80 \
+            -v "$PWD/run/alex_skin.png:/tmp/alex_skin.png:ro" \
             -p 18081:80 \
             minecraft-skin-viewer:opengl-smoke
-          docker cp run/alex_skin.png msv-opengl-smoke:/tmp/alex_skin.png
           for i in {1..30}; do
             curl -fsS http://127.0.0.1:18081/data/name/404E && break
+            if [ "$i" -eq 30 ]; then
+              exit 1
+            fi
             sleep 1
           done
           curl -fsS http://127.0.0.1:18081/face/name/404E -o opengl-face.png
@@ -122,6 +131,7 @@ jobs:
           test -s opengl-head.png
           docker logs msv-opengl-smoke
           docker rm -f msv-opengl-smoke
+          trap - EXIT
 
       - name: Prepare release assets
         run: |
