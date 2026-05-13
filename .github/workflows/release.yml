@@ -33,12 +33,83 @@ jobs:
           bash ./gradlew \
             :core:test \
             :http-server:test \
+            :renderer-tavolo:test \
             :http-server-tavolo-win:shadowJar \
             :http-server-tavolo-linux:shadowJar \
             :http-server-opengl-win:shadowJar \
             :http-server-opengl-linux:shadowJar \
             --build-cache \
             --parallel
+
+      - name: Run OpenGL renderer smoke test
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            xvfb \
+            libgl1 \
+            libglx-mesa0 \
+            libgl1-mesa-dri \
+            libx11-6 \
+            libxext6 \
+            libxrender1 \
+            libxi6 \
+            libxrandr2 \
+            libxcursor1 \
+            libxinerama1 \
+            libxxf86vm1
+          xvfb-run -a bash ./gradlew :renderer-opengl:test -Dskin.openglSmoke=true --build-cache
+
+      - name: Prepare Docker smoke fixture
+        run: bash ./gradlew prepareRunAssets
+
+      - name: Build Docker smoke images
+        run: |
+          docker build -t minecraft-skin-viewer:tavolo-smoke http-server-tavolo-linux
+          docker build -t minecraft-skin-viewer:opengl-smoke http-server-opengl-linux
+
+      - name: Smoke test Tavolo Docker image
+        run: |
+          docker run -d --name msv-tavolo-smoke \
+            -e SKIN_FIXTURE_FILE=/tmp/alex_skin.png \
+            -e SKIN_FIXTURE_NAME=404E \
+            -e SKIN_FIXTURE_SLIM=true \
+            -e SERVER_HOST=0.0.0.0 \
+            -e SERVER_PORT=80 \
+            -p 18080:80 \
+            minecraft-skin-viewer:tavolo-smoke
+          docker cp run/alex_skin.png msv-tavolo-smoke:/tmp/alex_skin.png
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:18080/data/name/404E && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:18080/face/name/404E -o tavolo-face.png
+          curl -fsS http://127.0.0.1:18080/render/name/404E/head -o tavolo-head.png
+          test -s tavolo-face.png
+          test -s tavolo-head.png
+          docker logs msv-tavolo-smoke
+          docker rm -f msv-tavolo-smoke
+
+      - name: Smoke test OpenGL Docker image
+        run: |
+          docker run -d --name msv-opengl-smoke \
+            -e SKIN_FIXTURE_FILE=/tmp/alex_skin.png \
+            -e SKIN_FIXTURE_NAME=404E \
+            -e SKIN_FIXTURE_SLIM=true \
+            -e SERVER_HOST=0.0.0.0 \
+            -e SERVER_PORT=80 \
+            -p 18081:80 \
+            minecraft-skin-viewer:opengl-smoke
+          docker cp run/alex_skin.png msv-opengl-smoke:/tmp/alex_skin.png
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:18081/data/name/404E && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:18081/face/name/404E -o opengl-face.png
+          curl -fsS http://127.0.0.1:18081/render/name/404E/head -o opengl-head.png
+          test -s opengl-face.png
+          test -s opengl-head.png
+          docker logs msv-opengl-smoke
+          docker rm -f msv-opengl-smoke
 
       - name: Prepare release assets
         run: |

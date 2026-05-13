@@ -7,4 +7,5 @@ dependencies {
     api("top.e404.tavolo:tavolo-graphics:${Versions.TAVOLO}")
     api("top.e404.tavolo:tavolo-gif-codec:${Versions.TAVOLO}")
     api("top.e404.tavolo:tavolo-common:${Versions.TAVOLO}")
+    testRuntimeOnly(skiko("linux-x64"))
 }

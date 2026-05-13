@@ -89,6 +89,7 @@ val client = HttpClient(OkHttp) {
 
 object Skin {
     suspend fun getByName(name: String): SkinData? {
+        FixtureSkin.byName(name)?.let { return it }
         val exists = SkinDao.getByName(name)
         if (exists != null && !exists.isExpired()) return exists
         val id = Mojang.getIdByName(name) ?: return null
@@ -96,12 +97,14 @@ object Skin {
     }
 
     suspend fun getById(id: String): SkinData? {
+        FixtureSkin.byId(id)?.let { return it }
         val exists = SkinDao.getById(id)
         if (exists != null && !exists.isExpired()) return exists
         return Mojang.getById(id)?.also { data -> saveRefreshedSkin(exists, data) }
     }
 
     suspend fun refreshByName(name: String): Boolean {
+        if (FixtureSkin.refreshByName(name)) return true
         val old = SkinDao.getByName(name)
         val id = Mojang.getIdByName(name) ?: return false
         return Mojang.getById(id)?.also { data ->
@@ -111,6 +114,7 @@ object Skin {
     }
 
     suspend fun refreshById(id: String): Boolean {
+        if (FixtureSkin.refreshById(id)) return true
         val old = SkinDao.getById(id)
         return Mojang.getById(id)?.also { data ->
             clearSkinFilesAndRenderCache(old, data, force = true)

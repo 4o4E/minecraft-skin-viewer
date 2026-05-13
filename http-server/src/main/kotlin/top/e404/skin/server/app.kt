@@ -38,7 +38,11 @@ suspend fun main() {
     }
 
     ConfigManager.load()
-    Database.initTables()
+    if (FixtureSkin.enabled) {
+        appLog.info("Fixture skin mode enabled; skipping database initialization")
+    } else {
+        Database.initTables()
+    }
 
     SignalHandler { stop() }.let {
         // ctrl + c

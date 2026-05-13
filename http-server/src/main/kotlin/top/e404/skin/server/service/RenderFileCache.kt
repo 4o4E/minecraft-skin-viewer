@@ -3,6 +3,7 @@ package top.e404.skin.server.service
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import top.e404.skin.server.ConfigManager
+import top.e404.skin.server.FixtureSkin
 import top.e404.skin.server.sql.RenderCacheDao
 import top.e404.skin.server.sql.RenderCacheRecord
 import top.e404.skin.server.sql.pojo.SkinData
@@ -37,6 +38,7 @@ object RenderFileCache {
         ext: String,
         render: suspend () -> ByteArray,
     ): ByteArray {
+        if (FixtureSkin.enabled) return render()
         if (!ConfigManager.config.renderCache.enabled) return render()
 
         val file = cacheFile(skin.uuid, paramsMd5, ext)
