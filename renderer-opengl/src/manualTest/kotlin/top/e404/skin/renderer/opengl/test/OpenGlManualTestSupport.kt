@@ -13,9 +13,13 @@ import java.awt.Graphics2D
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.File
+import javax.imageio.IIOImage
 import javax.imageio.ImageIO
+import javax.imageio.ImageTypeSpecifier
+import javax.imageio.metadata.IIOMetadataNode
+import javax.imageio.stream.MemoryCacheImageOutputStream
 
-internal const val DEFAULT_BG: Int = -15124186 // rgb(25, 30, 38)
+internal const val DEFAULT_BG: Int = 0xFF1F1B1D.toInt()
 
 internal fun renderRequest(
     skinFile: File,
@@ -32,6 +36,7 @@ internal fun renderRequest(
     overlayMode: SkinOverlayMode = SkinOverlayMode.THREE_D,
     shadows: Boolean = true,
     showPlatform: Boolean = false,
+    modelYaw: Float = 0f,
 ): SkinRenderRequest =
     SkinRenderRequest(
         skinPng = skinFile.readBytes(),
@@ -54,7 +59,8 @@ internal fun renderRequest(
         lightingMode = SkinLightingMode.DIRECTIONAL,
         shadows = shadows,
         showPlatform = showPlatform,
-        pose = pose
+        pose = pose,
+        modelYaw = modelYaw
     )
 
 internal fun explodedPose(isSlim: Boolean, gap: Float): Map<BodyPart, List<SkinTransform>> {
@@ -101,4 +107,76 @@ internal fun stitchPngs(images: List<ByteArray>, columns: Int): BufferedImage {
     }
     graphics.dispose()
     return output
+}
+
+internal fun writeGif(
+    frames: List<ByteArray>,
+    outputFile: File,
+    durationMs: Int,
+) {
+    require(frames.isNotEmpty()) { "GIF must contain at least one frame" }
+    outputFile.parentFile?.mkdirs()
+    val writer = ImageIO.getImageWritersBySuffix("gif").asSequence().first()
+    try {
+        outputFile.outputStream().use { fileOutput ->
+            MemoryCacheImageOutputStream(fileOutput).use { output ->
+                writer.output = output
+                writer.prepareWriteSequence(null)
+                frames.forEachIndexed { index, frame ->
+                    val image = requireNotNull(ImageIO.read(ByteArrayInputStream(frame))).toArgb()
+                    val params = writer.defaultWriteParam
+                    val imageType = ImageTypeSpecifier.createFromBufferedImageType(BufferedImage.TYPE_INT_ARGB)
+                    val metadata = writer.getDefaultImageMetadata(imageType, params)
+                    configureGifMetadata(metadata, durationMs, loop = index == 0)
+                    writer.writeToSequence(IIOImage(image, null, metadata), params)
+                }
+                writer.endWriteSequence()
+            }
+        }
+    } finally {
+        writer.dispose()
+    }
+}
+
+private fun configureGifMetadata(
+    metadata: javax.imageio.metadata.IIOMetadata,
+    durationMs: Int,
+    loop: Boolean,
+) {
+    val format = metadata.nativeMetadataFormatName
+    val root = metadata.getAsTree(format) as IIOMetadataNode
+    val gce = root.child("GraphicControlExtension")
+    gce.setAttribute("disposalMethod", "none")
+    gce.setAttribute("userInputFlag", "FALSE")
+    gce.setAttribute("transparentColorFlag", "FALSE")
+    gce.setAttribute("delayTime", (durationMs / 10).coerceAtLeast(1).toString())
+    gce.setAttribute("transparentColorIndex", "0")
+
+    if (loop) {
+        val appExtensions = root.child("ApplicationExtensions")
+        val appExtension = IIOMetadataNode("ApplicationExtension")
+        appExtension.setAttribute("applicationID", "NETSCAPE")
+        appExtension.setAttribute("authenticationCode", "2.0")
+        appExtension.userObject = byteArrayOf(1, 0, 0)
+        appExtensions.appendChild(appExtension)
+    }
+
+    metadata.setFromTree(format, root)
+}
+
+private fun IIOMetadataNode.child(name: String): IIOMetadataNode {
+    for (i in 0 until length) {
+        val node = item(i)
+        if (node.nodeName == name) return node as IIOMetadataNode
+    }
+    return IIOMetadataNode(name).also { appendChild(it) }
+}
+
+private fun BufferedImage.toArgb(): BufferedImage {
+    if (type == BufferedImage.TYPE_INT_ARGB) return this
+    val converted = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+    val graphics = converted.createGraphics()
+    graphics.drawImage(this, 0, 0, null)
+    graphics.dispose()
+    return converted
 }

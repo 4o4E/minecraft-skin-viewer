@@ -2,7 +2,6 @@ package top.e404.skin.renderer.tavolo.test
 
 import kotlin.test.Test
 import kotlin.test.assertTrue
-import org.jetbrains.skia.Color
 import org.jetbrains.skia.EncodedImageFormat
 import org.jetbrains.skia.Image
 import org.jetbrains.skia.Surface
@@ -14,11 +13,13 @@ import top.e404.skin.renderer.tavolo.renderMinecraftViewTavolo
 import top.e404.tavolo.draw.render3d.OrbitCamera
 import top.e404.tavolo.draw.render3d.RenderConfig
 import top.e404.tavolo.draw.render3d.Vec3
+import top.e404.tavolo.util.Colors
 import java.io.File
 
 class BodyPartMappingManualTest {
     private val outputDir = File("manual-test-output/tavolo/body-part-mapping")
     private val tileSize = 720
+    private val backgroundColor = Colors.BG.argb
 
     @Test
     fun renderExplodedAlexBodyParts() {
@@ -37,7 +38,7 @@ class BodyPartMappingManualTest {
                         width = tileSize,
                         height = tileSize,
                         camera = OrbitCamera(Vec3(0f, 10f, 0f), yaw = yaw, pitch = pitch, distance = 58f),
-                        backgroundColor = Color.makeRGB(32, 34, 38),
+                        backgroundColor = backgroundColor,
                         lightDirection = Vec3(0.4f, 0.8f, 0.6f).normalized(),
                         lightIntensity = 0.95f,
                         antiAliasingLevel = 2
@@ -90,7 +91,7 @@ class BodyPartMappingManualTest {
         val rows = (images.size + columns - 1) / columns
         val surface = Surface.makeRasterN32Premul(columns * tileSize, rows * tileSize)
         val canvas = surface.canvas
-        canvas.clear(Color.makeRGB(24, 26, 30))
+        canvas.clear(backgroundColor)
         images.forEachIndexed { index, image ->
             val x = (index % columns) * tileSize
             val y = (index / columns) * tileSize
