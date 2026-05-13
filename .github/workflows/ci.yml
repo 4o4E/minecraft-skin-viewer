@@ -54,11 +54,12 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
 
       - name: Install OpenGL test dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
+          packages=(
             xvfb \
             libgl1 \
             libglx-mesa0 \
@@ -71,6 +72,17 @@ jobs:
             libxcursor1 \
             libxinerama1 \
             libxxf86vm1
+          )
+          missing=()
+          for package in "${packages[@]}"; do
+            if ! dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -q "install ok installed"; then
+              missing+=("$package")
+            fi
+          done
+          if [ "${#missing[@]}" -gt 0 ]; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends "${missing[@]}"
+          fi
 
       - name: Run OpenGL renderer smoke test
         run: xvfb-run -a bash ./gradlew :renderer-opengl:test -Dskin.openglSmoke=true --build-cache
