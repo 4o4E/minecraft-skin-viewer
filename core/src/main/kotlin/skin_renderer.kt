@@ -62,5 +62,8 @@ interface SkinPngRenderer : AutoCloseable {
 
     fun renderPng(request: SkinRenderRequest): ByteArray
 
+    fun renderPngBatch(requests: List<SkinRenderRequest>): List<ByteArray> =
+        requests.map(::renderPng)
+
     override fun close() = Unit
 }

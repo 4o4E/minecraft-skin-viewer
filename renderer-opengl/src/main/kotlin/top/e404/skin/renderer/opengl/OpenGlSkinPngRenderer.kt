@@ -130,7 +130,6 @@ import kotlin.math.max
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-private const val GL_COLOR_SSAA = 2
 private const val GL_SHADOW_SIZE = 4096
 
 class OpenGlSkinPngRenderer : SkinPngRenderer {
@@ -147,6 +146,9 @@ class OpenGlSkinPngRenderer : SkinPngRenderer {
             request = request
         )
 
+    override fun renderPngBatch(requests: List<SkinRenderRequest>): List<ByteArray> =
+        renderer.renderPngBatch(requests)
+
     override fun close() {
         renderer.close()
     }
@@ -155,6 +157,7 @@ class OpenGlSkinPngRenderer : SkinPngRenderer {
 private class OpenGlSkinRenderer {
     private var window = 0L
     private var colorTarget: GlColorTarget? = null
+    private val shaders = mutableMapOf<GlShaderKey, GlShadowShader>()
 
     fun startup() {
         if (window != 0L) return
@@ -173,9 +176,38 @@ private class OpenGlSkinRenderer {
         request: SkinRenderRequest,
     ): ByteArray {
         startup()
+        val prepared = prepareSkinScene(request)
+        val textureId = uploadTexture(prepared.skinBitmap)
+        try {
+            return renderPngPrepared(request, prepared.meshes, textureId)
+        } finally {
+            glDeleteTextures(textureId)
+        }
+    }
+
+    fun renderPngBatch(requests: List<SkinRenderRequest>): List<ByteArray> {
+        if (requests.isEmpty()) return emptyList()
+        startup()
+        if (!requests.canReusePreparedScene()) return requests.map(::renderPng)
+
+        val prepared = prepareSkinScene(requests.first())
+        val textureId = uploadTexture(prepared.skinBitmap)
+        try {
+            return requests.map { renderPngPrepared(it, prepared.meshes, textureId) }
+        } finally {
+            glDeleteTextures(textureId)
+        }
+    }
+
+    private fun renderPngPrepared(
+        request: SkinRenderRequest,
+        baseMeshes: List<SkinMesh>,
+        textureId: Int,
+    ): ByteArray {
         val settings = request.settings
-        val targetWidth = settings.width * GL_COLOR_SSAA
-        val targetHeight = settings.height * GL_COLOR_SSAA
+        val colorSsaa = settings.colorSsaa()
+        val targetWidth = settings.width * colorSsaa
+        val targetHeight = settings.height * colorSsaa
         val target = colorTarget
         if (target == null || target.width != targetWidth || target.height != targetHeight) {
             target?.close()
@@ -183,7 +215,11 @@ private class OpenGlSkinRenderer {
         }
 
         glBindFramebuffer(GL_FRAMEBUFFER, colorTarget!!.framebuffer)
-        renderSkinScene(request)
+        renderSkinScene(
+            request = request,
+            meshes = baseMeshes.map { if (request.modelYaw == 0f) it else it.rotateY(request.modelYaw) },
+            textureId = textureId
+        )
         val image = readFramebuffer(targetWidth, targetHeight, settings.width, settings.height)
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
@@ -196,6 +232,8 @@ private class OpenGlSkinRenderer {
     fun close() {
         colorTarget?.close()
         colorTarget = null
+        shaders.values.forEach { it.close() }
+        shaders.clear()
         if (window != 0L) {
             glfwDestroyWindow(window)
             window = 0L
@@ -203,27 +241,34 @@ private class OpenGlSkinRenderer {
         }
     }
 
-    private fun renderSkinScene(
-        request: SkinRenderRequest,
-    ) {
-        val settings = request.settings
+    private fun prepareSkinScene(request: SkinRenderRequest): PreparedSkinScene {
+        startup()
         val skinImage = SkiaImage.makeFromEncoded(request.skinPng)
         val skinBitmap = Bitmap.makeFromImage(skinImage)
         val use3DOverlay = request.overlayMode == SkinOverlayMode.THREE_D
-        val meshes = createMinecraftPlayerMeshes(
-            skin = skinBitmap,
-            isSlim = request.isSlim,
-            pose = request.pose,
-            use3DOverlay = use3DOverlay
-        ).map { if (request.modelYaw == 0f) it else it.rotateY(request.modelYaw) }
+        return PreparedSkinScene(
+            skinBitmap = skinBitmap,
+            meshes = createMinecraftPlayerMeshes(
+                skin = skinBitmap,
+                isSlim = request.isSlim,
+                pose = request.pose,
+                use3DOverlay = use3DOverlay
+            )
+        )
+    }
+
+    private fun renderSkinScene(
+        request: SkinRenderRequest,
+        meshes: List<SkinMesh>,
+        textureId: Int,
+    ) {
+        val settings = request.settings
+        val use3DOverlay = request.overlayMode == SkinOverlayMode.THREE_D
         val lightDir = settings.lightDirection.toGlVec3().normalized()
         val shadowCamera = createShadowCamera(settings, lightDir)
 
         var floorShadow: GlShadowResources? = null
         var overlayDetailShadow: GlShadowResources? = null
-        var textureId = 0
-        var floorShader: GlShadowShader? = null
-        var detailShader: GlShadowShader? = null
         try {
             if (request.shadows) {
                 floorShadow = createShadowResources()
@@ -240,53 +285,70 @@ private class OpenGlSkinRenderer {
             }
 
             beginScene(settings, request.yaw)
-            floorShader = GlShadowShader.create(
-                shadowMatrix = shadowCamera.shadowMatrix(),
-                shadowTexture = floorShadow?.depthTexture ?: 0,
-                lightDir = lightDir,
+            val shadowMatrix = shadowCamera.shadowMatrix()
+            val floorShader = shadowShader(
                 style = GlShadowStyle.FLOOR,
                 lightingMode = request.lightingMode
             )
-            detailShader = GlShadowShader.create(
-                shadowMatrix = shadowCamera.shadowMatrix(),
-                shadowTexture = overlayDetailShadow?.depthTexture ?: floorShadow?.depthTexture ?: 0,
-                lightDir = lightDir,
+            val detailShader = shadowShader(
                 style = GlShadowStyle.MODEL_DETAIL,
                 lightingMode = request.lightingMode
             )
 
             if (request.showPlatform) {
-                floorShader.use(receiveShadow = request.shadows, useTexture = false)
+                floorShader.use(
+                    shadowMatrix = shadowMatrix,
+                    shadowTexture = floorShadow?.depthTexture ?: 0,
+                    lightDir = lightDir,
+                    receiveShadow = request.shadows,
+                    useTexture = false
+                )
                 drawFloor(settings.platformTopY)
             }
 
-            textureId = uploadTexture(skinBitmap)
-            floorShader.use(receiveShadow = request.shadows, useTexture = true, skinTexture = textureId)
+            floorShader.use(
+                shadowMatrix = shadowMatrix,
+                shadowTexture = floorShadow?.depthTexture ?: 0,
+                lightDir = lightDir,
+                receiveShadow = request.shadows,
+                useTexture = true,
+                skinTexture = textureId
+            )
             glEnable(GL_TEXTURE_2D)
             glBindTexture(GL_TEXTURE_2D, textureId)
             meshes.filter { it.texture != null }.forEach { drawTexturedMesh(it, correctNormalByFaceCenter = true) }
             glDisable(GL_TEXTURE_2D)
 
             val solidReceiveDetailShadow = request.shadows && use3DOverlay
-            detailShader.use(receiveShadow = solidReceiveDetailShadow, useTexture = false)
+            detailShader.use(
+                shadowMatrix = shadowMatrix,
+                shadowTexture = overlayDetailShadow?.depthTexture ?: floorShadow?.depthTexture ?: 0,
+                lightDir = lightDir,
+                receiveShadow = solidReceiveDetailShadow,
+                useTexture = false
+            )
             drawSolidMeshes(meshes, transparentPass = false, correctNormalByVoxelCenter = use3DOverlay)
 
-            detailShader.use(receiveShadow = solidReceiveDetailShadow, useTexture = false)
+            detailShader.use(
+                shadowMatrix = shadowMatrix,
+                shadowTexture = overlayDetailShadow?.depthTexture ?: floorShadow?.depthTexture ?: 0,
+                lightDir = lightDir,
+                receiveShadow = solidReceiveDetailShadow,
+                useTexture = false
+            )
             glDepthMask(false)
             drawSolidMeshes(meshes, transparentPass = true, correctNormalByVoxelCenter = use3DOverlay)
             glDepthMask(true)
             glUseProgram(0)
         } finally {
-            if (textureId != 0) glDeleteTextures(textureId)
-            floorShader?.close()
-            detailShader?.close()
             floorShadow?.close()
             overlayDetailShadow?.close()
         }
     }
 
     private fun beginScene(settings: SkinRenderSettings, yaw: Float) {
-        glViewport(0, 0, settings.width * GL_COLOR_SSAA, settings.height * GL_COLOR_SSAA)
+        val colorSsaa = settings.colorSsaa()
+        glViewport(0, 0, settings.width * colorSsaa, settings.height * colorSsaa)
         glClearColor(
             SkiaColor.getR(settings.backgroundColor) / 255f,
             SkiaColor.getG(settings.backgroundColor) / 255f,
@@ -316,6 +378,11 @@ private class OpenGlSkinRenderer {
             view = lookAt(target + (lightDir * lightDistance), target, GlVec3(0f, 1f, 0f))
         )
     }
+
+    private fun shadowShader(style: GlShadowStyle, lightingMode: SkinLightingMode): GlShadowShader =
+        shaders.getOrPut(GlShaderKey(style, lightingMode)) {
+            GlShadowShader.create(style, lightingMode)
+        }
 
     private fun drawAllMeshesForShadow(meshes: List<SkinMesh>, useVoxelNormals: Boolean) {
         meshes.filter { it.texture != null }.forEach { drawTexturedMesh(it, correctNormalByFaceCenter = true) }
@@ -609,6 +676,16 @@ private fun readFramebuffer(sourceWidth: Int, sourceHeight: Int, outputWidth: In
     return image
 }
 
+private data class PreparedSkinScene(
+    val skinBitmap: Bitmap,
+    val meshes: List<SkinMesh>,
+)
+
+private data class GlShaderKey(
+    val style: GlShadowStyle,
+    val lightingMode: SkinLightingMode,
+)
+
 private data class GlVec3(val x: Float, val y: Float, val z: Float) {
     operator fun plus(other: GlVec3): GlVec3 = GlVec3(x + other.x, y + other.y, z + other.z)
     operator fun minus(other: GlVec3): GlVec3 = GlVec3(x - other.x, y - other.y, z - other.z)
@@ -668,12 +745,22 @@ private data class GlShadowStyle(
 
 private class GlShadowShader private constructor(
     private val program: Int,
-    private val shadowTexture: Int,
+    private val shadowMatrixLocation: Int,
+    private val lightDirLocation: Int,
     private val useTextureLocation: Int,
     private val receiveShadowLocation: Int,
 ) {
-    fun use(receiveShadow: Boolean, useTexture: Boolean, skinTexture: Int = 0) {
+    fun use(
+        shadowMatrix: FloatArray,
+        shadowTexture: Int,
+        lightDir: GlVec3,
+        receiveShadow: Boolean,
+        useTexture: Boolean,
+        skinTexture: Int = 0,
+    ) {
         glUseProgram(program)
+        glUniformMatrix4fv(shadowMatrixLocation, false, shadowMatrix)
+        glUniform3f(lightDirLocation, lightDir.x, lightDir.y, lightDir.z)
         glUniform1i(useTextureLocation, if (useTexture) 1 else 0)
         glUniform1i(receiveShadowLocation, if (receiveShadow) 1 else 0)
         glActiveTexture(GL_TEXTURE1)
@@ -688,9 +775,6 @@ private class GlShadowShader private constructor(
 
     companion object {
         fun create(
-            shadowMatrix: FloatArray,
-            shadowTexture: Int,
-            lightDir: GlVec3,
             style: GlShadowStyle,
             lightingMode: SkinLightingMode,
         ): GlShadowShader {
@@ -776,17 +860,13 @@ private class GlShadowShader private constructor(
             check(glGetProgrami(program, GL_LINK_STATUS) != 0) { glGetProgramInfoLog(program) }
 
             glUseProgram(program)
-            glUniformMatrix4fv(glGetUniformLocation(program, "uShadowMatrix"), false, shadowMatrix)
-            glUniform3f(glGetUniformLocation(program, "uLightDir"), lightDir.x, lightDir.y, lightDir.z)
             glUniform1i(glGetUniformLocation(program, "uSkinTexture"), 0)
             glUniform1i(glGetUniformLocation(program, "uShadowMap"), 1)
-            glActiveTexture(GL_TEXTURE1)
-            glBindTexture(GL_TEXTURE_2D, shadowTexture)
-            glActiveTexture(GL_TEXTURE0)
 
             return GlShadowShader(
                 program = program,
-                shadowTexture = shadowTexture,
+                shadowMatrixLocation = glGetUniformLocation(program, "uShadowMatrix"),
+                lightDirLocation = glGetUniformLocation(program, "uLightDir"),
                 useTextureLocation = glGetUniformLocation(program, "uUseTexture"),
                 receiveShadowLocation = glGetUniformLocation(program, "uReceiveShadow")
             )
@@ -803,6 +883,19 @@ private class GlShadowShader private constructor(
 }
 
 private fun SkinRenderVec3.toGlVec3(): GlVec3 = GlVec3(x, y, z)
+
+private fun SkinRenderSettings.colorSsaa(): Int =
+    antiAliasingLevel.coerceAtLeast(1)
+
+private fun List<SkinRenderRequest>.canReusePreparedScene(): Boolean {
+    val first = first()
+    return all {
+        it.skinPng.contentEquals(first.skinPng) &&
+            it.isSlim == first.isSlim &&
+            it.overlayMode == first.overlayMode &&
+            it.pose == first.pose
+    }
+}
 
 private fun orbitEye(yawDegrees: Float, settings: SkinRenderSettings): GlVec3 {
     val yaw = Math.toRadians(yawDegrees.toDouble())

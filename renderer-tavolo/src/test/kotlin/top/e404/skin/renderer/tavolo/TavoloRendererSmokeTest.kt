@@ -20,6 +20,20 @@ class TavoloRendererSmokeTest {
         val bytes = TavoloSkinPngRenderer().renderPng(smokeRequest())
         assertRenderedPng(bytes, width = 160, height = 240)
     }
+
+    @Test
+    fun `renders reusable batch PNGs`() {
+        val request = smokeRequest()
+        val bytes = TavoloSkinPngRenderer().renderPngBatch(
+            listOf(
+                request,
+                request.copy(modelYaw = 90f)
+            )
+        )
+
+        assertEquals(2, bytes.size)
+        bytes.forEach { assertRenderedPng(it, width = 160, height = 240) }
+    }
 }
 
 private fun smokeRequest(): SkinRenderRequest =

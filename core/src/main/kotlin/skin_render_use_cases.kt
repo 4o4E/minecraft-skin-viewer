@@ -142,19 +142,21 @@ object SkinRenderUseCases {
         val normalPose = headScalePose(slim, headScale)
         val sneakPose = mergePose(normalPose, sneakPose())
         val camera = SkinCamera(SkinRenderVec3(0f, 10f, 0f), yaw = 315f, pitch = 10f, distance = 65f)
+        val pngs = renderer.renderPngBatch(
+            listOf(
+                request(skinPng, slim, FULL_WIDTH, FULL_HEIGHT, backgroundColor, lightColor, camera, normalPose, 1, showPlatform),
+                request(skinPng, slim, FULL_WIDTH, FULL_HEIGHT, backgroundColor, lightColor, camera, sneakPose, 1, showPlatform)
+            )
+        )
         return encodeGif(
             listOf(
                 SkinAnimationFrame(
                     durationMs = duration,
-                    png = renderer.renderPng(
-                        request(skinPng, slim, FULL_WIDTH, FULL_HEIGHT, backgroundColor, lightColor, camera, normalPose, 1, showPlatform)
-                    )
+                    png = pngs[0]
                 ),
                 SkinAnimationFrame(
                     durationMs = duration,
-                    png = renderer.renderPng(
-                        request(skinPng, slim, FULL_WIDTH, FULL_HEIGHT, backgroundColor, lightColor, camera, sneakPose, 1, showPlatform)
-                    )
+                    png = pngs[1]
                 )
             )
         )
@@ -203,26 +205,28 @@ object SkinRenderUseCases {
     ): ByteArray {
         val frames = frameCount.coerceAtLeast(1)
         val camera = SkinCamera(target, yaw = 45f, pitch = pitch, distance = distance)
+        val requests = (0 until frames).map { index ->
+            val modelYaw = 360f * index / frames
+            request(
+                skinPng = skinPng,
+                slim = slim,
+                width = width,
+                height = height,
+                backgroundColor = backgroundColor,
+                lightColor = lightColor,
+                camera = camera,
+                pose = pose,
+                antiAliasingLevel = antiAliasingLevel,
+                showPlatform = showPlatform,
+                modelYaw = modelYaw
+            )
+        }
+        val pngs = renderer.renderPngBatch(requests)
         return encodeGif(
-            (0 until frames).map { index ->
-                val modelYaw = 360f * index / frames
+            pngs.map {
                 SkinAnimationFrame(
                     durationMs = duration,
-                    png = renderer.renderPng(
-                        request(
-                            skinPng = skinPng,
-                            slim = slim,
-                            width = width,
-                            height = height,
-                            backgroundColor = backgroundColor,
-                            lightColor = lightColor,
-                            camera = camera,
-                            pose = pose,
-                            antiAliasingLevel = antiAliasingLevel,
-                            showPlatform = showPlatform,
-                            modelYaw = modelYaw
-                        )
-                    )
+                    png = it
                 )
             }
         )

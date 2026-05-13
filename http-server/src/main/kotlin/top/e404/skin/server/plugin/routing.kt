@@ -31,7 +31,6 @@ fun Application.routing() = routing {
             call.respond(HttpStatusCode.NotFound)
             return@get
         }
-        val skinBytes = data.skinBytes
 
         val parameters = call.request.queryParameters
         val bg = parameters["bg"]?.asColor() ?: DEFAULT_BG_COLOR
@@ -55,7 +54,7 @@ fun Application.routing() = routing {
                     "voxelOverlay" to true,
                 )) {
                     SkinRendererService.renderSneak(
-                        bytes = skinBytes,
+                        bytes = data.skinBytes,
                         slim = slim,
                         backgroundColor = bg,
                         lightColor = light,
@@ -82,7 +81,7 @@ fun Application.routing() = routing {
                     "voxelOverlay" to true,
                 )) {
                     SkinRendererService.renderSkin(
-                        bytes = skinBytes,
+                        bytes = data.skinBytes,
                         slim = slim,
                         backgroundColor = bg,
                         lightColor = light,
@@ -114,7 +113,7 @@ fun Application.routing() = routing {
                     "voxelOverlay" to true,
                 )) {
                     SkinRendererService.renderSkinRotate(
-                        bytes = skinBytes,
+                        bytes = data.skinBytes,
                         slim = slim,
                         backgroundColor = bg,
                         frameCount = frameCount,
@@ -139,7 +138,7 @@ fun Application.routing() = routing {
                     "voxelOverlay" to true,
                 )) {
                     SkinRendererService.renderHead(
-                        bytes = skinBytes,
+                        bytes = data.skinBytes,
                         backgroundColor = bg,
                         lightColor = light,
                         showPlatform = platform
@@ -165,7 +164,7 @@ fun Application.routing() = routing {
                     "voxelOverlay" to true,
                 )) {
                     SkinRendererService.renderHeadRotate(
-                        bytes = skinBytes,
+                        bytes = data.skinBytes,
                         backgroundColor = bg,
                         frameCount = frameCount,
                         pitchAmplitude = pitchAmplitude,
@@ -192,7 +191,7 @@ fun Application.routing() = routing {
                     "voxelOverlay" to true,
                 )) {
                     SkinRendererService.renderHomo(
-                        bytes = skinBytes,
+                        bytes = data.skinBytes,
                         slim = slim,
                         backgroundColor = bg,
                         lightColor = light,
@@ -251,7 +250,13 @@ fun Application.routing() = routing {
         val bg = parameters["bg"]?.asColor() ?: 0
         val scale = parameters["scale"]?.toIntOrNull() ?: 5
         val margin = parameters["margin"]?.toIntOrNull() ?: 40
-        call.respondBytes(renderFace(data.skinBytes, bg, scale, margin), ContentType.Image.PNG)
+        call.respondCachedRender(data, "face", "png", ContentType.Image.PNG, mapOf(
+            "bg" to bg.hexColor(),
+            "scale" to scale,
+            "margin" to margin,
+        )) {
+            renderFace(data.skinBytes, bg, scale, margin)
+        }
     }
 }
 

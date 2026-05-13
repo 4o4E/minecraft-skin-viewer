@@ -2,6 +2,8 @@ package top.e404.skin.server.service
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import top.e404.skin.server.ConfigManager
 import top.e404.skin.server.FixtureSkin
 import top.e404.skin.server.sql.RenderCacheDao
@@ -9,9 +11,11 @@ import top.e404.skin.server.sql.RenderCacheRecord
 import top.e404.skin.server.sql.pojo.SkinData
 import java.io.File
 import java.security.MessageDigest
+import java.util.concurrent.ConcurrentHashMap
 
 object RenderFileCache {
     private const val CACHE_VERSION = 2
+    private val renderLocks = ConcurrentHashMap<CacheKey, RenderLock>()
 
     fun paramsMd5(values: Map<String, Any?>): String {
         val normalized = buildString {
@@ -41,6 +45,31 @@ object RenderFileCache {
         if (FixtureSkin.enabled) return render()
         if (!ConfigManager.config.renderCache.enabled) return render()
 
+        return withRenderLock(CacheKey(skin.uuid, paramsMd5, ext)) {
+            getOrRenderLocked(skin, paramsMd5, ext, render)
+        }
+    }
+
+    private suspend fun <T> withRenderLock(key: CacheKey, block: suspend () -> T): T {
+        val lock = renderLocks.compute(key) { _, current ->
+            (current ?: RenderLock()).also { it.references++ }
+        }!!
+        try {
+            return lock.mutex.withLock { block() }
+        } finally {
+            renderLocks.computeIfPresent(key) { _, current ->
+                current.references--
+                if (current.references == 0) null else current
+            }
+        }
+    }
+
+    private suspend fun getOrRenderLocked(
+        skin: SkinData,
+        paramsMd5: String,
+        ext: String,
+        render: suspend () -> ByteArray,
+    ): ByteArray {
         val file = cacheFile(skin.uuid, paramsMd5, ext)
         val record = RenderCacheDao.find(skin.uuid, paramsMd5, ext)
         val now = System.currentTimeMillis()
@@ -109,7 +138,7 @@ object RenderFileCache {
 
     private suspend fun writeAtomically(file: File, bytes: ByteArray) = withContext(Dispatchers.IO) {
         file.parentFile.mkdirs()
-        val tmp = File(file.parentFile, "${file.name}.${ProcessHandle.current().pid()}.${Thread.currentThread().id}.tmp")
+        val tmp = File(file.parentFile, "${file.name}.${ProcessHandle.current().pid()}.${System.nanoTime()}.tmp")
         tmp.writeBytes(bytes)
         if (file.exists()) file.delete()
         if (!tmp.renameTo(file)) {
@@ -123,6 +152,13 @@ object RenderFileCache {
 
     private fun cacheDir(uuid: String): File =
         File(ConfigManager.config.renderCache.dir).resolve(uuid)
+
+    private data class CacheKey(val uuid: String, val paramsMd5: String, val ext: String)
+
+    private class RenderLock(
+        val mutex: Mutex = Mutex(),
+        var references: Int = 0,
+    )
 
     private fun String.md5(): String {
         val digest = MessageDigest.getInstance("MD5").digest(toByteArray(Charsets.UTF_8))

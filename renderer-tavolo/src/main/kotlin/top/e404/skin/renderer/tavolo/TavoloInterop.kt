@@ -32,9 +32,32 @@ fun renderMinecraftViewTavolo(
 ): Image {
     val skinBitmap = Bitmap.makeFromImage(skin)
     val playerMeshes = createMinecraftPlayerMeshes(skinBitmap, isSlim, pose, use3DOverlay)
+    return renderMinecraftViewTavolo(
+        playerMeshes = playerMeshes,
+        renderConfig = renderConfig,
+        backgroundMeshes = backgroundMeshes,
+        modelYaw = modelYaw
+    )
+}
+
+fun prepareMinecraftPlayerMeshesTavolo(
+    skin: Image,
+    isSlim: Boolean,
+    pose: Map<BodyPart, List<SkinTransform>> = emptyMap(),
+    use3DOverlay: Boolean = true,
+): List<SkinMesh> =
+    createMinecraftPlayerMeshes(Bitmap.makeFromImage(skin), isSlim, pose, use3DOverlay)
+
+fun renderMinecraftViewTavolo(
+    playerMeshes: List<SkinMesh>,
+    renderConfig: RenderConfig,
+    backgroundMeshes: List<SkinMesh> = emptyList(),
+    modelYaw: Float = 0f,
+): Image {
+    val renderedPlayerMeshes = playerMeshes
         .map { if (modelYaw == 0f) it else it.rotateY(modelYaw) }
     return renderSceneToImage(
-        scene = Scene((playerMeshes + backgroundMeshes).map { it.toTavoloMesh() }),
+        scene = Scene((renderedPlayerMeshes + backgroundMeshes).map { it.toTavoloMesh() }),
         config = renderConfig
     )
 }

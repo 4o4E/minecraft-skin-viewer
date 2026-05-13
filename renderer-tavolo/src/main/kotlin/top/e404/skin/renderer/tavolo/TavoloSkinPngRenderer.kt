@@ -17,30 +17,44 @@ class TavoloSkinPngRenderer : SkinPngRenderer {
     override fun startup() = Unit
 
     override fun renderPng(request: SkinRenderRequest): ByteArray {
+        return renderPngInternal(request, Image.makeFromEncoded(request.skinPng))
+    }
+
+    override fun renderPngBatch(requests: List<SkinRenderRequest>): List<ByteArray> {
+        if (requests.isEmpty()) return emptyList()
+        if (!requests.canReusePreparedMeshes()) return requests.map(::renderPng)
+
+        val first = requests.first()
+        val skin = Image.makeFromEncoded(first.skinPng)
+        val playerMeshes = prepareMinecraftPlayerMeshesTavolo(
+            skin = skin,
+            isSlim = first.isSlim,
+            pose = first.pose,
+            use3DOverlay = first.overlayMode == SkinOverlayMode.THREE_D
+        )
+        return requests.map { request ->
+            val settings = request.settings
+            val backgroundMeshes = if (request.showPlatform) {
+                listOf(createSkinPlatform(settings.platformTopY, settings.platformThickness))
+            } else {
+                emptyList()
+            }
+            val image = renderMinecraftViewTavolo(
+                playerMeshes = playerMeshes,
+                renderConfig = request.renderConfig(),
+                backgroundMeshes = backgroundMeshes,
+                modelYaw = request.modelYaw
+            )
+            image.encodeToData(EncodedImageFormat.PNG)!!.bytes
+        }
+    }
+
+    private fun renderPngInternal(request: SkinRenderRequest, skin: Image): ByteArray {
         val settings = request.settings
         val image = renderMinecraftViewTavolo(
-            skin = Image.makeFromEncoded(request.skinPng),
+            skin = skin,
             isSlim = request.isSlim,
-            renderConfig = RenderConfig(
-                width = settings.width,
-                height = settings.height,
-                camera = OrbitCamera(
-                    target = Vec3(settings.target.x, settings.target.y, settings.target.z),
-                    yaw = request.yaw,
-                    pitch = settings.pitch,
-                    distance = settings.distance
-                ),
-                backgroundColor = settings.backgroundColor,
-                useBackFaceCulling = false,
-                antiAliasingLevel = settings.antiAliasingLevel,
-                lightDirection = Vec3(
-                    settings.lightDirection.x,
-                    settings.lightDirection.y,
-                    settings.lightDirection.z
-                ),
-                lightIntensity = settings.lightIntensity,
-                enableShadows = request.shadows
-            ),
+            renderConfig = request.renderConfig(),
             backgroundMeshes = if (request.showPlatform) {
                 listOf(createSkinPlatform(settings.platformTopY, settings.platformThickness))
             } else {
@@ -51,5 +65,39 @@ class TavoloSkinPngRenderer : SkinPngRenderer {
             modelYaw = request.modelYaw
         )
         return image.encodeToData(EncodedImageFormat.PNG)!!.bytes
+    }
+
+    private fun List<SkinRenderRequest>.canReusePreparedMeshes(): Boolean {
+        val first = first()
+        return all {
+            it.skinPng.contentEquals(first.skinPng) &&
+                it.isSlim == first.isSlim &&
+                it.overlayMode == first.overlayMode &&
+                it.pose == first.pose
+        }
+    }
+
+    private fun SkinRenderRequest.renderConfig(): RenderConfig {
+        val settings = settings
+        return RenderConfig(
+            width = settings.width,
+            height = settings.height,
+            camera = OrbitCamera(
+                target = Vec3(settings.target.x, settings.target.y, settings.target.z),
+                yaw = yaw,
+                pitch = settings.pitch,
+                distance = settings.distance
+            ),
+            backgroundColor = settings.backgroundColor,
+            useBackFaceCulling = false,
+            antiAliasingLevel = settings.antiAliasingLevel,
+            lightDirection = Vec3(
+                settings.lightDirection.x,
+                settings.lightDirection.y,
+                settings.lightDirection.z
+            ),
+            lightIntensity = settings.lightIntensity,
+            enableShadows = shadows
+        )
     }
 }
