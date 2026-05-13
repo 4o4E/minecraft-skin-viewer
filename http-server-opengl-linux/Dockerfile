@@ -1,4 +1,4 @@
-FROM openjdk:11-jre-slim AS jre_source
+FROM eclipse-temurin:11-jre-jammy AS jre_source
 FROM ubuntu:24.04
 
 ENV TZ="Asia/Shanghai"
@@ -26,7 +26,7 @@ RUN sed -i s/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/i /etc/apt/sources.
     mesa-utils \
     && rm -rf /var/lib/apt/lists/*
 
-ENV JAVA_HOME=/usr/local/openjdk-11
+ENV JAVA_HOME=/opt/java/openjdk
 ENV LANG="en_US.UTF-8" \
     LANGUAGE="en_US.UTF-8" \
     LC_ALL="C" \
