@@ -1,3 +1,5 @@
+import java.net.URI
+
 plugins {
     kotlin("jvm") version Versions.KOTLIN
     kotlin("plugin.serialization") version Versions.KOTLIN
@@ -41,6 +43,37 @@ fun rendererClassName(renderer: String): String =
         "opengl" -> "top.e404.skin.renderer.opengl.OpenGlSkinPngRenderer"
         else -> error("Unknown renderer $renderer")
     }
+
+val runDir = rootDir.resolve("run")
+val runSkinAssets = mapOf(
+    "alex_skin.png" to "https://textures.minecraft.net/texture/4daa024bc2d35de2b26025051817d04491ad586e5a2ab85f9dad608b009ac7d",
+    "steve_skin.png" to "https://textures.minecraft.net/texture/1a4af718455d4aab528e7a61f86fa25e6a369d1768dcb13f7df319a713eb810b",
+)
+
+val prepareRunDir = tasks.register("prepareRunDir") {
+    outputs.dir(runDir)
+    doLast {
+        if (runDir.isFile) runDir.delete()
+        runDir.mkdirs()
+    }
+}
+
+val prepareRunAssets = tasks.register("prepareRunAssets") {
+    dependsOn(prepareRunDir)
+    outputs.files(runSkinAssets.keys.map { runDir.resolve(it) })
+    doLast {
+        runSkinAssets.forEach { (fileName, url) ->
+            val target = runDir.resolve(fileName)
+            if (target.isFile) return@forEach
+            logger.lifecycle("Downloading missing run asset $fileName")
+            target.outputStream().use { output ->
+                URI(url).toURL().openStream().use { input ->
+                    input.copyTo(output)
+                }
+            }
+        }
+    }
+}
 
 kotlin {
     jvmToolchain(11)
@@ -142,7 +175,8 @@ subprojects {
 
         test {
             useJUnitPlatform()
-            workingDir = rootDir.resolve("run")
+            dependsOn(rootProject.tasks.named("prepareRunDir"))
+            workingDir = runDir
         }
 
         register<Test>("manualTest") {
@@ -158,7 +192,8 @@ subprojects {
                 events("passed", "failed", "skipped", "standardOut", "standardError")
                 showStandardStreams = true
             }
-            workingDir = rootDir.resolve("run")
+            dependsOn(rootProject.tasks.named("prepareRunAssets"))
+            workingDir = runDir
             shouldRunAfter(test)
         }
     }

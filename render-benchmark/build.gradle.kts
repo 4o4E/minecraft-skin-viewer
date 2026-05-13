@@ -51,6 +51,7 @@ dependencies {
 }
 
 tasks.register<JavaExec>("openglCubeDemo") {
+    dependsOn(rootProject.tasks.named("prepareRunAssets"))
     description = "生成 OpenGL 方块、半透明外壳和阴�?demo"
     group = "verification"
     mainClass.set("top.e404.skin.benchmark.OpenGlCubeDemoKt")
@@ -64,6 +65,7 @@ tasks.register<JavaExec>("openglCubeDemo") {
 }
 
 tasks.register<Test>("renderImageBenchmark") {
+    dependsOn(rootProject.tasks.named("prepareRunAssets"))
     description = "运行 Minecraft 皮肤渲染生成 PNG 图片的耗时对比测试"
     group = "verification"
     testClassesDirs = benchmark.output.classesDirs
@@ -81,6 +83,7 @@ tasks.register<Test>("renderImageBenchmark") {
 }
 
 tasks.register<JavaExec>("javafxQualityDemo") {
+    dependsOn(rootProject.tasks.named("prepareRunAssets"))
     description = "Generate JavaFX transparency and shadow quality demo"
     group = "verification"
     mainClass.set("top.e404.skin.benchmark.JavaFxQualityDemoKt")
@@ -96,3 +99,4 @@ tasks.register<JavaExec>("javafxQualityDemo") {
         layout.buildDirectory.dir("reports/javafx-quality-demo").get().asFile.absolutePath
     )
 }
+
