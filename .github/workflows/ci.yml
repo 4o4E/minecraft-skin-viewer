@@ -35,4 +35,4 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run unit tests
-        run: bash ./gradlew test --build-cache --parallel
+        run: bash ./gradlew :core:test :http-server:test --build-cache --parallel

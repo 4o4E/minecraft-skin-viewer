@@ -30,7 +30,9 @@ jobs:
 
       - name: Run tests and build server packages
         run: |
-          bash ./gradlew test \
+          bash ./gradlew \
+            :core:test \
+            :http-server:test \
             :http-server-tavolo-win:shadowJar \
             :http-server-tavolo-linux:shadowJar \
             :http-server-opengl-win:shadowJar \

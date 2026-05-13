@@ -14,6 +14,7 @@ dependencies {
     implementation("org.slf4j:slf4j-api:2.0.17")
     // skiko
     api("org.jetbrains.skiko:skiko-awt-runtime-windows-x64:${Versions.SKIKO}")
+    testRuntimeOnly(skiko("linux-x64"))
     // test
     testImplementation(kotlin("test", Versions.KOTLIN))
 }
