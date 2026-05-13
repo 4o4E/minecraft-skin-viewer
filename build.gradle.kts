@@ -13,15 +13,10 @@ data class ServerPackageSpec(
 )
 
 fun serverPackageSpec(projectName: String): ServerPackageSpec? =
-    when (projectName) {
-        "http-server-win" -> ServerPackageSpec("tavolo", "win")
-        "http-server-linux" -> ServerPackageSpec("tavolo", "linux")
-        "http-server-mac" -> ServerPackageSpec("tavolo", "mac")
-        else -> Regex("""http-server-(tavolo|opengl)-(win|linux)""")
-            .matchEntire(projectName)
-            ?.destructured
-            ?.let { (renderer, os) -> ServerPackageSpec(renderer, os) }
-    }
+    Regex("""http-server-(tavolo|opengl)-(win|linux)""")
+        .matchEntire(projectName)
+        ?.destructured
+        ?.let { (renderer, os) -> ServerPackageSpec(renderer, os) }
 
 fun skikoOsClassifier(os: String): String =
     when (os) {

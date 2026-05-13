@@ -15,8 +15,8 @@
 ### 使用
 
 1. 安装11或更高版本的[java](https://adoptium.net/)以及[mysql](https://downloads.mysql.com/archives/community/)
-2. 从[release](https://github.com/4o4E/minecraft-skin-viewer/releases/latest)下载对应操作系统的jar文件
-3. 在控制台中使用`java -jar http-server-${plateform}.jar`启动服务
+2. 从[release](https://github.com/4o4E/minecraft-skin-viewer/releases/latest)下载对应渲染器和操作系统的 jar 文件
+3. 在控制台中使用 `java -jar http-server-tavolo-linux.jar` 或 `java -jar http-server-opengl-win.jar` 启动服务
 
 ### 测试
 
@@ -140,6 +140,9 @@ GET http://localhost:2345/data/name/404E
 
 ## Docker 部署
 
-支持使用 Docker 进行部署, 镜像不包含mysql, [compose部署参考](http-server-linux/docker-compose.yml)
+支持使用 Docker 进行部署, 镜像不包含 mysql：
+
+- Tavolo CPU 渲染：[compose 部署参考](http-server-tavolo-linux/docker-compose.yml)
+- OpenGL + Xvfb 渲染：[compose 部署参考](http-server-opengl-linux/docker-compose.yml)
 
 
