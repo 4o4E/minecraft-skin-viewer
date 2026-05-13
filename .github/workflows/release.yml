@@ -13,6 +13,7 @@ jobs:
   release:
     name: Build Release
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -27,16 +28,15 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Run unit tests
-        run: bash ./gradlew test
-
-      - name: Build server packages
+      - name: Run tests and build server packages
         run: |
-          bash ./gradlew \
+          bash ./gradlew test \
             :http-server-tavolo-win:shadowJar \
             :http-server-tavolo-linux:shadowJar \
             :http-server-opengl-win:shadowJar \
-            :http-server-opengl-linux:shadowJar
+            :http-server-opengl-linux:shadowJar \
+            --build-cache \
+            --parallel
 
       - name: Prepare release assets
         run: |
@@ -71,6 +71,8 @@ jobs:
         with:
           context: http-server-tavolo-linux
           push: true
+          cache-from: type=gha,scope=tavolo-linux
+          cache-to: type=gha,mode=max,scope=tavolo-linux
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/minecraft-skin-viewer-tavolo-linux:${{ github.ref_name }}
             ghcr.io/${{ env.OWNER_LC }}/minecraft-skin-viewer-tavolo-linux:latest
@@ -80,6 +82,8 @@ jobs:
         with:
           context: http-server-opengl-linux
           push: true
+          cache-from: type=gha,scope=opengl-linux
+          cache-to: type=gha,mode=max,scope=opengl-linux
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/minecraft-skin-viewer-opengl-linux:${{ github.ref_name }}
             ghcr.io/${{ env.OWNER_LC }}/minecraft-skin-viewer-opengl-linux:latest
