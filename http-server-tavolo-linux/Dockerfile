@@ -11,6 +11,7 @@ RUN sed -i s/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/i /etc/apt/sources.
     gosu \
     ca-certificates \
     fontconfig libfreetype6 \
+    libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
 ENV JAVA_HOME=/opt/java/openjdk

@@ -108,7 +108,7 @@ jobs:
 
       - name: Smoke test Tavolo Docker render endpoint
         run: |
-          curl -fsS http://127.0.0.1:18080/render/name/404E/head -o tavolo-head.png
+          curl -fSv http://127.0.0.1:18080/render/name/404E/head -o tavolo-head.png
           test -s tavolo-head.png
 
       - name: Stop Tavolo Docker image
