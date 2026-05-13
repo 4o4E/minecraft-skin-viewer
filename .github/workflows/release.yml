@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    name: Build Release
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "11"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run unit tests
+        run: bash ./gradlew test
+
+      - name: Build server packages
+        run: |
+          bash ./gradlew \
+            :http-server-tavolo-win:shadowJar \
+            :http-server-tavolo-linux:shadowJar \
+            :http-server-opengl-win:shadowJar \
+            :http-server-opengl-linux:shadowJar
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+          cp http-server-tavolo-win/build/libs/http-server-tavolo-win.jar release-assets/
+          cp http-server-tavolo-linux/build/libs/http-server-tavolo-linux.jar release-assets/
+          cp http-server-opengl-win/build/libs/http-server-opengl-win.jar release-assets/
+          cp http-server-opengl-linux/build/libs/http-server-opengl-linux.jar release-assets/
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          files: release-assets/*.jar
+          generate_release_notes: true
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Normalize image owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Tavolo Linux image
+        uses: docker/build-push-action@v6
+        with:
+          context: http-server-tavolo-linux
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/minecraft-skin-viewer-tavolo-linux:${{ github.ref_name }}
+            ghcr.io/${{ env.OWNER_LC }}/minecraft-skin-viewer-tavolo-linux:latest
+
+      - name: Build and push OpenGL Linux image
+        uses: docker/build-push-action@v6
+        with:
+          context: http-server-opengl-linux
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/minecraft-skin-viewer-opengl-linux:${{ github.ref_name }}
+            ghcr.io/${{ env.OWNER_LC }}/minecraft-skin-viewer-opengl-linux:latest
