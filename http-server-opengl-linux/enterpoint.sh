@@ -25,6 +25,16 @@ rm -f /tmp/.X99-lock
 Xvfb "${DISPLAY:-:99}" -screen 0 "${XVFB_SCREEN:-1024x768x24}" +extension GLX +render -noreset &
 XVFB_PID=$!
 trap 'kill "$XVFB_PID" 2>/dev/null || true' EXIT
+for i in {1..30}; do
+  if glxinfo -B >/dev/null 2>&1; then
+    break
+  fi
+  if [ "$i" -eq 30 ]; then
+    echo "Xvfb/GLX did not become ready" >&2
+    exit 1
+  fi
+  sleep 0.2
+done
 
 chown -R java /app
 

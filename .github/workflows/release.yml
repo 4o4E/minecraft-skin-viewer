@@ -117,9 +117,8 @@ jobs:
           docker logs msv-tavolo-smoke 2>/dev/null || true
           docker rm -f msv-tavolo-smoke 2>/dev/null || true
 
-      - name: Smoke test OpenGL Docker image
+      - name: Start OpenGL Docker image
         run: |
-          trap 'docker logs msv-opengl-smoke 2>/dev/null || true; docker rm -f msv-opengl-smoke 2>/dev/null || true' EXIT
           docker run -d --name msv-opengl-smoke \
             -e SKIN_FIXTURE_FILE=/tmp/alex_skin.png \
             -e SKIN_FIXTURE_NAME=404E \
@@ -129,6 +128,9 @@ jobs:
             -v "$PWD/run/alex_skin.png:/tmp/alex_skin.png:ro" \
             -p 18081:8080 \
             minecraft-skin-viewer:opengl-smoke
+
+      - name: Wait for OpenGL Docker data endpoint
+        run: |
           for i in {1..30}; do
             curl -fsS http://127.0.0.1:18081/data/name/404E && break
             if [ "$i" -eq 30 ]; then
@@ -136,13 +138,22 @@ jobs:
             fi
             sleep 1
           done
+
+      - name: Smoke test OpenGL Docker face endpoint
+        run: |
           curl -fsS http://127.0.0.1:18081/face/name/404E -o opengl-face.png
-          curl -fsS http://127.0.0.1:18081/render/name/404E/head -o opengl-head.png
           test -s opengl-face.png
+
+      - name: Smoke test OpenGL Docker render endpoint
+        run: |
+          curl -fSv http://127.0.0.1:18081/render/name/404E/head -o opengl-head.png
           test -s opengl-head.png
-          docker logs msv-opengl-smoke
-          docker rm -f msv-opengl-smoke
-          trap - EXIT
+
+      - name: Stop OpenGL Docker image
+        if: always()
+        run: |
+          docker logs msv-opengl-smoke 2>/dev/null || true
+          docker rm -f msv-opengl-smoke 2>/dev/null || true
 
       - name: Prepare release assets
         run: |
