@@ -32,6 +32,7 @@ ENV LANG="en_US.UTF-8" \
     LC_ALL="C" \
     PATH="$JAVA_HOME/bin:$PATH" \
     DISPLAY=":99" \
+    JAVA_TOOL_OPTIONS="-Djava.awt.headless=true" \
     LIBGL_ALWAYS_SOFTWARE="1" \
     SKIN_RENDERER_CLASS="top.e404.skin.renderer.opengl.OpenGlSkinPngRenderer" \
     SKIN_RENDERER_ID="opengl-lwjgl-fbo-xvfb"

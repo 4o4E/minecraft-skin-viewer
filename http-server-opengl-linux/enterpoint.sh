@@ -21,12 +21,14 @@ proxy:
 EOF
 fi
 
+chown -R java /app
+
 rm -f /tmp/.X99-lock
-Xvfb "${DISPLAY:-:99}" -screen 0 "${XVFB_SCREEN:-1024x768x24}" +extension GLX +render -noreset &
+Xvfb "${DISPLAY:-:99}" -screen 0 "${XVFB_SCREEN:-1024x768x24}" +extension GLX +render -noreset -ac &
 XVFB_PID=$!
 trap 'kill "$XVFB_PID" 2>/dev/null || true' EXIT
 for i in {1..30}; do
-  if glxinfo -B >/dev/null 2>&1; then
+  if gosu java glxinfo -B >/dev/null 2>&1; then
     break
   fi
   if [ "$i" -eq 30 ]; then
@@ -35,8 +37,6 @@ for i in {1..30}; do
   fi
   sleep 0.2
 done
-
-chown -R java /app
 
 if [ -z "$START_CMD" ]; then
   START_CMD="java -jar app.jar"

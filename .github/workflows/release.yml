@@ -141,7 +141,7 @@ jobs:
 
       - name: Smoke test OpenGL Docker face endpoint
         run: |
-          curl -fsS http://127.0.0.1:18081/face/name/404E -o opengl-face.png
+          curl --retry 3 --retry-delay 1 --retry-all-errors -fsS http://127.0.0.1:18081/face/name/404E -o opengl-face.png
           test -s opengl-face.png
 
       - name: Smoke test OpenGL Docker render endpoint
