@@ -1,15 +1,16 @@
-package top.e404.skin.renderer.opengl.test
+package top.e404.skin.renderer.tavolo.test
 
+import kotlin.test.assertTrue
+import org.jetbrains.skia.EncodedImageFormat
+import org.jetbrains.skia.Image
 import top.e404.skin.core.BodyPart
-import top.e404.skin.core.PlayerModel
-import top.e404.skin.core.SkinLightingMode
-import top.e404.skin.core.SkinOverlayMode
-import top.e404.skin.core.SkinRenderRequest
-import top.e404.skin.core.SkinRenderSettings
-import top.e404.skin.core.SkinRenderVec3
 import top.e404.skin.core.SkinTransform
-import top.e404.skin.core.SkinVec3
-import java.awt.Graphics2D
+import top.e404.skin.core.createSkinPlatform
+import top.e404.skin.renderer.tavolo.renderMinecraftViewTavolo
+import top.e404.tavolo.draw.render3d.OrbitCamera
+import top.e404.tavolo.draw.render3d.RenderConfig
+import top.e404.tavolo.draw.render3d.Vec3
+import top.e404.tavolo.util.Colors
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -19,107 +20,53 @@ import javax.imageio.ImageTypeSpecifier
 import javax.imageio.metadata.IIOMetadataNode
 import javax.imageio.stream.MemoryCacheImageOutputStream
 
-internal const val DEFAULT_BG: Int = 0xFF1F1B1D.toInt()
 internal val manualSkinFiles = listOf(
     "alex_skin.png" to true,
     "steve_skin.png" to false
 )
-internal val openGlRenderOutputDir = File("manual-test-output/opengl/render")
+internal val tavoloRenderOutputDir = File("manual-test-output/tavolo/render")
 internal val shadowGridYaws = listOf(0f, 45f, 90f, 135f, 180f, 225f, 270f, 315f)
 internal val shadowGridPitches = listOf(30f, 10f, -10f)
 internal const val GIF_FRAME_COUNT = 12
 internal const val GIF_FRAME_DURATION_MS = 80
 
-internal fun renderRequest(
-    skinFile: File,
-    slim: Boolean,
+internal fun renderTavoloFile(
+    file: File,
+    isSlim: Boolean,
     width: Int,
     height: Int,
-    target: SkinRenderVec3,
-    yaw: Float,
-    pitch: Float,
-    distance: Float,
-    lightDirection: SkinRenderVec3 = SkinRenderVec3(0.45f, 0.85f, 0.35f).normalized(),
-    lightIntensity: Float = 0.75f,
+    camera: OrbitCamera,
+    lightDirection: Vec3 = Vec3(1f, 1.0f, 1f).normalized(),
+    lightIntensity: Float = .8f,
     pose: Map<BodyPart, List<SkinTransform>> = emptyMap(),
-    overlayMode: SkinOverlayMode = SkinOverlayMode.THREE_D,
-    shadows: Boolean = true,
+    shadows: Boolean = false,
     showPlatform: Boolean = false,
     modelYaw: Float = 0f,
-): SkinRenderRequest =
-    SkinRenderRequest(
-        skinPng = skinFile.readBytes(),
-        isSlim = slim,
-        yaw = yaw,
-        settings = SkinRenderSettings(
+): Image {
+    assertTrue(file.isFile, "Put ${file.name} in the run directory first.")
+    val skin = Image.makeFromEncoded(file.readBytes())
+    return renderMinecraftViewTavolo(
+        skin = skin,
+        isSlim = isSlim,
+        renderConfig = RenderConfig(
             width = width,
             height = height,
-            target = target,
-            pitch = pitch,
-            distance = distance,
-            backgroundColor = DEFAULT_BG,
+            camera = camera,
+            backgroundColor = Colors.BG.argb,
             lightDirection = lightDirection,
-            platformTopY = -8.2f,
-            platformThickness = 2f,
             lightIntensity = lightIntensity,
-            antiAliasingLevel = 2
+            antiAliasingLevel = 4,
+            enableShadows = shadows
         ),
-        overlayMode = overlayMode,
-        lightingMode = SkinLightingMode.DIRECTIONAL,
-        shadows = shadows,
-        showPlatform = showPlatform,
+        backgroundMeshes = if (showPlatform) listOf(createSkinPlatform()) else emptyList(),
         pose = pose,
+        use3DOverlay = true,
         modelYaw = modelYaw
     )
-
-internal fun explodedPose(isSlim: Boolean, gap: Float): Map<BodyPart, List<SkinTransform>> {
-    val model = PlayerModel(isSlim)
-    val bodyDims = BodyPart.BODY.getDims(isSlim)
-    val headDims = BodyPart.HEAD.getDims(isSlim)
-    val rightArmDims = BodyPart.RIGHT_ARM.getDims(isSlim)
-    val leftArmDims = BodyPart.LEFT_ARM.getDims(isSlim)
-    val rightLegDims = BodyPart.RIGHT_LEG.getDims(isSlim)
-    val leftLegDims = BodyPart.LEFT_LEG.getDims(isSlim)
-
-    val desired = mapOf(
-        BodyPart.BODY to SkinVec3(0f, 10f, 0f),
-        BodyPart.HEAD to SkinVec3(0f, 10f + bodyDims.y / 2 + gap + headDims.y / 2, 0f),
-        BodyPart.RIGHT_ARM to SkinVec3(-(bodyDims.x / 2 + gap + rightArmDims.x / 2), 10f, 0f),
-        BodyPart.LEFT_ARM to SkinVec3(bodyDims.x / 2 + gap + leftArmDims.x / 2, 10f, 0f),
-        BodyPart.RIGHT_LEG to SkinVec3(-(gap / 2 + rightLegDims.x / 2), 10f - bodyDims.y / 2 - gap - rightLegDims.y / 2, 0f),
-        BodyPart.LEFT_LEG to SkinVec3(gap / 2 + leftLegDims.x / 2, 10f - bodyDims.y / 2 - gap - leftLegDims.y / 2, 0f),
-    )
-
-    return BodyPart.entries.associateWith { part ->
-        val current = model.parts.getValue(part).pos
-        val target = desired.getValue(part)
-        listOf(
-            SkinTransform.Translate(
-                x = target.x - current.x,
-                y = target.y - current.y,
-                z = target.z - current.z
-            )
-        )
-    }
-}
-
-internal fun stitchPngs(images: List<ByteArray>, columns: Int): BufferedImage {
-    require(images.isNotEmpty()) { "No images to stitch" }
-    val decoded = images.map { ImageIO.read(ByteArrayInputStream(it)) }
-    val tileWidth = decoded.maxOf { it.width }
-    val tileHeight = decoded.maxOf { it.height }
-    val rows = (decoded.size + columns - 1) / columns
-    val output = BufferedImage(tileWidth * columns, tileHeight * rows, BufferedImage.TYPE_INT_ARGB)
-    val graphics: Graphics2D = output.createGraphics()
-    decoded.forEachIndexed { index, image ->
-        graphics.drawImage(image, (index % columns) * tileWidth, (index / columns) * tileHeight, null)
-    }
-    graphics.dispose()
-    return output
 }
 
 internal fun writeGif(
-    frames: List<ByteArray>,
+    frames: List<Image>,
     outputFile: File,
     durationMs: Int,
 ) {
@@ -132,7 +79,9 @@ internal fun writeGif(
                 writer.output = output
                 writer.prepareWriteSequence(null)
                 frames.forEachIndexed { index, frame ->
-                    val image = requireNotNull(ImageIO.read(ByteArrayInputStream(frame))).toArgb()
+                    val image = requireNotNull(
+                        ImageIO.read(ByteArrayInputStream(frame.encodeToData()!!.bytes))
+                    ).toArgb()
                     val params = writer.defaultWriteParam
                     val imageType = ImageTypeSpecifier.createFromBufferedImageType(BufferedImage.TYPE_INT_ARGB)
                     val metadata = writer.getDefaultImageMetadata(imageType, params)
@@ -145,6 +94,23 @@ internal fun writeGif(
     } finally {
         writer.dispose()
     }
+}
+
+internal fun stitchImages(images: List<Image>, columns: Int): BufferedImage {
+    require(images.isNotEmpty()) { "No images to stitch" }
+    val decoded = images.map { image ->
+        ImageIO.read(ByteArrayInputStream(image.encodeToData(EncodedImageFormat.PNG)!!.bytes))
+    }
+    val tileWidth = decoded.maxOf { it.width }
+    val tileHeight = decoded.maxOf { it.height }
+    val rows = (decoded.size + columns - 1) / columns
+    val output = BufferedImage(tileWidth * columns, tileHeight * rows, BufferedImage.TYPE_INT_ARGB)
+    val graphics = output.createGraphics()
+    decoded.forEachIndexed { index, image ->
+        graphics.drawImage(image, (index % columns) * tileWidth, (index / columns) * tileHeight, null)
+    }
+    graphics.dispose()
+    return output
 }
 
 private fun configureGifMetadata(

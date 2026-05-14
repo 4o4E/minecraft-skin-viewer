@@ -42,4 +42,5 @@ dependencies {
 
     // test
     testImplementation(kotlin("test", Versions.KOTLIN))
+    testImplementation("com.h2database:h2:2.2.224")
 }

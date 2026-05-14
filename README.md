@@ -21,8 +21,9 @@
 ### 测试
 
 - `./gradlew test`：运行不依赖外部服务、本地图片或数据库的单元测试。
-- `./gradlew manualTest`：运行需要人工准备环境的测试，例如 Mojang API、MySQL DAO 和本地皮肤渲染样例。
+- `./gradlew manualTest`：运行需要人工准备环境的测试，例如本地皮肤渲染样例、图形环境或本地资产相关测试。
 - `./gradlew manualTestClasses`：只编译人工测试，不实际连接外部环境。
+- `./gradlew manualTest "-PmanualTest.maxParallelForks=4"`：以 4 个 Gradle test fork 并行运行人工测试；默认仍为 1，适合外部服务或图形环境不稳定时使用。
 
 ### 示例配置文件
 

@@ -10,6 +10,8 @@ import java.util.Properties
 import javax.sql.DataSource
 
 object Database {
+    internal var testDataSource: DataSource? = null
+
     private val dataSource: DataSource by lazy {
         initProperties()
         HikariDataSource(HikariConfig(Properties().apply {
@@ -37,6 +39,6 @@ object Database {
     }
 
     suspend fun <T> withConnection(block: (Connection) -> T): T = withContext(Dispatchers.IO) {
-        dataSource.connection.use(block)
+        (testDataSource ?: dataSource).connection.use(block)
     }
 }

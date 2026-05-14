@@ -28,6 +28,26 @@ object Mojang {
      */
     suspend fun getById(uuid: String): SkinData? {
         val json = client.get("${PROFILE_URL}$uuid").bodyAsText()
+        return parseProfileResponse(json)
+    }
+
+    /**
+     * 从MojangApi获取玩家id
+     *
+     * **不会主动存入缓存**
+     *
+     * @param name 玩家名
+     * @return 玩家uuid, 若不存在此玩家则返回null
+     */
+    suspend fun getIdByName(name: String): String? {
+        val ja = client.post(ID_URL) {
+            contentType(ContentType.Application.Json)
+            setBody(Json.encodeToString(buildJsonArray { add(JsonPrimitive(name)) }))
+        }.bodyAsText()
+        return parseIdByNameResponse(ja)
+    }
+
+    internal fun parseProfileResponse(json: String, update: Long = System.currentTimeMillis()): SkinData? {
         if (json.isBlank()) return null
         val jo = json.let { Json.parseToJsonElement(it) }.jsonObject
         val skinJson = jo["properties"]!!
@@ -52,24 +72,15 @@ object Mojang {
             jo["id"]!!.jsonPrimitive.content,
             jo["name"]!!.jsonPrimitive.content,
             slim,
-            System.currentTimeMillis(),
-            skinJson["url"]!!.jsonPrimitive.content.removePrefix("http://textures.minecraft.net/texture/")
+            update,
+            skinJson["url"]!!.jsonPrimitive.content
+                .removePrefix("http://textures.minecraft.net/texture/")
+                .removePrefix("https://textures.minecraft.net/texture/")
         )
     }
 
-    /**
-     * 从MojangApi获取玩家id
-     *
-     * **不会主动存入缓存**
-     *
-     * @param name 玩家名
-     * @return 玩家uuid, 若不存在此玩家则返回null
-     */
-    suspend fun getIdByName(name: String): String? {
-        val ja = client.post(ID_URL) {
-            contentType(ContentType.Application.Json)
-            setBody(Json.encodeToString(buildJsonArray { add(JsonPrimitive(name)) }))
-        }.bodyAsText().let { Json.parseToJsonElement(it).jsonArray }
+    internal fun parseIdByNameResponse(json: String): String? {
+        val ja = json.let { Json.parseToJsonElement(it).jsonArray }
         if (ja.isEmpty()) return null
         val jo = ja.first().jsonObject
         return jo["id"]!!.jsonPrimitive.content

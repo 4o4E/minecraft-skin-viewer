@@ -39,6 +39,15 @@ fun rendererClassName(renderer: String): String =
         else -> error("Unknown renderer $renderer")
     }
 
+fun parsePositiveInt(value: String?, propertyName: String): Int? =
+    value
+        ?.takeIf { it.isNotBlank() }
+        ?.toIntOrNull()
+        ?.takeIf { it > 0 }
+        ?: value
+            ?.takeIf { it.isNotBlank() }
+            ?.let { error("$propertyName must be a positive integer, but was '$it'") }
+
 val runDir = rootDir.resolve("run")
 val runSkinAssets = mapOf(
     "alex_skin.png" to "https://textures.minecraft.net/texture/4daa024bc2d35de2b26025051817d04491ad586e5a2ab85f9dad608b009ac7d",
@@ -69,6 +78,12 @@ val prepareRunAssets = tasks.register("prepareRunAssets") {
         }
     }
 }
+
+val manualTestMaxParallelForks: Int = parsePositiveInt(
+    providers.gradleProperty("manualTest.maxParallelForks").orNull
+        ?: providers.gradleProperty("manualTestMaxParallelForks").orNull,
+    "manualTest.maxParallelForks"
+) ?: 1
 
 kotlin {
     jvmToolchain(11)
@@ -177,6 +192,7 @@ subprojects {
         register<Test>("manualTest") {
             description = "运行需要人工准备环境、外部服务或本地资产的测试"
             group = "verification"
+            maxParallelForks = manualTestMaxParallelForks
             testClassesDirs = files(
                 manualTestSourceSet.output.classesDirs,
                 layout.buildDirectory.dir("classes/kotlin/manualTest")
