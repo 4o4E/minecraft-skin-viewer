@@ -20,6 +20,7 @@ import javax.imageio.ImageTypeSpecifier
 import javax.imageio.metadata.IIOMetadataNode
 import javax.imageio.stream.MemoryCacheImageOutputStream
 
+internal const val DEFAULT_BG: Int = 0xFF1F1B1D.toInt()
 internal val manualSkinFiles = listOf(
     "alex_skin.png" to true,
     "steve_skin.png" to false
