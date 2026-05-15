@@ -41,7 +41,7 @@ class SkinRenderUseCasesTest {
     }
 
     @Test
-    fun `sneak pose moves whole model to keep center stable`() {
+    fun `sneak pose matches legacy jfx offsets`() {
         val renderer = RecordingRenderer()
 
         val gif = runSuspend {
@@ -56,20 +56,22 @@ class SkinRenderUseCasesTest {
             )
         }
 
-        val sneakHeadTranslate = renderer.requests[1].pose.getValue(BodyPart.HEAD)
-            .filterIsInstance<SkinTransform.Translate>()
-        val sneakBodyPose = renderer.requests[1].pose.getValue(BodyPart.BODY)
-        val sneakRightLegTranslate = renderer.requests[1].pose.getValue(BodyPart.RIGHT_LEG)
-            .filterIsInstance<SkinTransform.Translate>()
-            .single()
-        val sneakLeftLegTranslate = renderer.requests[1].pose.getValue(BodyPart.LEFT_LEG)
-            .filterIsInstance<SkinTransform.Translate>()
-            .single()
-        assertTrue(sneakHeadTranslate.any { it.y < 0f && it.z > 0f })
-        assertTrue(sneakBodyPose.first() is SkinTransform.Translate)
-        assertTrue(sneakBodyPose.last() is SkinTransform.Translate)
-        assertTrue(sneakRightLegTranslate.z < 0f)
-        assertEquals(sneakRightLegTranslate, sneakLeftLegTranslate)
+        val sneakPose = renderer.requests[1].pose
+        assertEquals(listOf(SkinTransform.Translate(y = -3f, z = 1.8f)), sneakPose.getValue(BodyPart.HEAD))
+        assertEquals(
+            listOf(SkinTransform.Rotate(x = 30f), SkinTransform.Translate(y = -0.8f, z = -1f)),
+            sneakPose.getValue(BodyPart.BODY)
+        )
+        assertEquals(
+            listOf(SkinTransform.Rotate(x = 30f), SkinTransform.Translate(y = -1.6f)),
+            sneakPose.getValue(BodyPart.RIGHT_ARM)
+        )
+        assertEquals(
+            listOf(SkinTransform.Rotate(x = 30f), SkinTransform.Translate(y = -1.6f)),
+            sneakPose.getValue(BodyPart.LEFT_ARM)
+        )
+        assertEquals(listOf(SkinTransform.Translate(z = -3f)), sneakPose.getValue(BodyPart.RIGHT_LEG))
+        assertEquals(listOf(SkinTransform.Translate(z = -3f)), sneakPose.getValue(BodyPart.LEFT_LEG))
         assertTrue(gif.isNotEmpty())
     }
 }

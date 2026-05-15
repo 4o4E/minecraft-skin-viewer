@@ -284,22 +284,18 @@ object SkinRenderUseCases {
     }
 
     private fun sneakPose(): Map<BodyPart, List<SkinTransform>> {
-        val bodyAngle = 28.5f
-        val bodyTopOffset = SkinTransform.Translate(y = -1.45f, z = 5.72f)
-        val centerOffset = SkinTransform.Translate(z = -3.1f)
+        val rootOffset = SkinTransform.Translate(z = -3f)
         return mapOf(
-            // 身体绕下沿旋转保持髋部连接，再整体平移抵消水平重心漂移。
+            // 对齐迁移前 JFX sneak：整个人前移，头/身体/手臂局部调整，腿保持站立支撑。
             BodyPart.BODY to listOf(
-                SkinTransform.Translate(y = 6f),
-                SkinTransform.Rotate(x = bodyAngle),
-                SkinTransform.Translate(y = -6f),
-                centerOffset
+                SkinTransform.Rotate(x = 30f),
+                SkinTransform.Translate(y = -0.8f, z = -1f)
             ),
-            BodyPart.HEAD to listOf(bodyTopOffset, centerOffset),
-            BodyPart.RIGHT_ARM to listOf(SkinTransform.Rotate(x = bodyAngle), bodyTopOffset, centerOffset),
-            BodyPart.LEFT_ARM to listOf(SkinTransform.Rotate(x = bodyAngle), bodyTopOffset, centerOffset),
-            BodyPart.RIGHT_LEG to listOf(centerOffset),
-            BodyPart.LEFT_LEG to listOf(centerOffset)
+            BodyPart.HEAD to listOf(SkinTransform.Translate(y = -3f, z = 1.8f)),
+            BodyPart.RIGHT_ARM to listOf(SkinTransform.Rotate(x = 30f), SkinTransform.Translate(y = -1.6f)),
+            BodyPart.LEFT_ARM to listOf(SkinTransform.Rotate(x = 30f), SkinTransform.Translate(y = -1.6f)),
+            BodyPart.RIGHT_LEG to listOf(rootOffset),
+            BodyPart.LEFT_LEG to listOf(rootOffset)
         )
     }
 
