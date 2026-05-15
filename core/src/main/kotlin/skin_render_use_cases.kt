@@ -17,7 +17,7 @@ object SkinRenderUseCases {
     private const val HOMO_WIDTH = 1024
     private const val HOMO_HEIGHT = 768
     private const val DEFAULT_LIGHT_INTENSITY = 0.8f
-    private const val SNEAK_MODEL_YAW = 90f
+    private const val SNEAK_MODEL_YAW = 270f
 
     fun renderSkin(
         renderer: SkinPngRenderer,
