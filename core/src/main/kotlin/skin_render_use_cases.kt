@@ -17,6 +17,7 @@ object SkinRenderUseCases {
     private const val HOMO_WIDTH = 1024
     private const val HOMO_HEIGHT = 768
     private const val DEFAULT_LIGHT_INTENSITY = 0.8f
+    private const val SNEAK_MODEL_YAW = 90f
 
     fun renderSkin(
         renderer: SkinPngRenderer,
@@ -140,8 +141,32 @@ object SkinRenderUseCases {
         val camera = SkinCamera(SkinRenderVec3(0f, 10f, 0f), yaw = 315f, pitch = 10f, distance = 65f)
         val pngs = renderer.renderPngBatch(
             listOf(
-                request(skinPng, slim, FULL_WIDTH, FULL_HEIGHT, backgroundColor, lightIntensity, camera, normalPose, 1, showPlatform),
-                request(skinPng, slim, FULL_WIDTH, FULL_HEIGHT, backgroundColor, lightIntensity, camera, sneakPose, 1, showPlatform)
+                request(
+                    skinPng,
+                    slim,
+                    FULL_WIDTH,
+                    FULL_HEIGHT,
+                    backgroundColor,
+                    lightIntensity,
+                    camera,
+                    normalPose,
+                    1,
+                    showPlatform,
+                    modelYaw = SNEAK_MODEL_YAW
+                ),
+                request(
+                    skinPng,
+                    slim,
+                    FULL_WIDTH,
+                    FULL_HEIGHT,
+                    backgroundColor,
+                    lightIntensity,
+                    camera,
+                    sneakPose,
+                    1,
+                    showPlatform,
+                    modelYaw = SNEAK_MODEL_YAW
+                )
             )
         )
         return encodeGif(

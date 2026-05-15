@@ -56,6 +56,7 @@ class SkinRenderUseCasesTest {
             )
         }
 
+        assertTrue(renderer.requests.all { it.modelYaw == 90f })
         val sneakPose = renderer.requests[1].pose
         assertEquals(listOf(SkinTransform.Translate(y = -3f, z = 1.8f)), sneakPose.getValue(BodyPart.HEAD))
         assertEquals(
