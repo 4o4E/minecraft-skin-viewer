@@ -268,19 +268,11 @@ private class OpenGlSkinRenderer {
         val shadowCamera = createShadowCamera(settings, lightDir)
 
         var floorShadow: GlShadowResources? = null
-        var overlayDetailShadow: GlShadowResources? = null
         try {
             if (request.shadows) {
                 floorShadow = createShadowResources()
                 renderShadowMap(floorShadow, shadowCamera) {
                     drawAllMeshesForShadow(meshes, useVoxelNormals = use3DOverlay)
-                }
-                if (use3DOverlay) {
-                    overlayDetailShadow = createShadowResources()
-                    renderShadowMap(overlayDetailShadow, shadowCamera, cullFrontFaces = false, polygonOffset = null) {
-                        drawSolidMeshes(meshes, transparentPass = false, correctNormalByVoxelCenter = true)
-                        drawSolidMeshes(meshes, transparentPass = true, correctNormalByVoxelCenter = true)
-                    }
                 }
             }
 
@@ -310,19 +302,20 @@ private class OpenGlSkinRenderer {
                 shadowMatrix = shadowMatrix,
                 shadowTexture = floorShadow?.depthTexture ?: 0,
                 lightDir = lightDir,
-                receiveShadow = request.shadows,
+                receiveShadow = false,
                 useTexture = true,
                 skinTexture = textureId
             )
             glEnable(GL_TEXTURE_2D)
             glBindTexture(GL_TEXTURE_2D, textureId)
-            meshes.filter { it.texture != null }.forEach { drawTexturedMesh(it, correctNormalByFaceCenter = true) }
+            meshes.filter { it.texture != null }.forEach { drawTexturedMesh(it) }
             glDisable(GL_TEXTURE_2D)
 
-            val solidReceiveDetailShadow = request.shadows && use3DOverlay
+            // 角色本体只负责投影，避免 shadow map 自采样在模型表面形成旋转闪烁的三角色块。
+            val solidReceiveDetailShadow = false
             detailShader.use(
                 shadowMatrix = shadowMatrix,
-                shadowTexture = overlayDetailShadow?.depthTexture ?: floorShadow?.depthTexture ?: 0,
+                shadowTexture = floorShadow?.depthTexture ?: 0,
                 lightDir = lightDir,
                 receiveShadow = solidReceiveDetailShadow,
                 useTexture = false
@@ -331,7 +324,7 @@ private class OpenGlSkinRenderer {
 
             detailShader.use(
                 shadowMatrix = shadowMatrix,
-                shadowTexture = overlayDetailShadow?.depthTexture ?: floorShadow?.depthTexture ?: 0,
+                shadowTexture = floorShadow?.depthTexture ?: 0,
                 lightDir = lightDir,
                 receiveShadow = solidReceiveDetailShadow,
                 useTexture = false
@@ -342,7 +335,6 @@ private class OpenGlSkinRenderer {
             glUseProgram(0)
         } finally {
             floorShadow?.close()
-            overlayDetailShadow?.close()
         }
     }
 
@@ -385,7 +377,7 @@ private class OpenGlSkinRenderer {
         }
 
     private fun drawAllMeshesForShadow(meshes: List<SkinMesh>, useVoxelNormals: Boolean) {
-        meshes.filter { it.texture != null }.forEach { drawTexturedMesh(it, correctNormalByFaceCenter = true) }
+        meshes.filter { it.texture != null }.forEach { drawTexturedMesh(it) }
         glDisable(GL_CULL_FACE)
         drawSolidMeshes(meshes, transparentPass = false, correctNormalByVoxelCenter = useVoxelNormals)
         drawSolidMeshes(meshes, transparentPass = true, correctNormalByVoxelCenter = useVoxelNormals)
@@ -438,14 +430,14 @@ private class OpenGlSkinRenderer {
         return textureId
     }
 
-    private fun drawTexturedMesh(mesh: SkinMesh, correctNormalByFaceCenter: Boolean = false) {
+    private fun drawTexturedMesh(mesh: SkinMesh) {
         glColor4f(1f, 1f, 1f, 1f)
         glBegin(GL_TRIANGLES)
         mesh.faces.forEach { face ->
             if (face.indices.size < 3) return@forEach
-            val faceCenter = if (correctNormalByFaceCenter) face.boundsCenter(mesh) else null
+            val normal = face.stableNormal(mesh)
             for (i in 1 until face.indices.size - 1) {
-                setTriangleNormal(mesh, face.indices[0], face.indices[i], face.indices[i + 1], faceCenter)
+                glNormal3f(normal.x, normal.y, normal.z)
                 drawTexturedVertex(mesh, face.indices[0])
                 drawTexturedVertex(mesh, face.indices[i])
                 drawTexturedVertex(mesh, face.indices[i + 1])
@@ -473,8 +465,9 @@ private class OpenGlSkinRenderer {
             )
             if (face.indices.size < 3) return@forEach
             val normalCenter = if (correctNormalByVoxelCenter) face.voxelBoundsCenter(mesh) else null
+            val normal = face.stableNormal(mesh, normalCenter)
             for (i in 1 until face.indices.size - 1) {
-                setTriangleNormal(mesh, face.indices[0], face.indices[i], face.indices[i + 1], normalCenter)
+                glNormal3f(normal.x, normal.y, normal.z)
                 drawSolidVertex(mesh, face.indices[0])
                 drawSolidVertex(mesh, face.indices[i])
                 drawSolidVertex(mesh, face.indices[i + 1])
@@ -488,24 +481,38 @@ private class OpenGlSkinRenderer {
         glVertex3f(position.x, position.y, position.z)
     }
 
-    private fun setTriangleNormal(mesh: SkinMesh, a: Int, b: Int, c: Int, normalCenter: GlVec3? = null) {
-        val p0 = mesh.vertices[a].position
-        val p1 = mesh.vertices[b].position
-        val p2 = mesh.vertices[c].position
+    private fun SkinMeshFace.stableNormal(mesh: SkinMesh, normalCenter: GlVec3? = null): GlVec3 {
+        if (normalCenter != null) {
+            // 体素边缘可能收缩成非平面四边形，用整面中心保证拆分出的两个三角形亮度一致。
+            val center = center(mesh)
+            val outward = (center - normalCenter).normalized()
+            if (outward.length() > 0f) return outward
+        }
+
+        val p0 = mesh.vertices[indices[0]].position
+        val p1 = mesh.vertices[indices[1]].position
+        val p2 = mesh.vertices[indices[2]].position
         var normal = (GlVec3(p1.x - p0.x, p1.y - p0.y, p1.z - p0.z)
             .cross(GlVec3(p2.x - p0.x, p2.y - p0.y, p2.z - p0.z)))
             .normalized()
-        if (normalCenter != null) {
-            val faceCenter = GlVec3(
-                (p0.x + p1.x + p2.x) / 3f,
-                (p0.y + p1.y + p2.y) / 3f,
-                (p0.z + p1.z + p2.z) / 3f
-            )
-            if (normal.dot(faceCenter - normalCenter) < 0f) {
-                normal = -normal
-            }
+        if (normalCenter != null && normal.dot(center(mesh) - normalCenter) < 0f) {
+            normal = -normal
         }
-        glNormal3f(normal.x, normal.y, normal.z)
+        return normal
+    }
+
+    private fun SkinMeshFace.center(mesh: SkinMesh): GlVec3 {
+        var x = 0f
+        var y = 0f
+        var z = 0f
+        indices.forEach { index ->
+            val position = mesh.vertices[index].position
+            x += position.x
+            y += position.y
+            z += position.z
+        }
+        val count = indices.size.toFloat()
+        return GlVec3(x / count, y / count, z / count)
     }
 
     private fun SkinMeshFace.boundsCenter(mesh: SkinMesh): GlVec3 {
@@ -697,8 +704,10 @@ private data class GlVec3(val x: Float, val y: Float, val z: Float) {
 
     fun dot(other: GlVec3): Float = x * other.x + y * other.y + z * other.z
 
+    fun length(): Float = sqrt(x * x + y * y + z * z)
+
     fun normalized(): GlVec3 {
-        val length = sqrt(x * x + y * y + z * z)
+        val length = length()
         return if (length > 0f) GlVec3(x / length, y / length, z / length) else this
     }
 }
