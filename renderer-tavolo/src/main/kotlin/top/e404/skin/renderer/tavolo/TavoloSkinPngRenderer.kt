@@ -79,6 +79,7 @@ class TavoloSkinPngRenderer : SkinPngRenderer {
 
     private fun SkinRenderRequest.renderConfig(): RenderConfig {
         val settings = settings
+        val ambientOnly = lightingMode == SkinLightingMode.AMBIENT
         return RenderConfig(
             width = settings.width,
             height = settings.height,
@@ -96,8 +97,9 @@ class TavoloSkinPngRenderer : SkinPngRenderer {
                 settings.lightDirection.y,
                 settings.lightDirection.z
             ),
-            lightIntensity = settings.lightIntensity,
-            enableShadows = shadows
+            // Tavolo 的光强为环境光比例，1f 表示不再叠加方向光明暗。
+            lightIntensity = if (ambientOnly) 1f else settings.lightIntensity,
+            enableShadows = shadows && !ambientOnly
         )
     }
 }

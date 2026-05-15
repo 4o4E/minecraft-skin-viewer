@@ -9,8 +9,11 @@ import kotlin.coroutines.startCoroutine
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import top.e404.skin.core.BodyPart
+import top.e404.skin.core.SkinLightingMode
 import top.e404.skin.core.SkinPngRenderer
 import top.e404.skin.core.SkinRenderRequest
+import top.e404.skin.core.SkinTransform
 import top.e404.skin.core.SkinRenderUseCases
 
 class SkinRenderUseCasesTest {
@@ -33,12 +36,47 @@ class SkinRenderUseCasesTest {
         }
 
         assertEquals(listOf(3), renderer.batchSizes)
+        assertTrue(renderer.requests.all { it.lightingMode == SkinLightingMode.AMBIENT })
+        assertTrue(gif.isNotEmpty())
+    }
+
+    @Test
+    fun `sneak pose moves whole model to keep center stable`() {
+        val renderer = RecordingRenderer()
+
+        val gif = runSuspend {
+            SkinRenderUseCases.renderSneak(
+                renderer = renderer,
+                bytes = testPng(width = 64, height = 64),
+                slim = true,
+                backgroundColor = 0xFF1F1B1D.toInt(),
+                lightIntensity = null,
+                headScale = 1.0,
+                duration = 40
+            )
+        }
+
+        val sneakHeadTranslate = renderer.requests[1].pose.getValue(BodyPart.HEAD)
+            .filterIsInstance<SkinTransform.Translate>()
+        val sneakBodyPose = renderer.requests[1].pose.getValue(BodyPart.BODY)
+        val sneakRightLegTranslate = renderer.requests[1].pose.getValue(BodyPart.RIGHT_LEG)
+            .filterIsInstance<SkinTransform.Translate>()
+            .single()
+        val sneakLeftLegTranslate = renderer.requests[1].pose.getValue(BodyPart.LEFT_LEG)
+            .filterIsInstance<SkinTransform.Translate>()
+            .single()
+        assertTrue(sneakHeadTranslate.any { it.y < 0f && it.z > 0f })
+        assertTrue(sneakBodyPose.first() is SkinTransform.Translate)
+        assertTrue(sneakBodyPose.last() is SkinTransform.Translate)
+        assertTrue(sneakRightLegTranslate.z < 0f)
+        assertEquals(sneakRightLegTranslate, sneakLeftLegTranslate)
         assertTrue(gif.isNotEmpty())
     }
 }
 
 private class RecordingRenderer : SkinPngRenderer {
     val batchSizes = mutableListOf<Int>()
+    val requests = mutableListOf<SkinRenderRequest>()
 
     override val name = "recording"
 
@@ -49,6 +87,7 @@ private class RecordingRenderer : SkinPngRenderer {
 
     override fun renderPngBatch(requests: List<SkinRenderRequest>): List<ByteArray> {
         batchSizes += requests.size
+        this.requests += requests
         return requests.map(::renderPng)
     }
 }

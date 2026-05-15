@@ -75,7 +75,8 @@ object SkinRenderUseCases {
             distance = 65f,
             showPlatform = showPlatform,
             pose = headScalePose(slim, headScale),
-            antiAliasingLevel = 1
+            antiAliasingLevel = 1,
+            lightingMode = SkinLightingMode.AMBIENT
         )
 
     fun renderHead(
@@ -125,7 +126,8 @@ object SkinRenderUseCases {
             distance = 30f,
             showPlatform = showPlatform,
             pose = PosePresets.HEAD_ONLY,
-            antiAliasingLevel = 1
+            antiAliasingLevel = 1,
+            lightingMode = SkinLightingMode.AMBIENT
         )
 
     suspend fun renderSneak(
@@ -202,6 +204,7 @@ object SkinRenderUseCases {
         showPlatform: Boolean,
         pose: Map<BodyPart, List<SkinTransform>>,
         antiAliasingLevel: Int,
+        lightingMode: SkinLightingMode = SkinLightingMode.DIRECTIONAL,
     ): ByteArray {
         val frames = frameCount.coerceAtLeast(1)
         val camera = SkinCamera(target, yaw = 45f, pitch = pitch, distance = distance)
@@ -218,7 +221,8 @@ object SkinRenderUseCases {
                 pose = pose,
                 antiAliasingLevel = antiAliasingLevel,
                 showPlatform = showPlatform,
-                modelYaw = modelYaw
+                modelYaw = modelYaw,
+                lightingMode = lightingMode
             )
         }
         val pngs = renderer.renderPngBatch(requests)
@@ -244,6 +248,7 @@ object SkinRenderUseCases {
         antiAliasingLevel: Int,
         showPlatform: Boolean = false,
         modelYaw: Float = 0f,
+        lightingMode: SkinLightingMode = SkinLightingMode.DIRECTIONAL,
     ): SkinRenderRequest =
         SkinRenderRequest(
             skinPng = skinPng,
@@ -263,7 +268,7 @@ object SkinRenderUseCases {
                 platformThickness = 2f
             ),
             overlayMode = SkinOverlayMode.THREE_D,
-            lightingMode = SkinLightingMode.DIRECTIONAL,
+            lightingMode = lightingMode,
             shadows = false,
             showPlatform = showPlatform,
             pose = pose,
@@ -284,12 +289,25 @@ object SkinRenderUseCases {
         )
     }
 
-    private fun sneakPose(): Map<BodyPart, List<SkinTransform>> = mapOf(
-        BodyPart.HEAD to listOf(SkinTransform.Translate(y = 3f, z = -4.8f)),
-        BodyPart.BODY to listOf(SkinTransform.Rotate(x = 30f), SkinTransform.Translate(y = 0.8f, z = -2f)),
-        BodyPart.RIGHT_ARM to listOf(SkinTransform.Rotate(x = 30f), SkinTransform.Translate(y = 1.6f, z = -3f)),
-        BodyPart.LEFT_ARM to listOf(SkinTransform.Rotate(x = 30f), SkinTransform.Translate(y = 1.6f, z = -3f))
-    )
+    private fun sneakPose(): Map<BodyPart, List<SkinTransform>> {
+        val bodyAngle = 28.5f
+        val bodyTopOffset = SkinTransform.Translate(y = -1.45f, z = 5.72f)
+        val centerOffset = SkinTransform.Translate(z = -3.1f)
+        return mapOf(
+            // 身体绕下沿旋转保持髋部连接，再整体平移抵消水平重心漂移。
+            BodyPart.BODY to listOf(
+                SkinTransform.Translate(y = 6f),
+                SkinTransform.Rotate(x = bodyAngle),
+                SkinTransform.Translate(y = -6f),
+                centerOffset
+            ),
+            BodyPart.HEAD to listOf(bodyTopOffset, centerOffset),
+            BodyPart.RIGHT_ARM to listOf(SkinTransform.Rotate(x = bodyAngle), bodyTopOffset, centerOffset),
+            BodyPart.LEFT_ARM to listOf(SkinTransform.Rotate(x = bodyAngle), bodyTopOffset, centerOffset),
+            BodyPart.RIGHT_LEG to listOf(centerOffset),
+            BodyPart.LEFT_LEG to listOf(centerOffset)
+        )
+    }
 
     private fun mergePose(
         first: Map<BodyPart, List<SkinTransform>>,
