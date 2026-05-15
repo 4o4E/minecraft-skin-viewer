@@ -5,14 +5,8 @@ import org.jetbrains.skia.Color
 import org.jetbrains.skia.EncodedImageFormat
 import org.jetbrains.skia.Image
 import org.jetbrains.skia.IRect
-import java.awt.image.BufferedImage
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import javax.imageio.IIOImage
-import javax.imageio.ImageIO
-import javax.imageio.ImageTypeSpecifier
-import javax.imageio.metadata.IIOMetadataNode
-import javax.imageio.stream.MemoryCacheImageOutputStream
+import top.e404.tavolo.frame.Frame
+import top.e404.tavolo.frame.encodeToBytes
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -376,60 +370,8 @@ private fun ByteArray.formatSkinPng(): ByteArray {
 
 private fun encodeGif(frames: List<SkinAnimationFrame>): ByteArray {
     require(frames.isNotEmpty()) { "GIF must contain at least one frame" }
-    val writer = ImageIO.getImageWritersBySuffix("gif").asSequence().first()
-    val outputBytes = ByteArrayOutputStream()
-    MemoryCacheImageOutputStream(outputBytes).use { output ->
-        writer.output = output
-        writer.prepareWriteSequence(null)
-        frames.forEachIndexed { index, frame ->
-            val image = ImageIO.read(ByteArrayInputStream(frame.png)).toArgb()
-            val params = writer.defaultWriteParam
-            val imageType = ImageTypeSpecifier.createFromBufferedImageType(BufferedImage.TYPE_INT_ARGB)
-            val metadata = writer.getDefaultImageMetadata(imageType, params)
-            configureGifMetadata(metadata, frame.durationMs, loop = index == 0)
-            writer.writeToSequence(IIOImage(image, null, metadata), params)
-        }
-        writer.endWriteSequence()
-    }
-    writer.dispose()
-    return outputBytes.toByteArray()
-}
-
-private fun configureGifMetadata(metadata: javax.imageio.metadata.IIOMetadata, durationMs: Int, loop: Boolean) {
-    val format = metadata.nativeMetadataFormatName
-    val root = metadata.getAsTree(format) as IIOMetadataNode
-    val gce = root.child("GraphicControlExtension")
-    gce.setAttribute("disposalMethod", "none")
-    gce.setAttribute("userInputFlag", "FALSE")
-    gce.setAttribute("transparentColorFlag", "FALSE")
-    gce.setAttribute("delayTime", (durationMs / 10).coerceAtLeast(1).toString())
-    gce.setAttribute("transparentColorIndex", "0")
-
-    if (loop) {
-        val appExtensions = root.child("ApplicationExtensions")
-        val appExtension = IIOMetadataNode("ApplicationExtension")
-        appExtension.setAttribute("applicationID", "NETSCAPE")
-        appExtension.setAttribute("authenticationCode", "2.0")
-        appExtension.userObject = byteArrayOf(1, 0, 0)
-        appExtensions.appendChild(appExtension)
-    }
-
-    metadata.setFromTree(format, root)
-}
-
-private fun IIOMetadataNode.child(name: String): IIOMetadataNode {
-    for (i in 0 until length) {
-        val node = item(i)
-        if (node.nodeName == name) return node as IIOMetadataNode
-    }
-    return IIOMetadataNode(name).also { appendChild(it) }
-}
-
-private fun BufferedImage.toArgb(): BufferedImage {
-    if (type == BufferedImage.TYPE_INT_ARGB) return this
-    val converted = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-    val graphics = converted.createGraphics()
-    graphics.drawImage(this, 0, 0, null)
-    graphics.dispose()
-    return converted
+    return frames.map { frame ->
+        // 使用迁移前的 GIF 编码器，避免 ImageIO 逐帧调色板差异。
+        Frame(frame.durationMs, Image.makeFromEncoded(frame.png))
+    }.encodeToBytes()
 }

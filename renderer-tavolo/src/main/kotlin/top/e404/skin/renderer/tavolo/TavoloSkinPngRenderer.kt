@@ -80,24 +80,31 @@ class TavoloSkinPngRenderer : SkinPngRenderer {
     private fun SkinRenderRequest.renderConfig(): RenderConfig {
         val settings = settings
         val ambientOnly = lightingMode == SkinLightingMode.AMBIENT
-        return RenderConfig(
-            width = settings.width,
-            height = settings.height,
-            camera = OrbitCamera(
-                target = Vec3(settings.target.x, settings.target.y, settings.target.z),
-                yaw = yaw,
-                pitch = settings.pitch,
-                distance = settings.distance
-            ),
-            backgroundColor = settings.backgroundColor,
-            useBackFaceCulling = false,
-            antiAliasingLevel = settings.antiAliasingLevel,
-            lightDirection = Vec3(
+        val camera = OrbitCamera(
+            target = Vec3(settings.target.x, settings.target.y, settings.target.z),
+            yaw = yaw,
+            pitch = settings.pitch,
+            distance = settings.distance
+        )
+        val lightDirection = if (ambientOnly) {
+            val (_, cameraForward) = camera.createViewMatrix()
+            cameraForward
+        } else {
+            Vec3(
                 settings.lightDirection.x,
                 settings.lightDirection.y,
                 settings.lightDirection.z
-            ),
-            // Tavolo 的光强为环境光比例，1f 表示不再叠加方向光明暗。
+            )
+        }
+        return RenderConfig(
+            width = settings.width,
+            height = settings.height,
+            camera = camera,
+            backgroundColor = settings.backgroundColor,
+            useBackFaceCulling = false,
+            antiAliasingLevel = settings.antiAliasingLevel,
+            lightDirection = lightDirection,
+            // 环境光模式需要同时避开 Tavolo 的方向高光。
             lightIntensity = if (ambientOnly) 1f else settings.lightIntensity,
             enableShadows = shadows && !ambientOnly
         )
