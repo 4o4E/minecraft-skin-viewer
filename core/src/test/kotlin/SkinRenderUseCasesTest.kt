@@ -26,7 +26,7 @@ class SkinRenderUseCasesTest {
                 backgroundColor = 0xFF1F1B1D.toInt(),
                 frameCount = 3,
                 pitchAmplitude = 20,
-                lightColor = null,
+                lightIntensity = null,
                 headScale = 1.0,
                 duration = 40
             )

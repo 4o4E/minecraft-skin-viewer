@@ -34,7 +34,7 @@ fun Application.routing() = routing {
 
         val parameters = call.request.queryParameters
         val bg = parameters["bg"]?.asColor() ?: DEFAULT_BG_COLOR
-        val light = parameters["light"]?.asColor()
+        val lightIntensity = parameters["light"]?.asLightIntensity()
         when (call.parameters["position"]!!.lowercase()) {
             "sneak" -> {
                 val slim = parameters["slim"]?.toBoolean() ?: parameters["t"]?.toBoolean() ?: data.slim
@@ -44,7 +44,7 @@ fun Application.routing() = routing {
                 call.respondCachedRender(data, "sneak", "gif", ContentType.Image.GIF, mapOf(
                     "slim" to slim,
                     "bg" to bg.hexColor(),
-                    "light" to light?.hexColor(),
+                    "light" to lightIntensity,
                     "head" to headScale,
                     "duration" to duration,
                     "platform" to platform,
@@ -57,7 +57,7 @@ fun Application.routing() = routing {
                         bytes = data.skinBytes,
                         slim = slim,
                         backgroundColor = bg,
-                        lightColor = light,
+                        lightIntensity = lightIntensity,
                         headScale = headScale,
                         duration = duration,
                         showPlatform = platform
@@ -72,7 +72,7 @@ fun Application.routing() = routing {
                 call.respondCachedRender(data, "sk", "png", ContentType.Image.PNG, mapOf(
                     "slim" to slim,
                     "bg" to bg.hexColor(),
-                    "light" to light?.hexColor(),
+                    "light" to lightIntensity,
                     "head" to headScale,
                     "platform" to platform,
                     "width" to 600,
@@ -84,7 +84,7 @@ fun Application.routing() = routing {
                         bytes = data.skinBytes,
                         slim = slim,
                         backgroundColor = bg,
-                        lightColor = light,
+                        lightIntensity = lightIntensity,
                         headScale = headScale,
                         showPlatform = platform
                     )
@@ -101,7 +101,7 @@ fun Application.routing() = routing {
                 call.respondCachedRender(data, "dsk", "gif", ContentType.Image.GIF, mapOf(
                     "slim" to slim,
                     "bg" to bg.hexColor(),
-                    "light" to light?.hexColor(),
+                    "light" to lightIntensity,
                     "head" to headScale,
                     "frameCount" to frameCount,
                     "pitchAmplitude" to pitchAmplitude,
@@ -118,7 +118,7 @@ fun Application.routing() = routing {
                         backgroundColor = bg,
                         frameCount = frameCount,
                         pitchAmplitude = pitchAmplitude,
-                        lightColor = light,
+                        lightIntensity = lightIntensity,
                         headScale = headScale,
                         duration = duration,
                         showPlatform = platform
@@ -130,7 +130,7 @@ fun Application.routing() = routing {
                 val platform = parameters["platform"]?.toBoolean() ?: false
                 call.respondCachedRender(data, "head", "png", ContentType.Image.PNG, mapOf(
                     "bg" to bg.hexColor(),
-                    "light" to light?.hexColor(),
+                    "light" to lightIntensity,
                     "platform" to platform,
                     "width" to 400,
                     "height" to 400,
@@ -140,7 +140,7 @@ fun Application.routing() = routing {
                     SkinRendererService.renderHead(
                         bytes = data.skinBytes,
                         backgroundColor = bg,
-                        lightColor = light,
+                        lightIntensity = lightIntensity,
                         showPlatform = platform
                     )
                 }
@@ -153,7 +153,7 @@ fun Application.routing() = routing {
                 val platform = parameters["platform"]?.toBoolean() ?: false
                 call.respondCachedRender(data, "dhead", "gif", ContentType.Image.GIF, mapOf(
                     "bg" to bg.hexColor(),
-                    "light" to light?.hexColor(),
+                    "light" to lightIntensity,
                     "frameCount" to frameCount,
                     "pitchAmplitude" to pitchAmplitude,
                     "duration" to duration,
@@ -168,7 +168,7 @@ fun Application.routing() = routing {
                         backgroundColor = bg,
                         frameCount = frameCount,
                         pitchAmplitude = pitchAmplitude,
-                        lightColor = light,
+                        lightIntensity = lightIntensity,
                         duration = duration,
                         showPlatform = platform
                     )
@@ -182,7 +182,7 @@ fun Application.routing() = routing {
                 call.respondCachedRender(data, "homo", "png", ContentType.Image.PNG, mapOf(
                     "slim" to slim,
                     "bg" to bg.hexColor(),
-                    "light" to light?.hexColor(),
+                    "light" to lightIntensity,
                     "head" to headScale,
                     "platform" to platform,
                     "width" to 1024,
@@ -194,7 +194,7 @@ fun Application.routing() = routing {
                         bytes = data.skinBytes,
                         slim = slim,
                         backgroundColor = bg,
-                        lightColor = light,
+                        lightIntensity = lightIntensity,
                         headScale = headScale,
                         showPlatform = platform
                     )
@@ -292,6 +292,12 @@ private fun String.asColor(): Int {
         else -> error("Invalid color: $this")
     }
     return argb.toULong(16).toInt()
+}
+
+private fun String.asLightIntensity(): Float {
+    val value = toFloatOrNull() ?: error("Invalid light intensity: $this")
+    require(value in 0f..1f) { "Light intensity must be between 0 and 1: $this" }
+    return value
 }
 
 private fun renderFace(skinBytes: ByteArray, backgroundColor: Int, scale: Int, margin: Int): ByteArray {

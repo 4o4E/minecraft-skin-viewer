@@ -66,12 +66,13 @@ url: `/render/{type}/{content}/{position}`
 | 请求参数     | 含义              | 备注             | sneak              | sk                 | dsk                | head               | dhead              | homo               |
 |----------|-----------------|----------------|--------------------|--------------------|--------------------|--------------------|--------------------|--------------------|
 | bg       | 背景颜色            | 默认值`#1F1B1D`   | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| light    | 环境光颜色           | 默认值空           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| light    | 光照强度            | 默认值`0.8`，范围`0.0`-`1.0` | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 | head     | 头大小             | 默认值`1.0`浮点数    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
 | x        | 旋转时的速度          | 默认值`20`        |                    |                    | :heavy_check_mark: |                    | :heavy_check_mark: |                    |
 | y        | 俯仰角             | 默认值`20`        |                    |                    | :heavy_check_mark: |                    | :heavy_check_mark: |                    |
 | slim     | 是否使用alex模型      | 默认值空(跟随mc皮肤设置) | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                    |                    | :heavy_check_mark: |
 | duration | gif的帧持续时长, 单位ms | 默认值`40`        | :heavy_check_mark: |                    | :heavy_check_mark: |                    | :heavy_check_mark: |                    |
+| platform | 是否显示地台          | 默认值按模式决定       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 
 **duration的精度为10ms(gif仅支持此精度)**
 

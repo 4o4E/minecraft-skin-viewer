@@ -25,11 +25,11 @@ object SkinRendererService {
         bytes: ByteArray,
         slim: Boolean,
         backgroundColor: Int,
-        lightColor: Int?,
+        lightIntensity: Float?,
         headScale: Double,
         showPlatform: Boolean = false,
     ): ByteArray = withRenderer {
-        SkinRenderUseCases.renderSkin(it, bytes, slim, backgroundColor, lightColor, headScale, showPlatform)
+        SkinRenderUseCases.renderSkin(it, bytes, slim, backgroundColor, lightIntensity, headScale, showPlatform)
     }
 
     suspend fun renderSkinRotate(
@@ -38,7 +38,7 @@ object SkinRendererService {
         backgroundColor: Int,
         frameCount: Int,
         pitchAmplitude: Int,
-        lightColor: Int?,
+        lightIntensity: Float?,
         headScale: Double,
         duration: Int,
         showPlatform: Boolean = true,
@@ -50,7 +50,7 @@ object SkinRendererService {
             backgroundColor = backgroundColor,
             frameCount = frameCount,
             pitchAmplitude = pitchAmplitude,
-            lightColor = lightColor,
+            lightIntensity = lightIntensity,
             headScale = headScale,
             duration = duration,
             showPlatform = showPlatform
@@ -60,10 +60,10 @@ object SkinRendererService {
     suspend fun renderHead(
         bytes: ByteArray,
         backgroundColor: Int,
-        lightColor: Int?,
+        lightIntensity: Float?,
         showPlatform: Boolean = false,
     ): ByteArray = withRenderer {
-        SkinRenderUseCases.renderHead(it, bytes, backgroundColor, lightColor, showPlatform)
+        SkinRenderUseCases.renderHead(it, bytes, backgroundColor, lightIntensity, showPlatform)
     }
 
     suspend fun renderHeadRotate(
@@ -71,7 +71,7 @@ object SkinRendererService {
         backgroundColor: Int,
         frameCount: Int,
         pitchAmplitude: Int,
-        lightColor: Int?,
+        lightIntensity: Float?,
         duration: Int,
         showPlatform: Boolean = false,
     ): ByteArray = withRenderer {
@@ -81,7 +81,7 @@ object SkinRendererService {
             backgroundColor = backgroundColor,
             frameCount = frameCount,
             pitchAmplitude = pitchAmplitude,
-            lightColor = lightColor,
+            lightIntensity = lightIntensity,
             duration = duration,
             showPlatform = showPlatform
         )
@@ -91,23 +91,23 @@ object SkinRendererService {
         bytes: ByteArray,
         slim: Boolean,
         backgroundColor: Int,
-        lightColor: Int?,
+        lightIntensity: Float?,
         headScale: Double,
         duration: Int,
         showPlatform: Boolean = false,
     ): ByteArray = withRenderer {
-        SkinRenderUseCases.renderSneak(it, bytes, slim, backgroundColor, lightColor, headScale, duration, showPlatform)
+        SkinRenderUseCases.renderSneak(it, bytes, slim, backgroundColor, lightIntensity, headScale, duration, showPlatform)
     }
 
     suspend fun renderHomo(
         bytes: ByteArray,
         slim: Boolean,
         backgroundColor: Int,
-        lightColor: Int?,
+        lightIntensity: Float?,
         headScale: Double,
         showPlatform: Boolean = false,
     ): ByteArray = withRenderer {
-        SkinRenderUseCases.renderHomo(it, bytes, slim, backgroundColor, lightColor, headScale, showPlatform)
+        SkinRenderUseCases.renderHomo(it, bytes, slim, backgroundColor, lightIntensity, headScale, showPlatform)
     }
 
     fun shutdown() {

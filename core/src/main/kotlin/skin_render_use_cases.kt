@@ -29,7 +29,7 @@ object SkinRenderUseCases {
         bytes: ByteArray,
         slim: Boolean,
         backgroundColor: Int,
-        lightColor: Int?,
+        lightIntensity: Float?,
         headScale: Double,
         showPlatform: Boolean = false,
     ): ByteArray =
@@ -40,7 +40,7 @@ object SkinRenderUseCases {
                 width = FULL_WIDTH,
                 height = FULL_HEIGHT,
                 backgroundColor = backgroundColor,
-                lightColor = lightColor,
+                lightIntensity = lightIntensity,
                 camera = SkinCamera(SkinRenderVec3(0f, 10f, 0f), yaw = 45f, pitch = 15f, distance = 65f),
                 pose = headScalePose(slim, headScale),
                 antiAliasingLevel = 2,
@@ -55,7 +55,7 @@ object SkinRenderUseCases {
         backgroundColor: Int,
         frameCount: Int,
         pitchAmplitude: Int,
-        lightColor: Int?,
+        lightIntensity: Float?,
         headScale: Double,
         duration: Int,
         showPlatform: Boolean = true,
@@ -69,7 +69,7 @@ object SkinRenderUseCases {
             backgroundColor = backgroundColor,
             frameCount = frameCount,
             pitch = pitchAmplitude.toFloat(),
-            lightColor = lightColor,
+            lightIntensity = lightIntensity,
             duration = duration,
             target = SkinRenderVec3(0f, 10f, 0f),
             distance = 65f,
@@ -82,7 +82,7 @@ object SkinRenderUseCases {
         renderer: SkinPngRenderer,
         bytes: ByteArray,
         backgroundColor: Int,
-        lightColor: Int?,
+        lightIntensity: Float?,
         showPlatform: Boolean = false,
     ): ByteArray =
         renderer.renderPng(
@@ -92,7 +92,7 @@ object SkinRenderUseCases {
                 width = HEAD_SIZE,
                 height = HEAD_SIZE,
                 backgroundColor = backgroundColor,
-                lightColor = lightColor,
+                lightIntensity = lightIntensity,
                 camera = SkinCamera(SkinRenderVec3(0f, 20f, 0f), yaw = 45f, pitch = 15f, distance = 30f),
                 pose = PosePresets.HEAD_ONLY,
                 antiAliasingLevel = 2,
@@ -106,7 +106,7 @@ object SkinRenderUseCases {
         backgroundColor: Int,
         frameCount: Int,
         pitchAmplitude: Int,
-        lightColor: Int?,
+        lightIntensity: Float?,
         duration: Int,
         showPlatform: Boolean = false,
     ): ByteArray =
@@ -119,7 +119,7 @@ object SkinRenderUseCases {
             backgroundColor = backgroundColor,
             frameCount = frameCount,
             pitch = pitchAmplitude.toFloat(),
-            lightColor = lightColor,
+            lightIntensity = lightIntensity,
             duration = duration,
             target = SkinRenderVec3(0f, 20f, 0f),
             distance = 30f,
@@ -133,7 +133,7 @@ object SkinRenderUseCases {
         bytes: ByteArray,
         slim: Boolean,
         backgroundColor: Int,
-        lightColor: Int?,
+        lightIntensity: Float?,
         headScale: Double,
         duration: Int,
         showPlatform: Boolean = false,
@@ -144,8 +144,8 @@ object SkinRenderUseCases {
         val camera = SkinCamera(SkinRenderVec3(0f, 10f, 0f), yaw = 315f, pitch = 10f, distance = 65f)
         val pngs = renderer.renderPngBatch(
             listOf(
-                request(skinPng, slim, FULL_WIDTH, FULL_HEIGHT, backgroundColor, lightColor, camera, normalPose, 1, showPlatform),
-                request(skinPng, slim, FULL_WIDTH, FULL_HEIGHT, backgroundColor, lightColor, camera, sneakPose, 1, showPlatform)
+                request(skinPng, slim, FULL_WIDTH, FULL_HEIGHT, backgroundColor, lightIntensity, camera, normalPose, 1, showPlatform),
+                request(skinPng, slim, FULL_WIDTH, FULL_HEIGHT, backgroundColor, lightIntensity, camera, sneakPose, 1, showPlatform)
             )
         )
         return encodeGif(
@@ -167,7 +167,7 @@ object SkinRenderUseCases {
         bytes: ByteArray,
         slim: Boolean,
         backgroundColor: Int,
-        lightColor: Int?,
+        lightIntensity: Float?,
         headScale: Double,
         showPlatform: Boolean = false,
     ): ByteArray =
@@ -178,7 +178,7 @@ object SkinRenderUseCases {
                 width = HOMO_WIDTH,
                 height = HOMO_HEIGHT,
                 backgroundColor = backgroundColor,
-                lightColor = lightColor,
+                lightIntensity = lightIntensity,
                 camera = SkinCamera(SkinRenderVec3(0f, 8f, 0f), yaw = 30f, pitch = 0f, distance = 80f),
                 pose = PosePresets.withScale(slim, headScale = headScale.toFloat()),
                 antiAliasingLevel = 2,
@@ -195,7 +195,7 @@ object SkinRenderUseCases {
         backgroundColor: Int,
         frameCount: Int,
         pitch: Float,
-        lightColor: Int?,
+        lightIntensity: Float?,
         duration: Int,
         target: SkinRenderVec3,
         distance: Float,
@@ -213,7 +213,7 @@ object SkinRenderUseCases {
                 width = width,
                 height = height,
                 backgroundColor = backgroundColor,
-                lightColor = lightColor,
+                lightIntensity = lightIntensity,
                 camera = camera,
                 pose = pose,
                 antiAliasingLevel = antiAliasingLevel,
@@ -238,7 +238,7 @@ object SkinRenderUseCases {
         width: Int,
         height: Int,
         backgroundColor: Int,
-        lightColor: Int?,
+        lightIntensity: Float?,
         camera: SkinCamera,
         pose: Map<BodyPart, List<SkinTransform>>,
         antiAliasingLevel: Int,
@@ -257,7 +257,7 @@ object SkinRenderUseCases {
                 distance = camera.distance,
                 backgroundColor = backgroundColor,
                 lightDirection = camera.relativeUpperLeftLight(),
-                lightIntensity = lightIntensity(lightColor),
+                lightIntensity = lightIntensity ?: DEFAULT_LIGHT_INTENSITY,
                 antiAliasingLevel = antiAliasingLevel,
                 platformTopY = -8.2f,
                 platformThickness = 2f
@@ -302,11 +302,6 @@ object SkinRenderUseCases {
         }
     }
 
-    private fun lightIntensity(color: Int?): Float {
-        if (color == null) return DEFAULT_LIGHT_INTENSITY
-        val luminance = (0.2126f * Color.getR(color) + 0.7152f * Color.getG(color) + 0.0722f * Color.getB(color)) / 255f
-        return luminance.coerceIn(0.2f, 1f)
-    }
 }
 
 private data class SkinCamera(
