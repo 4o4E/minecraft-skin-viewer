@@ -1,8 +1,10 @@
 package top.e404.skin.core.test
 
 import java.awt.image.BufferedImage
+import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
+import javax.imageio.metadata.IIOMetadataNode
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.startCoroutine
@@ -73,6 +75,10 @@ class SkinRenderUseCasesTest {
         )
         assertEquals(listOf(SkinTransform.Translate(z = -3f)), sneakPose.getValue(BodyPart.RIGHT_LEG))
         assertEquals(listOf(SkinTransform.Translate(z = -3f)), sneakPose.getValue(BodyPart.LEFT_LEG))
+        assertEquals(
+            listOf(SkinRenderUseCases.SNEAK_FRAME_DURATION_MS, SkinRenderUseCases.SNEAK_FRAME_DURATION_MS),
+            gifFrameDurationsMs(gif)
+        )
         assertTrue(gif.isNotEmpty())
     }
 }
@@ -108,6 +114,31 @@ private fun testPng(width: Int, height: Int): ByteArray {
         ImageIO.write(image, "png", it)
         it.toByteArray()
     }
+}
+
+private fun gifFrameDurationsMs(bytes: ByteArray): List<Int> {
+    val reader = ImageIO.getImageReadersByFormatName("gif").asSequence().first()
+    try {
+        ImageIO.createImageInputStream(ByteArrayInputStream(bytes)).use { input ->
+            reader.input = input
+            return (0 until reader.getNumImages(true)).map { index ->
+                val metadata = reader.getImageMetadata(index)
+                val root = metadata.getAsTree(metadata.nativeMetadataFormatName) as IIOMetadataNode
+                val gce = root.child("GraphicControlExtension")
+                gce.getAttribute("delayTime").toInt() * 10
+            }
+        }
+    } finally {
+        reader.dispose()
+    }
+}
+
+private fun IIOMetadataNode.child(name: String): IIOMetadataNode {
+    for (i in 0 until length) {
+        val node = item(i)
+        if (node.nodeName == name) return node as IIOMetadataNode
+    }
+    throw IllegalArgumentException("Missing GIF metadata node: $name")
 }
 
 private fun <T> runSuspend(block: suspend () -> T): T {

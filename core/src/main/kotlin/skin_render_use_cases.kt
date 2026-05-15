@@ -11,6 +11,8 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 object SkinRenderUseCases {
+    const val SNEAK_FRAME_DURATION_MS = 10
+
     private const val FULL_WIDTH = 600
     private const val FULL_HEIGHT = 900
     private const val HEAD_SIZE = 400
@@ -172,11 +174,11 @@ object SkinRenderUseCases {
         return encodeGif(
             listOf(
                 SkinAnimationFrame(
-                    durationMs = duration,
+                    durationMs = SNEAK_FRAME_DURATION_MS,
                     png = pngs[0]
                 ),
                 SkinAnimationFrame(
-                    durationMs = duration,
+                    durationMs = SNEAK_FRAME_DURATION_MS,
                     png = pngs[1]
                 )
             )

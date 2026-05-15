@@ -5,6 +5,7 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import top.e404.skin.core.SkinRenderUseCases
 import top.e404.skin.server.Skin
 import top.e404.skin.server.sql.pojo.SkinData
 import top.e404.skin.server.service.RenderFileCache
@@ -39,7 +40,7 @@ fun Application.routing() = routing {
             "sneak" -> {
                 val slim = parameters["slim"]?.toBoolean() ?: parameters["t"]?.toBoolean() ?: data.slim
                 val headScale = parameters["head"]?.toDoubleOrNull() ?: 1.0
-                val duration = parameters["duration"]?.toIntOrNull() ?: 40
+                val duration = SkinRenderUseCases.SNEAK_FRAME_DURATION_MS
                 val platform = parameters["platform"]?.toBoolean() ?: false
                 call.respondCachedRender(data, "sneak", "gif", ContentType.Image.GIF, mapOf(
                     "slim" to slim,

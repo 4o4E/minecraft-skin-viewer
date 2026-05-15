@@ -14,7 +14,7 @@ import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 
 object RenderFileCache {
-    private const val CACHE_VERSION = 10
+    private const val CACHE_VERSION = 11
     private val renderLocks = ConcurrentHashMap<CacheKey, RenderLock>()
 
     fun paramsMd5(values: Map<String, Any?>): String {
