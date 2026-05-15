@@ -1,9 +1,7 @@
 services:
   minecraft-skin-viewer-opengl:
     container_name: minecraft-skin-viewer-opengl
-    build:
-      context: .
-    image: minecraft-skin-viewer:opengl-linux
+    image: ghcr.io/4o4e/minecraft-skin-viewer-opengl-linux:latest
     environment:
       DB_URL: jdbc:mysql://172.17.0.1:3306/skin?useSSL=false
       DB_USERNAME: root
