@@ -1,0 +1,6 @@
+*
+!Dockerfile
+!enterpoint.sh
+!build/
+!build/libs/
+!build/libs/http-server-opengl-linux.jar

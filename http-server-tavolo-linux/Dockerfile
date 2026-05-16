@@ -15,13 +15,14 @@ RUN sed -i s/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/i /etc/apt/sources.
     && rm -rf /var/lib/apt/lists/*
 
 ENV JAVA_HOME=/opt/java/openjdk
+COPY --from=jre_source "$JAVA_HOME" "$JAVA_HOME"
+
 ENV LANG="en_US.UTF-8" \
     LANGUAGE="en_US.UTF-8" \
     LC_ALL="C" \
     PATH="$JAVA_HOME/bin:$PATH" \
     SKIN_RENDERER_CLASS="top.e404.skin.renderer.tavolo.TavoloSkinPngRenderer" \
     SKIN_RENDERER_ID="tavolo-cpu-v1"
-COPY --from=jre_source "$JAVA_HOME" "$JAVA_HOME"
 
 COPY enterpoint.sh /enterpoint.sh
 RUN chmod +x /enterpoint.sh && \
