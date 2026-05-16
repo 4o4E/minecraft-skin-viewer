@@ -263,8 +263,17 @@ private fun String.asLightIntensity(): Float {
     return value
 }
 
-internal fun Parameters.renderOptions(defaults: SkinRenderOptions): SkinRenderOptions =
-    defaults.copy(
+internal fun Parameters.renderOptions(defaults: SkinRenderOptions): SkinRenderOptions {
+    val shadows = firstValue("shadow", "shadows")?.asBooleanParam() ?: defaults.shadows
+    val lightingMode = firstValue("lighting", "lightingMode")?.asLightingMode()
+        ?: if (shadows) SkinLightingMode.DIRECTIONAL else defaults.lightingMode
+    if (shadows && lightingMode == SkinLightingMode.AMBIENT) {
+        queryParameterError("shadow requires directional lighting")
+    }
+    val showPlatform = firstValue("platform", "showPlatform")?.asBooleanParam()
+        ?: if (shadows) true else defaults.showPlatform
+
+    return defaults.copy(
         width = intParam(defaults.width, "width"),
         height = intParam(defaults.height, "height"),
         target = vec3Param(defaults.target, "target", "targetX", "targetY", "targetZ"),
@@ -278,12 +287,13 @@ internal fun Parameters.renderOptions(defaults: SkinRenderOptions): SkinRenderOp
         platformThickness = floatParam(defaults.platformThickness, "platformThickness"),
         antiAliasingLevel = intParam(defaults.antiAliasingLevel, "aa", "antiAliasingLevel"),
         overlayMode = firstValue("overlay", "overlayMode")?.asOverlayMode() ?: defaults.overlayMode,
-        lightingMode = firstValue("lighting", "lightingMode")?.asLightingMode() ?: defaults.lightingMode,
-        shadows = firstValue("shadow", "shadows")?.asBooleanParam() ?: defaults.shadows,
-        showPlatform = firstValue("platform", "showPlatform")?.asBooleanParam() ?: defaults.showPlatform,
+        lightingMode = lightingMode,
+        shadows = shadows,
+        showPlatform = showPlatform,
         modelYaw = floatParam(defaults.modelYaw, "modelYaw"),
         pose = this["pose"]?.asPose() ?: defaults.pose,
     )
+}
 
 internal fun SkinRenderOptions.cacheParams(): Map<String, Any?> =
     mapOf(

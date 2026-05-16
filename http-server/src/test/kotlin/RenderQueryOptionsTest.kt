@@ -75,4 +75,24 @@ class RenderQueryOptionsTest {
                 .renderOptions(SkinRenderUseCases.skinOptions(0))
         }
     }
+
+    @Test
+    fun `shadow query enables directional lighting and visible platform by default`() {
+        val options = parametersOf("shadow" to listOf("true"))
+            .renderOptions(SkinRenderUseCases.skinRotateOptions(0))
+
+        assertTrue(options.shadows)
+        assertTrue(options.showPlatform)
+        assertEquals(SkinLightingMode.DIRECTIONAL, options.lightingMode)
+    }
+
+    @Test
+    fun `shadow query rejects ambient lighting`() {
+        assertFailsWith<IllegalArgumentException> {
+            parametersOf(
+                "shadow" to listOf("true"),
+                "lighting" to listOf("ambient")
+            ).renderOptions(SkinRenderUseCases.skinOptions(0))
+        }
+    }
 }

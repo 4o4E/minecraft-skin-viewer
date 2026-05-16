@@ -40,7 +40,7 @@ url: `/render/{type}/{content}/{position}`
 | `lightDir` | 方向光方向别名 | 等同 `lightDirection` |
 | `lightX` / `lightY` / `lightZ` | 方向光方向分量 | 可替代 `lightDirection` |
 | `lighting` | 光照模式 | `ambient` 或 `directional`；`lightingMode` 是别名 |
-| `shadow` | 是否启用阴影 | 默认 `false`；`shadows` 是别名 |
+| `shadow` | 是否启用光照投影 | 默认 `false`；`shadows` 是别名 |
 | `platform` | 是否显示地台 | 按模式决定；`showPlatform` 是别名 |
 | `platformTopY` | 地台顶面 Y 坐标 | 默认 `-8.2`；`platformY` 是别名 |
 | `platformThickness` | 地台厚度 | 默认 `2` |
@@ -49,7 +49,7 @@ url: `/render/{type}/{content}/{position}`
 | `modelYaw` | 模型自身水平旋转角度 | 静态图直接使用，旋转 gif 作为每帧旋转的起始偏移 |
 | `pose` | 额外姿态变换 | URL 编码后的 JSON，追加到当前模式内置姿态之后 |
 
-`shadow` 只控制阴影计算，`platform` 只控制地台显示。启用阴影但不显示地台时，地面投影不会出现在输出图里。
+`shadow=true` 表示启用“方向光照 + 影子”。如果没有显式传 `lighting`，接口会自动使用 `directional`；如果没有显式传 `platform`，接口会自动显示地台，保证地面投影可见。`shadow=true&lighting=ambient` 会返回 `400 Bad Request`，因为环境光模式没有方向光投影。
 
 ### 模式参数
 
@@ -89,11 +89,11 @@ GIF 的时间精度为 10ms。
 ### 示例请求
 
 ```http request
-GET http://localhost:2345/render/name/404E/sk?head=1.5&shadow=true&platform=true&overlay=3d
+GET http://localhost:2345/render/name/404E/sk?head=1.5&shadow=true&overlay=3d
 ```
 
 ```http request
-GET http://localhost:2345/render/name/404E/dsk?frameCount=24&duration=40&pitch=15&lighting=directional&lightDirection=0.5,0.9,0.35
+GET http://localhost:2345/render/name/404E/dsk?frameCount=24&duration=40&pitch=15&shadow=true&lightDirection=0.5,0.9,0.35
 ```
 
 ## 通过皮肤生成头像
