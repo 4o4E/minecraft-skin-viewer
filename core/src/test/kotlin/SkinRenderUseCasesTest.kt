@@ -54,7 +54,7 @@ class SkinRenderUseCasesTest {
                 backgroundColor = 0xFF1F1B1D.toInt(),
                 lightIntensity = null,
                 headScale = 1.0,
-                duration = 40
+                duration = SkinRenderUseCases.SNEAK_FRAME_DURATION_MS
             )
         }
 

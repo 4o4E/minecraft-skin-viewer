@@ -174,12 +174,12 @@ object SkinRenderUseCases {
         return encodeGif(
             listOf(
                 SkinAnimationFrame(
-                    durationMs = SNEAK_FRAME_DURATION_MS,
-                    png = pngs[0]
+                    duration,
+                    pngs[0]
                 ),
                 SkinAnimationFrame(
-                    durationMs = SNEAK_FRAME_DURATION_MS,
-                    png = pngs[1]
+                    duration,
+                    pngs[1]
                 )
             )
         )
