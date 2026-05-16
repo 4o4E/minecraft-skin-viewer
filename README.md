@@ -53,6 +53,10 @@ renderCache:
 
 接口文档已迁移到 [HTTP 接口文档](docs/http接口文档.md)。
 
+### HTTP Client
+
+[http-client模块](http-client)提供了基于 Ktor HttpClient 的类型化客户端，可直接调用渲染、头像、刷新和数据接口，并支持复用下游传入的 `HttpClient`。
+
 ## Docker 部署
 
 支持使用 Docker 进行部署, 镜像不包含 mysql：
