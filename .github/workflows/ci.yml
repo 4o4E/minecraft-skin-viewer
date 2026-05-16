@@ -35,7 +35,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: Run unit tests
-        run: bash ./gradlew :core:test :http-server:test :renderer-tavolo:test --build-cache --parallel
+        run: bash ./gradlew :core:test :http-client:test :http-server:test :renderer-tavolo:test --build-cache --parallel
 
   opengl-smoke:
     name: OpenGL Smoke
@@ -58,31 +58,7 @@ jobs:
           cache-read-only: true
 
       - name: Install OpenGL test dependencies
-        run: |
-          packages=(
-            xvfb \
-            libgl1 \
-            libglx-mesa0 \
-            libgl1-mesa-dri \
-            libx11-6 \
-            libxext6 \
-            libxrender1 \
-            libxi6 \
-            libxrandr2 \
-            libxcursor1 \
-            libxinerama1 \
-            libxxf86vm1
-          )
-          missing=()
-          for package in "${packages[@]}"; do
-            if ! dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -q "install ok installed"; then
-              missing+=("$package")
-            fi
-          done
-          if [ "${#missing[@]}" -gt 0 ]; then
-            sudo apt-get update
-            sudo apt-get install -y --no-install-recommends "${missing[@]}"
-          fi
+        run: bash .github/scripts/install-opengl-test-deps.sh
 
       - name: Run OpenGL renderer smoke test
         run: xvfb-run -a bash ./gradlew :renderer-opengl:test -Dskin.openglSmoke=true --build-cache
