@@ -11,7 +11,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 object SkinRenderUseCases {
-    const val SNEAK_FRAME_DURATION_MS = 10
+    const val SNEAK_FRAME_DURATION_MS = 40
 
     private const val FULL_WIDTH = 600
     private const val FULL_HEIGHT = 900
@@ -134,7 +134,7 @@ object SkinRenderUseCases {
         backgroundColor: Int,
         lightIntensity: Float?,
         headScale: Double,
-        duration: Int,
+        duration: Int = SNEAK_FRAME_DURATION_MS,
         showPlatform: Boolean = false,
     ): ByteArray {
         val skinPng = bytes.formatSkinPng()

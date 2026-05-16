@@ -28,7 +28,7 @@ internal val openGlRenderOutputDir = File("manual-test-output/opengl/render")
 internal val shadowGridYaws = listOf(0f, 45f, 90f, 135f, 180f, 225f, 270f, 315f)
 internal val shadowGridPitches = listOf(30f, 10f, -10f)
 internal const val GIF_FRAME_COUNT = 12
-internal const val GIF_FRAME_DURATION_MS = 10
+internal const val GIF_FRAME_DURATION_MS = 80
 
 internal fun renderRequest(
     skinFile: File,

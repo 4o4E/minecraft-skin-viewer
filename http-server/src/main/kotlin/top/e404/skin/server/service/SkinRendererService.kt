@@ -93,7 +93,7 @@ object SkinRendererService {
         backgroundColor: Int,
         lightIntensity: Float?,
         headScale: Double,
-        duration: Int,
+        duration: Int = SkinRenderUseCases.SNEAK_FRAME_DURATION_MS,
         showPlatform: Boolean = false,
     ): ByteArray = withRenderer {
         SkinRenderUseCases.renderSneak(it, bytes, slim, backgroundColor, lightIntensity, headScale, duration, showPlatform)

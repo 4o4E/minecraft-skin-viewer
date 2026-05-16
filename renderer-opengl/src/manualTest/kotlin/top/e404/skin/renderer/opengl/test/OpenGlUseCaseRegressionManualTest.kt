@@ -52,7 +52,6 @@ class OpenGlUseCaseRegressionManualTest {
                     backgroundColor = DEFAULT_BG,
                     lightIntensity = .7f,
                     headScale = 1.0,
-                    duration = GIF_FRAME_DURATION_MS,
                     showPlatform = true
                 )
                 outputDir.resolve("use_case_sneak_pose_${file.nameWithoutExtension}.gif").writeBytes(gif)

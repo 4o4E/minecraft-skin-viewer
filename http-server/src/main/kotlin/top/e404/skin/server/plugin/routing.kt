@@ -40,14 +40,13 @@ fun Application.routing() = routing {
             "sneak" -> {
                 val slim = parameters["slim"]?.toBoolean() ?: parameters["t"]?.toBoolean() ?: data.slim
                 val headScale = parameters["head"]?.toDoubleOrNull() ?: 1.0
-                val duration = SkinRenderUseCases.SNEAK_FRAME_DURATION_MS
                 val platform = parameters["platform"]?.toBoolean() ?: false
                 call.respondCachedRender(data, "sneak", "gif", ContentType.Image.GIF, mapOf(
                     "slim" to slim,
                     "bg" to bg.hexColor(),
                     "light" to lightIntensity,
                     "head" to headScale,
-                    "duration" to duration,
+                    "duration" to SkinRenderUseCases.SNEAK_FRAME_DURATION_MS,
                     "platform" to platform,
                     "width" to 600,
                     "height" to 900,
@@ -60,7 +59,6 @@ fun Application.routing() = routing {
                         backgroundColor = bg,
                         lightIntensity = lightIntensity,
                         headScale = headScale,
-                        duration = duration,
                         showPlatform = platform
                     )
                 }
