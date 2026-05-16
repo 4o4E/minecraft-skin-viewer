@@ -3,6 +3,7 @@ package top.e404.skin.server.service
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import top.e404.skin.core.SkinPngRenderer
+import top.e404.skin.core.SkinRenderOptions
 import top.e404.skin.core.SkinRenderUseCases
 import top.e404.skin.server.appLog
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -24,90 +25,70 @@ object SkinRendererService {
     suspend fun renderSkin(
         bytes: ByteArray,
         slim: Boolean,
-        backgroundColor: Int,
-        lightIntensity: Float?,
         headScale: Double,
-        showPlatform: Boolean = false,
+        options: SkinRenderOptions,
     ): ByteArray = withRenderer {
-        SkinRenderUseCases.renderSkin(it, bytes, slim, backgroundColor, lightIntensity, headScale, showPlatform)
+        SkinRenderUseCases.renderSkin(it, bytes, slim, headScale, options)
     }
 
     suspend fun renderSkinRotate(
         bytes: ByteArray,
         slim: Boolean,
-        backgroundColor: Int,
         frameCount: Int,
-        pitchAmplitude: Int,
-        lightIntensity: Float?,
         headScale: Double,
         duration: Int,
-        showPlatform: Boolean = true,
+        options: SkinRenderOptions,
     ): ByteArray = withRenderer {
         SkinRenderUseCases.renderSkinRotate(
             renderer = it,
             bytes = bytes,
             slim = slim,
-            backgroundColor = backgroundColor,
             frameCount = frameCount,
-            pitchAmplitude = pitchAmplitude,
-            lightIntensity = lightIntensity,
             headScale = headScale,
             duration = duration,
-            showPlatform = showPlatform
+            options = options
         )
     }
 
     suspend fun renderHead(
         bytes: ByteArray,
-        backgroundColor: Int,
-        lightIntensity: Float?,
-        showPlatform: Boolean = false,
+        options: SkinRenderOptions,
     ): ByteArray = withRenderer {
-        SkinRenderUseCases.renderHead(it, bytes, backgroundColor, lightIntensity, showPlatform)
+        SkinRenderUseCases.renderHead(it, bytes, options)
     }
 
     suspend fun renderHeadRotate(
         bytes: ByteArray,
-        backgroundColor: Int,
         frameCount: Int,
-        pitchAmplitude: Int,
-        lightIntensity: Float?,
         duration: Int,
-        showPlatform: Boolean = false,
+        options: SkinRenderOptions,
     ): ByteArray = withRenderer {
         SkinRenderUseCases.renderHeadRotate(
             renderer = it,
             bytes = bytes,
-            backgroundColor = backgroundColor,
             frameCount = frameCount,
-            pitchAmplitude = pitchAmplitude,
-            lightIntensity = lightIntensity,
             duration = duration,
-            showPlatform = showPlatform
+            options = options
         )
     }
 
     suspend fun renderSneak(
         bytes: ByteArray,
         slim: Boolean,
-        backgroundColor: Int,
-        lightIntensity: Float?,
         headScale: Double,
         duration: Int = SkinRenderUseCases.SNEAK_FRAME_DURATION_MS,
-        showPlatform: Boolean = false,
+        options: SkinRenderOptions,
     ): ByteArray = withRenderer {
-        SkinRenderUseCases.renderSneak(it, bytes, slim, backgroundColor, lightIntensity, headScale, duration, showPlatform)
+        SkinRenderUseCases.renderSneak(it, bytes, slim, headScale, duration, options)
     }
 
     suspend fun renderHomo(
         bytes: ByteArray,
         slim: Boolean,
-        backgroundColor: Int,
-        lightIntensity: Float?,
         headScale: Double,
-        showPlatform: Boolean = false,
+        options: SkinRenderOptions,
     ): ByteArray = withRenderer {
-        SkinRenderUseCases.renderHomo(it, bytes, slim, backgroundColor, lightIntensity, headScale, showPlatform)
+        SkinRenderUseCases.renderHomo(it, bytes, slim, headScale, options)
     }
 
     fun shutdown() {

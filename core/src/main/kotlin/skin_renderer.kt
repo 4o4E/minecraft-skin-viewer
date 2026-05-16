@@ -42,6 +42,27 @@ data class SkinRenderSettings(
     val antiAliasingLevel: Int = 2,
 )
 
+data class SkinRenderOptions(
+    val width: Int,
+    val height: Int,
+    val target: SkinRenderVec3,
+    val yaw: Float,
+    val pitch: Float,
+    val distance: Float,
+    val backgroundColor: Int,
+    val lightIntensity: Float,
+    val lightDirection: SkinRenderVec3? = null,
+    val platformTopY: Float = -8.2f,
+    val platformThickness: Float = 2f,
+    val antiAliasingLevel: Int = 2,
+    val overlayMode: SkinOverlayMode = SkinOverlayMode.THREE_D,
+    val lightingMode: SkinLightingMode = SkinLightingMode.DIRECTIONAL,
+    val shadows: Boolean = false,
+    val showPlatform: Boolean = false,
+    val modelYaw: Float = 0f,
+    val pose: Map<BodyPart, List<SkinTransform>> = emptyMap(),
+)
+
 data class SkinRenderRequest(
     val skinPng: ByteArray,
     val isSlim: Boolean,

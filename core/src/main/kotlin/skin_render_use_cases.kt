@@ -13,13 +13,148 @@ import kotlin.math.sin
 object SkinRenderUseCases {
     const val SNEAK_FRAME_DURATION_MS = 40
 
-    private const val FULL_WIDTH = 600
-    private const val FULL_HEIGHT = 900
-    private const val HEAD_SIZE = 400
-    private const val HOMO_WIDTH = 1024
-    private const val HOMO_HEIGHT = 768
-    private const val DEFAULT_LIGHT_INTENSITY = 0.8f
-    private const val SNEAK_MODEL_YAW = 270f
+    const val FULL_WIDTH = 600
+    const val FULL_HEIGHT = 900
+    const val HEAD_SIZE = 400
+    const val HOMO_WIDTH = 1024
+    const val HOMO_HEIGHT = 768
+    const val DEFAULT_LIGHT_INTENSITY = 0.8f
+    const val DEFAULT_PLATFORM_TOP_Y = -8.2f
+    const val DEFAULT_PLATFORM_THICKNESS = 2f
+    const val SNEAK_MODEL_YAW = 270f
+
+    fun skinOptions(
+        backgroundColor: Int,
+        lightIntensity: Float = DEFAULT_LIGHT_INTENSITY,
+        showPlatform: Boolean = false,
+    ): SkinRenderOptions =
+        SkinRenderOptions(
+            width = FULL_WIDTH,
+            height = FULL_HEIGHT,
+            target = SkinRenderVec3(0f, 10f, 0f),
+            yaw = 45f,
+            pitch = 15f,
+            distance = 65f,
+            backgroundColor = backgroundColor,
+            lightIntensity = lightIntensity,
+            platformTopY = DEFAULT_PLATFORM_TOP_Y,
+            platformThickness = DEFAULT_PLATFORM_THICKNESS,
+            antiAliasingLevel = 2,
+            overlayMode = SkinOverlayMode.THREE_D,
+            lightingMode = SkinLightingMode.DIRECTIONAL,
+            showPlatform = showPlatform
+        )
+
+    fun skinRotateOptions(
+        backgroundColor: Int,
+        lightIntensity: Float = DEFAULT_LIGHT_INTENSITY,
+        showPlatform: Boolean = true,
+    ): SkinRenderOptions =
+        SkinRenderOptions(
+            width = FULL_WIDTH,
+            height = FULL_HEIGHT,
+            target = SkinRenderVec3(0f, 10f, 0f),
+            yaw = 45f,
+            pitch = 20f,
+            distance = 65f,
+            backgroundColor = backgroundColor,
+            lightIntensity = lightIntensity,
+            platformTopY = DEFAULT_PLATFORM_TOP_Y,
+            platformThickness = DEFAULT_PLATFORM_THICKNESS,
+            antiAliasingLevel = 1,
+            overlayMode = SkinOverlayMode.THREE_D,
+            lightingMode = SkinLightingMode.AMBIENT,
+            showPlatform = showPlatform
+        )
+
+    fun headOptions(
+        backgroundColor: Int,
+        lightIntensity: Float = DEFAULT_LIGHT_INTENSITY,
+        showPlatform: Boolean = false,
+    ): SkinRenderOptions =
+        SkinRenderOptions(
+            width = HEAD_SIZE,
+            height = HEAD_SIZE,
+            target = SkinRenderVec3(0f, 20f, 0f),
+            yaw = 45f,
+            pitch = 15f,
+            distance = 30f,
+            backgroundColor = backgroundColor,
+            lightIntensity = lightIntensity,
+            platformTopY = DEFAULT_PLATFORM_TOP_Y,
+            platformThickness = DEFAULT_PLATFORM_THICKNESS,
+            antiAliasingLevel = 2,
+            overlayMode = SkinOverlayMode.THREE_D,
+            lightingMode = SkinLightingMode.DIRECTIONAL,
+            showPlatform = showPlatform
+        )
+
+    fun headRotateOptions(
+        backgroundColor: Int,
+        lightIntensity: Float = DEFAULT_LIGHT_INTENSITY,
+        showPlatform: Boolean = false,
+    ): SkinRenderOptions =
+        SkinRenderOptions(
+            width = HEAD_SIZE,
+            height = HEAD_SIZE,
+            target = SkinRenderVec3(0f, 20f, 0f),
+            yaw = 45f,
+            pitch = 20f,
+            distance = 30f,
+            backgroundColor = backgroundColor,
+            lightIntensity = lightIntensity,
+            platformTopY = DEFAULT_PLATFORM_TOP_Y,
+            platformThickness = DEFAULT_PLATFORM_THICKNESS,
+            antiAliasingLevel = 1,
+            overlayMode = SkinOverlayMode.THREE_D,
+            lightingMode = SkinLightingMode.AMBIENT,
+            showPlatform = showPlatform
+        )
+
+    fun sneakOptions(
+        backgroundColor: Int,
+        lightIntensity: Float = DEFAULT_LIGHT_INTENSITY,
+        showPlatform: Boolean = false,
+    ): SkinRenderOptions =
+        SkinRenderOptions(
+            width = FULL_WIDTH,
+            height = FULL_HEIGHT,
+            target = SkinRenderVec3(0f, 10f, 0f),
+            yaw = 315f,
+            pitch = 10f,
+            distance = 65f,
+            backgroundColor = backgroundColor,
+            lightIntensity = lightIntensity,
+            platformTopY = DEFAULT_PLATFORM_TOP_Y,
+            platformThickness = DEFAULT_PLATFORM_THICKNESS,
+            antiAliasingLevel = 1,
+            overlayMode = SkinOverlayMode.THREE_D,
+            lightingMode = SkinLightingMode.DIRECTIONAL,
+            showPlatform = showPlatform,
+            modelYaw = SNEAK_MODEL_YAW
+        )
+
+    fun homoOptions(
+        backgroundColor: Int,
+        lightIntensity: Float = DEFAULT_LIGHT_INTENSITY,
+        showPlatform: Boolean = false,
+    ): SkinRenderOptions =
+        SkinRenderOptions(
+            width = HOMO_WIDTH,
+            height = HOMO_HEIGHT,
+            target = SkinRenderVec3(0f, 8f, 0f),
+            yaw = 30f,
+            pitch = 0f,
+            distance = 80f,
+            backgroundColor = backgroundColor,
+            lightIntensity = lightIntensity,
+            platformTopY = DEFAULT_PLATFORM_TOP_Y,
+            platformThickness = DEFAULT_PLATFORM_THICKNESS,
+            antiAliasingLevel = 2,
+            overlayMode = SkinOverlayMode.THREE_D,
+            lightingMode = SkinLightingMode.DIRECTIONAL,
+            showPlatform = showPlatform
+        )
 
     fun renderSkin(
         renderer: SkinPngRenderer,
@@ -30,18 +165,31 @@ object SkinRenderUseCases {
         headScale: Double,
         showPlatform: Boolean = false,
     ): ByteArray =
+        renderSkin(
+            renderer = renderer,
+            bytes = bytes,
+            slim = slim,
+            headScale = headScale,
+            options = skinOptions(
+                backgroundColor = backgroundColor,
+                lightIntensity = lightIntensity ?: DEFAULT_LIGHT_INTENSITY,
+                showPlatform = showPlatform
+            )
+        )
+
+    fun renderSkin(
+        renderer: SkinPngRenderer,
+        bytes: ByteArray,
+        slim: Boolean,
+        headScale: Double,
+        options: SkinRenderOptions,
+    ): ByteArray =
         renderer.renderPng(
             request = request(
                 skinPng = bytes.formatSkinPng(),
                 slim = slim,
-                width = FULL_WIDTH,
-                height = FULL_HEIGHT,
-                backgroundColor = backgroundColor,
-                lightIntensity = lightIntensity,
-                camera = SkinCamera(SkinRenderVec3(0f, 10f, 0f), yaw = 45f, pitch = 15f, distance = 65f),
+                options = options,
                 pose = headScalePose(slim, headScale),
-                antiAliasingLevel = 2,
-                showPlatform = showPlatform
             )
         )
 
@@ -57,23 +205,37 @@ object SkinRenderUseCases {
         duration: Int,
         showPlatform: Boolean = true,
     ): ByteArray =
+        renderSkinRotate(
+            renderer = renderer,
+            bytes = bytes,
+            slim = slim,
+            frameCount = frameCount,
+            headScale = headScale,
+            duration = duration,
+            options = skinRotateOptions(
+                backgroundColor = backgroundColor,
+                lightIntensity = lightIntensity ?: DEFAULT_LIGHT_INTENSITY,
+                showPlatform = showPlatform
+            ).copy(pitch = pitchAmplitude.toFloat())
+        )
+
+    suspend fun renderSkinRotate(
+        renderer: SkinPngRenderer,
+        bytes: ByteArray,
+        slim: Boolean,
+        frameCount: Int,
+        headScale: Double,
+        duration: Int,
+        options: SkinRenderOptions,
+    ): ByteArray =
         renderRotate(
             renderer = renderer,
             skinPng = bytes.formatSkinPng(),
             slim = slim,
-            width = FULL_WIDTH,
-            height = FULL_HEIGHT,
-            backgroundColor = backgroundColor,
             frameCount = frameCount,
-            pitch = pitchAmplitude.toFloat(),
-            lightIntensity = lightIntensity,
             duration = duration,
-            target = SkinRenderVec3(0f, 10f, 0f),
-            distance = 65f,
-            showPlatform = showPlatform,
+            options = options,
             pose = headScalePose(slim, headScale),
-            antiAliasingLevel = 1,
-            lightingMode = SkinLightingMode.AMBIENT
         )
 
     fun renderHead(
@@ -83,18 +245,27 @@ object SkinRenderUseCases {
         lightIntensity: Float?,
         showPlatform: Boolean = false,
     ): ByteArray =
+        renderHead(
+            renderer = renderer,
+            bytes = bytes,
+            options = headOptions(
+                backgroundColor = backgroundColor,
+                lightIntensity = lightIntensity ?: DEFAULT_LIGHT_INTENSITY,
+                showPlatform = showPlatform
+            )
+        )
+
+    fun renderHead(
+        renderer: SkinPngRenderer,
+        bytes: ByteArray,
+        options: SkinRenderOptions,
+    ): ByteArray =
         renderer.renderPng(
             request = request(
                 skinPng = bytes.formatSkinPng(),
                 slim = false,
-                width = HEAD_SIZE,
-                height = HEAD_SIZE,
-                backgroundColor = backgroundColor,
-                lightIntensity = lightIntensity,
-                camera = SkinCamera(SkinRenderVec3(0f, 20f, 0f), yaw = 45f, pitch = 15f, distance = 30f),
+                options = options,
                 pose = PosePresets.HEAD_ONLY,
-                antiAliasingLevel = 2,
-                showPlatform = showPlatform
             )
         )
 
@@ -108,23 +279,33 @@ object SkinRenderUseCases {
         duration: Int,
         showPlatform: Boolean = false,
     ): ByteArray =
+        renderHeadRotate(
+            renderer = renderer,
+            bytes = bytes,
+            frameCount = frameCount,
+            duration = duration,
+            options = headRotateOptions(
+                backgroundColor = backgroundColor,
+                lightIntensity = lightIntensity ?: DEFAULT_LIGHT_INTENSITY,
+                showPlatform = showPlatform
+            ).copy(pitch = pitchAmplitude.toFloat())
+        )
+
+    suspend fun renderHeadRotate(
+        renderer: SkinPngRenderer,
+        bytes: ByteArray,
+        frameCount: Int,
+        duration: Int,
+        options: SkinRenderOptions,
+    ): ByteArray =
         renderRotate(
             renderer = renderer,
             skinPng = bytes.formatSkinPng(),
             slim = false,
-            width = HEAD_SIZE,
-            height = HEAD_SIZE,
-            backgroundColor = backgroundColor,
             frameCount = frameCount,
-            pitch = pitchAmplitude.toFloat(),
-            lightIntensity = lightIntensity,
             duration = duration,
-            target = SkinRenderVec3(0f, 20f, 0f),
-            distance = 30f,
-            showPlatform = showPlatform,
+            options = options,
             pose = PosePresets.HEAD_ONLY,
-            antiAliasingLevel = 1,
-            lightingMode = SkinLightingMode.AMBIENT
         )
 
     suspend fun renderSneak(
@@ -137,37 +318,44 @@ object SkinRenderUseCases {
         duration: Int = SNEAK_FRAME_DURATION_MS,
         showPlatform: Boolean = false,
     ): ByteArray {
+        return renderSneak(
+            renderer = renderer,
+            bytes = bytes,
+            slim = slim,
+            headScale = headScale,
+            duration = duration,
+            options = sneakOptions(
+                backgroundColor = backgroundColor,
+                lightIntensity = lightIntensity ?: DEFAULT_LIGHT_INTENSITY,
+                showPlatform = showPlatform
+            )
+        )
+    }
+
+    suspend fun renderSneak(
+        renderer: SkinPngRenderer,
+        bytes: ByteArray,
+        slim: Boolean,
+        headScale: Double,
+        duration: Int = SNEAK_FRAME_DURATION_MS,
+        options: SkinRenderOptions,
+    ): ByteArray {
         val skinPng = bytes.formatSkinPng()
         val normalPose = headScalePose(slim, headScale)
         val sneakPose = mergePose(normalPose, sneakPose())
-        val camera = SkinCamera(SkinRenderVec3(0f, 10f, 0f), yaw = 315f, pitch = 10f, distance = 65f)
         val pngs = renderer.renderPngBatch(
             listOf(
                 request(
-                    skinPng,
-                    slim,
-                    FULL_WIDTH,
-                    FULL_HEIGHT,
-                    backgroundColor,
-                    lightIntensity,
-                    camera,
-                    normalPose,
-                    1,
-                    showPlatform,
-                    modelYaw = SNEAK_MODEL_YAW
+                    skinPng = skinPng,
+                    slim = slim,
+                    options = options,
+                    pose = normalPose
                 ),
                 request(
-                    skinPng,
-                    slim,
-                    FULL_WIDTH,
-                    FULL_HEIGHT,
-                    backgroundColor,
-                    lightIntensity,
-                    camera,
-                    sneakPose,
-                    1,
-                    showPlatform,
-                    modelYaw = SNEAK_MODEL_YAW
+                    skinPng = skinPng,
+                    slim = slim,
+                    options = options,
+                    pose = sneakPose
                 )
             )
         )
@@ -194,18 +382,31 @@ object SkinRenderUseCases {
         headScale: Double,
         showPlatform: Boolean = false,
     ): ByteArray =
+        renderHomo(
+            renderer = renderer,
+            bytes = bytes,
+            slim = slim,
+            headScale = headScale,
+            options = homoOptions(
+                backgroundColor = backgroundColor,
+                lightIntensity = lightIntensity ?: DEFAULT_LIGHT_INTENSITY,
+                showPlatform = showPlatform
+            )
+        )
+
+    fun renderHomo(
+        renderer: SkinPngRenderer,
+        bytes: ByteArray,
+        slim: Boolean,
+        headScale: Double,
+        options: SkinRenderOptions,
+    ): ByteArray =
         renderer.renderPng(
             request = request(
                 skinPng = bytes.formatSkinPng(),
                 slim = slim,
-                width = HOMO_WIDTH,
-                height = HOMO_HEIGHT,
-                backgroundColor = backgroundColor,
-                lightIntensity = lightIntensity,
-                camera = SkinCamera(SkinRenderVec3(0f, 8f, 0f), yaw = 30f, pitch = 0f, distance = 80f),
+                options = options,
                 pose = PosePresets.withScale(slim, headScale = headScale.toFloat()),
-                antiAliasingLevel = 2,
-                showPlatform = showPlatform
             )
         )
 
@@ -213,37 +414,20 @@ object SkinRenderUseCases {
         renderer: SkinPngRenderer,
         skinPng: ByteArray,
         slim: Boolean,
-        width: Int,
-        height: Int,
-        backgroundColor: Int,
         frameCount: Int,
-        pitch: Float,
-        lightIntensity: Float?,
         duration: Int,
-        target: SkinRenderVec3,
-        distance: Float,
-        showPlatform: Boolean,
+        options: SkinRenderOptions,
         pose: Map<BodyPart, List<SkinTransform>>,
-        antiAliasingLevel: Int,
-        lightingMode: SkinLightingMode = SkinLightingMode.DIRECTIONAL,
     ): ByteArray {
         val frames = frameCount.coerceAtLeast(1)
-        val camera = SkinCamera(target, yaw = 45f, pitch = pitch, distance = distance)
         val requests = (0 until frames).map { index ->
-            val modelYaw = 360f * index / frames
+            val modelYaw = options.modelYaw + 360f * index / frames
             request(
                 skinPng = skinPng,
                 slim = slim,
-                width = width,
-                height = height,
-                backgroundColor = backgroundColor,
-                lightIntensity = lightIntensity,
-                camera = camera,
+                options = options,
                 pose = pose,
-                antiAliasingLevel = antiAliasingLevel,
-                showPlatform = showPlatform,
                 modelYaw = modelYaw,
-                lightingMode = lightingMode
             )
         }
         val pngs = renderer.renderPngBatch(requests)
@@ -260,41 +444,36 @@ object SkinRenderUseCases {
     private fun request(
         skinPng: ByteArray,
         slim: Boolean,
-        width: Int,
-        height: Int,
-        backgroundColor: Int,
-        lightIntensity: Float?,
-        camera: SkinCamera,
+        options: SkinRenderOptions,
         pose: Map<BodyPart, List<SkinTransform>>,
-        antiAliasingLevel: Int,
-        showPlatform: Boolean = false,
-        modelYaw: Float = 0f,
-        lightingMode: SkinLightingMode = SkinLightingMode.DIRECTIONAL,
-    ): SkinRenderRequest =
-        SkinRenderRequest(
+        modelYaw: Float = options.modelYaw,
+    ): SkinRenderRequest {
+        val camera = SkinCamera(options.target, yaw = options.yaw, pitch = options.pitch, distance = options.distance)
+        return SkinRenderRequest(
             skinPng = skinPng,
             isSlim = slim,
             yaw = camera.yaw,
             settings = SkinRenderSettings(
-                width = width,
-                height = height,
+                width = options.width,
+                height = options.height,
                 target = camera.target,
                 pitch = camera.pitch,
                 distance = camera.distance,
-                backgroundColor = backgroundColor,
-                lightDirection = camera.relativeUpperLeftLight(),
-                lightIntensity = lightIntensity ?: DEFAULT_LIGHT_INTENSITY,
-                antiAliasingLevel = antiAliasingLevel,
-                platformTopY = -8.2f,
-                platformThickness = 2f
+                backgroundColor = options.backgroundColor,
+                lightDirection = (options.lightDirection ?: camera.relativeUpperLeftLight()).normalized(),
+                lightIntensity = options.lightIntensity,
+                antiAliasingLevel = options.antiAliasingLevel,
+                platformTopY = options.platformTopY,
+                platformThickness = options.platformThickness
             ),
-            overlayMode = SkinOverlayMode.THREE_D,
-            lightingMode = lightingMode,
-            shadows = false,
-            showPlatform = showPlatform,
-            pose = pose,
+            overlayMode = options.overlayMode,
+            lightingMode = options.lightingMode,
+            shadows = options.shadows,
+            showPlatform = options.showPlatform,
+            pose = mergePose(pose, options.pose),
             modelYaw = modelYaw
         )
+    }
 
     private fun headScalePose(
         slim: Boolean,

@@ -13,12 +13,68 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import top.e404.skin.core.BodyPart
 import top.e404.skin.core.SkinLightingMode
+import top.e404.skin.core.SkinOverlayMode
 import top.e404.skin.core.SkinPngRenderer
+import top.e404.skin.core.SkinRenderOptions
 import top.e404.skin.core.SkinRenderRequest
 import top.e404.skin.core.SkinTransform
 import top.e404.skin.core.SkinRenderUseCases
+import top.e404.skin.core.SkinRenderVec3
 
 class SkinRenderUseCasesTest {
+    @Test
+    fun `render options are forwarded to renderer request`() {
+        val renderer = RecordingRenderer()
+        val options = SkinRenderOptions(
+            width = 320,
+            height = 480,
+            target = SkinRenderVec3(1f, 2f, 3f),
+            yaw = 90f,
+            pitch = 25f,
+            distance = 42f,
+            backgroundColor = 0xFF112233.toInt(),
+            lightIntensity = 0.5f,
+            lightDirection = SkinRenderVec3(0.2f, 0.8f, 0.4f),
+            platformTopY = -7f,
+            platformThickness = 1.5f,
+            antiAliasingLevel = 4,
+            overlayMode = SkinOverlayMode.FLAT,
+            lightingMode = SkinLightingMode.DIRECTIONAL,
+            shadows = true,
+            showPlatform = true,
+            modelYaw = 45f,
+            pose = mapOf(BodyPart.BODY to listOf(SkinTransform.Translate(z = 2f)))
+        )
+
+        SkinRenderUseCases.renderSkin(
+            renderer = renderer,
+            bytes = testPng(width = 64, height = 64),
+            slim = true,
+            headScale = 1.0,
+            options = options
+        )
+
+        val request = renderer.requests.single()
+        assertEquals(320, request.settings.width)
+        assertEquals(480, request.settings.height)
+        assertEquals(SkinRenderVec3(1f, 2f, 3f), request.settings.target)
+        assertEquals(90f, request.yaw)
+        assertEquals(25f, request.settings.pitch)
+        assertEquals(42f, request.settings.distance)
+        assertEquals(0xFF112233.toInt(), request.settings.backgroundColor)
+        assertEquals(0.5f, request.settings.lightIntensity)
+        assertEquals(SkinRenderVec3(0.2f, 0.8f, 0.4f).normalized(), request.settings.lightDirection)
+        assertEquals(-7f, request.settings.platformTopY)
+        assertEquals(1.5f, request.settings.platformThickness)
+        assertEquals(4, request.settings.antiAliasingLevel)
+        assertEquals(SkinOverlayMode.FLAT, request.overlayMode)
+        assertEquals(SkinLightingMode.DIRECTIONAL, request.lightingMode)
+        assertEquals(true, request.shadows)
+        assertEquals(true, request.showPlatform)
+        assertEquals(45f, request.modelYaw)
+        assertEquals(listOf(SkinTransform.Translate(z = 2f)), request.pose.getValue(BodyPart.BODY))
+    }
+
     @Test
     fun `rotate render uses renderer batch API`() {
         val renderer = RecordingRenderer()
@@ -90,13 +146,15 @@ private class RecordingRenderer : SkinPngRenderer {
 
     override fun startup() = Unit
 
-    override fun renderPng(request: SkinRenderRequest): ByteArray =
-        testPng(request.settings.width, request.settings.height)
+    override fun renderPng(request: SkinRenderRequest): ByteArray {
+        requests += request
+        return testPng(request.settings.width, request.settings.height)
+    }
 
     override fun renderPngBatch(requests: List<SkinRenderRequest>): List<ByteArray> {
         batchSizes += requests.size
         this.requests += requests
-        return requests.map(::renderPng)
+        return requests.map { testPng(it.settings.width, it.settings.height) }
     }
 }
 

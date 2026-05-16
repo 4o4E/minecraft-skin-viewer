@@ -5,7 +5,19 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.floatOrNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import top.e404.skin.core.BodyPart
+import top.e404.skin.core.SkinLightingMode
+import top.e404.skin.core.SkinOverlayMode
+import top.e404.skin.core.SkinRenderOptions
 import top.e404.skin.core.SkinRenderUseCases
+import top.e404.skin.core.SkinRenderVec3
+import top.e404.skin.core.SkinTransform
 import top.e404.skin.server.Skin
 import top.e404.skin.server.sql.pojo.SkinData
 import top.e404.skin.server.service.RenderFileCache
@@ -17,6 +29,11 @@ import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
 private const val DEFAULT_BG_COLOR = 0xFF1F1B1D.toInt()
+private const val DEFAULT_FRAME_COUNT = 20
+private const val DEFAULT_DURATION_MS = 40
+private val QUERY_JSON = Json { ignoreUnknownKeys = true }
+
+private class QueryParameterException(message: String) : IllegalArgumentException(message)
 
 fun Application.routing() = routing {
     get("/render/{type}/{content}/{position}") {
@@ -33,174 +50,117 @@ fun Application.routing() = routing {
             return@get
         }
 
-        val parameters = call.request.queryParameters
-        val bg = parameters["bg"]?.asColor() ?: DEFAULT_BG_COLOR
-        val lightIntensity = parameters["light"]?.asLightIntensity()
-        when (call.parameters["position"]!!.lowercase()) {
-            "sneak" -> {
-                val slim = parameters["slim"]?.toBoolean() ?: parameters["t"]?.toBoolean() ?: data.slim
-                val headScale = parameters["head"]?.toDoubleOrNull() ?: 1.0
-                val platform = parameters["platform"]?.toBoolean() ?: false
-                call.respondCachedRender(data, "sneak", "gif", ContentType.Image.GIF, mapOf(
-                    "slim" to slim,
-                    "bg" to bg.hexColor(),
-                    "light" to lightIntensity,
-                    "head" to headScale,
-                    "duration" to SkinRenderUseCases.SNEAK_FRAME_DURATION_MS,
-                    "platform" to platform,
-                    "width" to 600,
-                    "height" to 900,
-                    "aa" to 1,
-                    "voxelOverlay" to true,
-                )) {
-                    SkinRendererService.renderSneak(
-                        bytes = data.skinBytes,
-                        slim = slim,
-                        backgroundColor = bg,
-                        lightIntensity = lightIntensity,
-                        headScale = headScale,
-                        showPlatform = platform
-                    )
+        try {
+            val parameters = call.request.queryParameters
+            when (call.parameters["position"]!!.lowercase()) {
+                "sneak" -> {
+                    val options = parameters.renderOptions(SkinRenderUseCases.sneakOptions(DEFAULT_BG_COLOR))
+                    val slim = parameters.slim(data.slim)
+                    val headScale = parameters.headScale()
+                    val duration = parameters.intParam(SkinRenderUseCases.SNEAK_FRAME_DURATION_MS, "duration")
+                    call.respondCachedRender(data, "sneak", "gif", ContentType.Image.GIF, options.cacheParams() + mapOf(
+                        "slim" to slim,
+                        "head" to headScale,
+                        "duration" to duration,
+                    )) {
+                        SkinRendererService.renderSneak(
+                            bytes = data.skinBytes,
+                            slim = slim,
+                            headScale = headScale,
+                            duration = duration,
+                            options = options
+                        )
+                    }
                 }
-            }
 
-            "sk" -> {
-                val slim = parameters["slim"]?.toBoolean() ?: parameters["t"]?.toBoolean() ?: data.slim
-                val headScale = parameters["head"]?.toDoubleOrNull() ?: 1.0
-                val platform = parameters["platform"]?.toBoolean() ?: false
-                call.respondCachedRender(data, "sk", "png", ContentType.Image.PNG, mapOf(
-                    "slim" to slim,
-                    "bg" to bg.hexColor(),
-                    "light" to lightIntensity,
-                    "head" to headScale,
-                    "platform" to platform,
-                    "width" to 600,
-                    "height" to 900,
-                    "aa" to 2,
-                    "voxelOverlay" to true,
-                )) {
-                    SkinRendererService.renderSkin(
-                        bytes = data.skinBytes,
-                        slim = slim,
-                        backgroundColor = bg,
-                        lightIntensity = lightIntensity,
-                        headScale = headScale,
-                        showPlatform = platform
-                    )
+                "sk" -> {
+                    val options = parameters.renderOptions(SkinRenderUseCases.skinOptions(DEFAULT_BG_COLOR))
+                    val slim = parameters.slim(data.slim)
+                    val headScale = parameters.headScale()
+                    call.respondCachedRender(data, "sk", "png", ContentType.Image.PNG, options.cacheParams() + mapOf(
+                        "slim" to slim,
+                        "head" to headScale,
+                    )) {
+                        SkinRendererService.renderSkin(
+                            bytes = data.skinBytes,
+                            slim = slim,
+                            headScale = headScale,
+                            options = options
+                        )
+                    }
                 }
-            }
 
-            "dsk" -> {
-                val slim = parameters["slim"]?.toBoolean() ?: parameters["t"]?.toBoolean() ?: data.slim
-                val frameCount = parameters["x"]?.toIntOrNull() ?: 20
-                val pitchAmplitude = parameters["y"]?.toIntOrNull() ?: 20
-                val headScale = parameters["head"]?.toDoubleOrNull() ?: 1.0
-                val duration = parameters["duration"]?.toIntOrNull() ?: 40
-                val platform = parameters["platform"]?.toBoolean() ?: true
-                call.respondCachedRender(data, "dsk", "gif", ContentType.Image.GIF, mapOf(
-                    "slim" to slim,
-                    "bg" to bg.hexColor(),
-                    "light" to lightIntensity,
-                    "head" to headScale,
-                    "frameCount" to frameCount,
-                    "pitchAmplitude" to pitchAmplitude,
-                    "duration" to duration,
-                    "platform" to platform,
-                    "width" to 600,
-                    "height" to 900,
-                    "aa" to 1,
-                    "voxelOverlay" to true,
-                )) {
-                    SkinRendererService.renderSkinRotate(
-                        bytes = data.skinBytes,
-                        slim = slim,
-                        backgroundColor = bg,
-                        frameCount = frameCount,
-                        pitchAmplitude = pitchAmplitude,
-                        lightIntensity = lightIntensity,
-                        headScale = headScale,
-                        duration = duration,
-                        showPlatform = platform
-                    )
+                "dsk" -> {
+                    val options = parameters.renderOptions(SkinRenderUseCases.skinRotateOptions(DEFAULT_BG_COLOR))
+                    val slim = parameters.slim(data.slim)
+                    val frameCount = parameters.intParam(DEFAULT_FRAME_COUNT, "frameCount", "x")
+                    val headScale = parameters.headScale()
+                    val duration = parameters.intParam(DEFAULT_DURATION_MS, "duration")
+                    call.respondCachedRender(data, "dsk", "gif", ContentType.Image.GIF, options.cacheParams() + mapOf(
+                        "slim" to slim,
+                        "head" to headScale,
+                        "frameCount" to frameCount,
+                        "duration" to duration,
+                    )) {
+                        SkinRendererService.renderSkinRotate(
+                            bytes = data.skinBytes,
+                            slim = slim,
+                            frameCount = frameCount,
+                            headScale = headScale,
+                            duration = duration,
+                            options = options
+                        )
+                    }
                 }
-            }
 
-            "head" -> {
-                val platform = parameters["platform"]?.toBoolean() ?: false
-                call.respondCachedRender(data, "head", "png", ContentType.Image.PNG, mapOf(
-                    "bg" to bg.hexColor(),
-                    "light" to lightIntensity,
-                    "platform" to platform,
-                    "width" to 400,
-                    "height" to 400,
-                    "aa" to 2,
-                    "voxelOverlay" to true,
-                )) {
-                    SkinRendererService.renderHead(
-                        bytes = data.skinBytes,
-                        backgroundColor = bg,
-                        lightIntensity = lightIntensity,
-                        showPlatform = platform
-                    )
+                "head" -> {
+                    val options = parameters.renderOptions(SkinRenderUseCases.headOptions(DEFAULT_BG_COLOR))
+                    call.respondCachedRender(data, "head", "png", ContentType.Image.PNG, options.cacheParams()) {
+                        SkinRendererService.renderHead(
+                            bytes = data.skinBytes,
+                            options = options
+                        )
+                    }
                 }
-            }
 
-            "dhead" -> {
-                val frameCount = parameters["x"]?.toIntOrNull() ?: 20
-                val pitchAmplitude = parameters["y"]?.toIntOrNull() ?: 20
-                val duration = parameters["duration"]?.toIntOrNull() ?: 40
-                val platform = parameters["platform"]?.toBoolean() ?: false
-                call.respondCachedRender(data, "dhead", "gif", ContentType.Image.GIF, mapOf(
-                    "bg" to bg.hexColor(),
-                    "light" to lightIntensity,
-                    "frameCount" to frameCount,
-                    "pitchAmplitude" to pitchAmplitude,
-                    "duration" to duration,
-                    "platform" to platform,
-                    "width" to 400,
-                    "height" to 400,
-                    "aa" to 1,
-                    "voxelOverlay" to true,
-                )) {
-                    SkinRendererService.renderHeadRotate(
-                        bytes = data.skinBytes,
-                        backgroundColor = bg,
-                        frameCount = frameCount,
-                        pitchAmplitude = pitchAmplitude,
-                        lightIntensity = lightIntensity,
-                        duration = duration,
-                        showPlatform = platform
-                    )
+                "dhead" -> {
+                    val options = parameters.renderOptions(SkinRenderUseCases.headRotateOptions(DEFAULT_BG_COLOR))
+                    val frameCount = parameters.intParam(DEFAULT_FRAME_COUNT, "frameCount", "x")
+                    val duration = parameters.intParam(DEFAULT_DURATION_MS, "duration")
+                    call.respondCachedRender(data, "dhead", "gif", ContentType.Image.GIF, options.cacheParams() + mapOf(
+                        "frameCount" to frameCount,
+                        "duration" to duration,
+                    )) {
+                        SkinRendererService.renderHeadRotate(
+                            bytes = data.skinBytes,
+                            frameCount = frameCount,
+                            duration = duration,
+                            options = options
+                        )
+                    }
                 }
-            }
 
-            "homo" -> {
-                val slim = parameters["slim"]?.toBoolean() ?: parameters["t"]?.toBoolean() ?: data.slim
-                val headScale = parameters["head"]?.toDoubleOrNull() ?: 1.0
-                val platform = parameters["platform"]?.toBoolean() ?: false
-                call.respondCachedRender(data, "homo", "png", ContentType.Image.PNG, mapOf(
-                    "slim" to slim,
-                    "bg" to bg.hexColor(),
-                    "light" to lightIntensity,
-                    "head" to headScale,
-                    "platform" to platform,
-                    "width" to 1024,
-                    "height" to 768,
-                    "aa" to 2,
-                    "voxelOverlay" to true,
-                )) {
-                    SkinRendererService.renderHomo(
-                        bytes = data.skinBytes,
-                        slim = slim,
-                        backgroundColor = bg,
-                        lightIntensity = lightIntensity,
-                        headScale = headScale,
-                        showPlatform = platform
-                    )
+                "homo" -> {
+                    val options = parameters.renderOptions(SkinRenderUseCases.homoOptions(DEFAULT_BG_COLOR))
+                    val slim = parameters.slim(data.slim)
+                    val headScale = parameters.headScale()
+                    call.respondCachedRender(data, "homo", "png", ContentType.Image.PNG, options.cacheParams() + mapOf(
+                        "slim" to slim,
+                        "head" to headScale,
+                    )) {
+                        SkinRendererService.renderHomo(
+                            bytes = data.skinBytes,
+                            slim = slim,
+                            headScale = headScale,
+                            options = options
+                        )
+                    }
                 }
-            }
 
-            else -> call.respond(HttpStatusCode.NotFound)
+                else -> call.respond(HttpStatusCode.NotFound)
+            }
+        } catch (e: QueryParameterException) {
+            call.respond(HttpStatusCode.BadRequest, e.message ?: "Invalid query parameter")
         }
     }
 
@@ -245,16 +205,20 @@ fun Application.routing() = routing {
             call.respond(HttpStatusCode.NotFound)
             return@get
         }
-        val parameters = call.request.queryParameters
-        val bg = parameters["bg"]?.asColor() ?: 0
-        val scale = parameters["scale"]?.toIntOrNull() ?: 5
-        val margin = parameters["margin"]?.toIntOrNull() ?: 40
-        call.respondCachedRender(data, "face", "png", ContentType.Image.PNG, mapOf(
-            "bg" to bg.hexColor(),
-            "scale" to scale,
-            "margin" to margin,
-        )) {
-            renderFace(data.skinBytes, bg, scale, margin)
+        try {
+            val parameters = call.request.queryParameters
+            val bg = parameters["bg"]?.asColor() ?: 0
+            val scale = parameters.intParam(5, "scale")
+            val margin = parameters.intParam(40, "margin")
+            call.respondCachedRender(data, "face", "png", ContentType.Image.PNG, mapOf(
+                "bg" to bg.hexColor(),
+                "scale" to scale,
+                "margin" to margin,
+            )) {
+                renderFace(data.skinBytes, bg, scale, margin)
+            }
+        } catch (e: QueryParameterException) {
+            call.respond(HttpStatusCode.BadRequest, e.message ?: "Invalid query parameter")
         }
     }
 }
@@ -288,16 +252,193 @@ private fun String.asColor(): Int {
         4 -> raw.map { "$it$it" }.joinToString("")
         6 -> "ff$raw"
         8 -> raw
-        else -> error("Invalid color: $this")
+        else -> queryParameterError("Invalid color: $this")
     }
-    return argb.toULong(16).toInt()
+    return argb.toULongOrNull(16)?.toInt() ?: queryParameterError("Invalid color: $this")
 }
 
 private fun String.asLightIntensity(): Float {
-    val value = toFloatOrNull() ?: error("Invalid light intensity: $this")
-    require(value in 0f..1f) { "Light intensity must be between 0 and 1: $this" }
+    val value = toFloatOrNull() ?: queryParameterError("Invalid light intensity: $this")
+    if (value !in 0f..1f) queryParameterError("Light intensity must be between 0 and 1: $this")
     return value
 }
+
+internal fun Parameters.renderOptions(defaults: SkinRenderOptions): SkinRenderOptions =
+    defaults.copy(
+        width = intParam(defaults.width, "width"),
+        height = intParam(defaults.height, "height"),
+        target = vec3Param(defaults.target, "target", "targetX", "targetY", "targetZ"),
+        yaw = floatParam(defaults.yaw, "yaw"),
+        pitch = floatParam(defaults.pitch, "pitch", "y"),
+        distance = floatParam(defaults.distance, "distance"),
+        backgroundColor = this["bg"]?.asColor() ?: defaults.backgroundColor,
+        lightIntensity = this["light"]?.asLightIntensity() ?: defaults.lightIntensity,
+        lightDirection = nullableVec3Param(defaults.lightDirection, "lightDirection", "lightDir", "lightX", "lightY", "lightZ"),
+        platformTopY = floatParam(defaults.platformTopY, "platformTopY", "platformY"),
+        platformThickness = floatParam(defaults.platformThickness, "platformThickness"),
+        antiAliasingLevel = intParam(defaults.antiAliasingLevel, "aa", "antiAliasingLevel"),
+        overlayMode = firstValue("overlay", "overlayMode")?.asOverlayMode() ?: defaults.overlayMode,
+        lightingMode = firstValue("lighting", "lightingMode")?.asLightingMode() ?: defaults.lightingMode,
+        shadows = firstValue("shadow", "shadows")?.asBooleanParam() ?: defaults.shadows,
+        showPlatform = firstValue("platform", "showPlatform")?.asBooleanParam() ?: defaults.showPlatform,
+        modelYaw = floatParam(defaults.modelYaw, "modelYaw"),
+        pose = this["pose"]?.asPose() ?: defaults.pose,
+    )
+
+internal fun SkinRenderOptions.cacheParams(): Map<String, Any?> =
+    mapOf(
+        "width" to width,
+        "height" to height,
+        "target" to target.cacheString(),
+        "yaw" to yaw,
+        "pitch" to pitch,
+        "distance" to distance,
+        "bg" to backgroundColor.hexColor(),
+        "light" to lightIntensity,
+        "lightDirection" to lightDirection?.normalized()?.cacheString(),
+        "platformTopY" to platformTopY,
+        "platformThickness" to platformThickness,
+        "aa" to antiAliasingLevel,
+        "overlay" to overlayMode.name.lowercase(),
+        "lighting" to lightingMode.name.lowercase(),
+        "shadow" to shadows,
+        "platform" to showPlatform,
+        "modelYaw" to modelYaw,
+        "pose" to pose.cacheString()
+    )
+
+private fun Parameters.slim(default: Boolean): Boolean =
+    firstValue("slim", "t")?.asBooleanParam() ?: default
+
+private fun Parameters.headScale(): Double =
+    doubleParam(1.0, "head")
+
+internal fun Parameters.intParam(default: Int, vararg names: String): Int =
+    firstValue(*names)?.let { value ->
+        value.toIntOrNull() ?: queryParameterError("Invalid integer value for ${names.first()}: $value")
+    } ?: default
+
+private fun Parameters.floatParam(default: Float, vararg names: String): Float =
+    firstValue(*names)?.let { value ->
+        value.toFloatOrNull() ?: queryParameterError("Invalid float value for ${names.first()}: $value")
+    } ?: default
+
+private fun Parameters.doubleParam(default: Double, vararg names: String): Double =
+    firstValue(*names)?.let { value ->
+        value.toDoubleOrNull() ?: queryParameterError("Invalid double value for ${names.first()}: $value")
+    } ?: default
+
+private fun Parameters.firstValue(vararg names: String): String? =
+    names.firstNotNullOfOrNull { this[it] }
+
+private fun Parameters.vec3Param(default: SkinRenderVec3, combinedName: String, xName: String, yName: String, zName: String): SkinRenderVec3 =
+    nullableVec3Param(default, combinedName, combinedName, xName, yName, zName) ?: default
+
+private fun Parameters.nullableVec3Param(
+    default: SkinRenderVec3?,
+    combinedName: String,
+    combinedAlias: String,
+    xName: String,
+    yName: String,
+    zName: String,
+): SkinRenderVec3? {
+    firstValue(combinedName, combinedAlias)?.let { return it.asVec3() }
+    if (this[xName] == null && this[yName] == null && this[zName] == null) return default
+    val x = floatComponent(xName, default?.x)
+    val y = floatComponent(yName, default?.y)
+    val z = floatComponent(zName, default?.z)
+    return SkinRenderVec3(x, y, z)
+}
+
+private fun Parameters.floatComponent(name: String, default: Float?): Float =
+    this[name]?.let { value ->
+        value.toFloatOrNull() ?: queryParameterError("Invalid float value for $name: $value")
+    } ?: default ?: queryParameterError("Missing vector component: $name")
+
+private fun String.asVec3(): SkinRenderVec3 {
+    val values = split(',').map { it.trim().toFloatOrNull() ?: queryParameterError("Invalid vector value: $this") }
+    if (values.size != 3) queryParameterError("Vector must contain 3 numbers: $this")
+    return SkinRenderVec3(values[0], values[1], values[2])
+}
+
+private fun String.asBooleanParam(): Boolean =
+    when (lowercase()) {
+        "true", "1", "yes", "on" -> true
+        "false", "0", "no", "off" -> false
+        else -> queryParameterError("Invalid boolean value: $this")
+    }
+
+private fun String.asOverlayMode(): SkinOverlayMode =
+    when (lowercase()) {
+        "none" -> SkinOverlayMode.NONE
+        "flat", "2d" -> SkinOverlayMode.FLAT
+        "three_d", "three-d", "3d", "voxel", "voxel3d" -> SkinOverlayMode.THREE_D
+        else -> queryParameterError("Invalid overlay mode: $this")
+    }
+
+private fun String.asLightingMode(): SkinLightingMode =
+    when (lowercase()) {
+        "ambient" -> SkinLightingMode.AMBIENT
+        "directional" -> SkinLightingMode.DIRECTIONAL
+        else -> queryParameterError("Invalid lighting mode: $this")
+    }
+
+private fun String.asPose(): Map<BodyPart, List<SkinTransform>> {
+    try {
+        val root = QUERY_JSON.parseToJsonElement(this).jsonObject
+        return root.mapKeys { (part, _) -> part.asBodyPart() }
+            .mapValues { (_, transforms) ->
+                transforms.jsonArray.map { it.jsonObject.asTransform() }
+            }
+    } catch (e: QueryParameterException) {
+        throw e
+    } catch (e: Exception) {
+        queryParameterError("Invalid pose json: ${e.message ?: this}")
+    }
+}
+
+private fun String.asBodyPart(): BodyPart =
+    when (lowercase().replace("-", "").replace("_", "")) {
+        "head" -> BodyPart.HEAD
+        "body" -> BodyPart.BODY
+        "rightarm" -> BodyPart.RIGHT_ARM
+        "leftarm" -> BodyPart.LEFT_ARM
+        "rightleg" -> BodyPart.RIGHT_LEG
+        "leftleg" -> BodyPart.LEFT_LEG
+        else -> queryParameterError("Invalid body part: $this")
+    }
+
+private fun JsonObject.asTransform(): SkinTransform {
+    val type = (this["type"] ?: this["kind"])?.jsonPrimitive?.content
+        ?: queryParameterError("Pose transform missing type")
+    return when (type.lowercase()) {
+        "rotate" -> SkinTransform.Rotate(floatValue("x"), floatValue("y"), floatValue("z"))
+        "scale" -> SkinTransform.Scale(floatValue("x", 1f), floatValue("y", 1f), floatValue("z", 1f))
+        "translate" -> SkinTransform.Translate(floatValue("x"), floatValue("y"), floatValue("z"))
+        else -> queryParameterError("Invalid pose transform type: $type")
+    }
+}
+
+private fun JsonObject.floatValue(name: String, default: Float = 0f): Float =
+    this[name]?.jsonPrimitive?.floatOrNull
+        ?: if (this[name] == null) default else queryParameterError("Invalid float value for pose.$name")
+
+private fun queryParameterError(message: String): Nothing =
+    throw QueryParameterException(message)
+
+private fun SkinRenderVec3.cacheString(): String = "$x,$y,$z"
+
+private fun Map<BodyPart, List<SkinTransform>>.cacheString(): String =
+    BodyPart.entries.joinToString("|") { part ->
+        val transforms = this[part].orEmpty().joinToString(",") { transform ->
+            when (transform) {
+                is SkinTransform.Rotate -> "rotate(${transform.x},${transform.y},${transform.z})"
+                is SkinTransform.Scale -> "scale(${transform.x},${transform.y},${transform.z})"
+                is SkinTransform.Translate -> "translate(${transform.x},${transform.y},${transform.z})"
+            }
+        }
+        "${part.name.lowercase()}=[$transforms]"
+    }
 
 private fun renderFace(skinBytes: ByteArray, backgroundColor: Int, scale: Int, margin: Int): ByteArray {
     val skin = ImageIO.read(ByteArrayInputStream(skinBytes))
