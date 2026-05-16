@@ -1,4 +1,7 @@
 import java.net.URI
+import org.gradle.api.component.AdhocComponentWithVariants
+import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.publish.maven.MavenPublication
 
 plugins {
     kotlin("jvm") version Versions.KOTLIN
@@ -38,6 +41,9 @@ fun rendererClassName(renderer: String): String =
         "opengl" -> "top.e404.skin.renderer.opengl.OpenGlSkinPngRenderer"
         else -> error("Unknown renderer $renderer")
     }
+
+fun shouldPublishMavenPackage(projectName: String): Boolean =
+    !projectName.startsWith("http-server") && projectName != "render-benchmark"
 
 fun parsePositiveInt(value: String?, propertyName: String): Int? =
     value
@@ -138,6 +144,54 @@ subprojects {
     extensions.configure<org.gradle.api.plugins.JavaPluginExtension> {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        if (shouldPublishMavenPackage(project.name)) {
+            withSourcesJar()
+        }
+    }
+
+    if (shouldPublishMavenPackage(project.name)) {
+        (components["java"] as AdhocComponentWithVariants).withVariantsFromConfiguration(configurations["shadowRuntimeElements"]) {
+            skip()
+        }
+
+        extensions.configure<PublishingExtension> {
+            publications {
+                create<MavenPublication>("mavenJava") {
+                    from(components["java"])
+                    pom {
+                        name.set(project.name)
+                        description.set("Minecraft skin viewer ${project.name} module")
+                        url.set("https://github.com/4o4E/minecraft-skin-viewer")
+                        licenses {
+                            license {
+                                name.set("GNU General Public License v3.0")
+                                url.set("https://www.gnu.org/licenses/gpl-3.0.txt")
+                            }
+                        }
+                        scm {
+                            url.set("https://github.com/4o4E/minecraft-skin-viewer")
+                            connection.set("scm:git:https://github.com/4o4E/minecraft-skin-viewer.git")
+                        }
+                    }
+                }
+            }
+            repositories {
+                maven {
+                    name = "GitHubPackages"
+                    val githubRepository = providers.gradleProperty("githubPackagesRepository")
+                        .orElse(System.getenv("GITHUB_REPOSITORY") ?: "4o4E/minecraft-skin-viewer")
+                    url = uri("https://maven.pkg.github.com/${githubRepository.get()}")
+                    credentials {
+                        username = providers.gradleProperty("gpr.user")
+                            .orElse(System.getenv("GITHUB_ACTOR") ?: "")
+                            .get()
+                        password = providers.gradleProperty("gpr.key")
+                            .orElse(System.getenv("GITHUB_TOKEN") ?: "")
+                            .get()
+                    }
+                }
+            }
+        }
     }
 
     val manualTestSourceSet = sourceSets.create("manualTest") {

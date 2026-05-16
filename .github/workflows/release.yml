@@ -34,6 +34,7 @@ jobs:
         run: |
           bash ./gradlew \
             :core:test \
+            :http-client:test \
             :http-server:test \
             :renderer-tavolo:test \
             :http-server-tavolo-win:shadowJar \
@@ -169,6 +170,19 @@ jobs:
           name: ${{ github.ref_name }}
           files: release-assets/*.jar
           generate_release_notes: true
+
+      - name: Publish Maven packages
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bash ./gradlew \
+            :core:publish \
+            :http-client:publish \
+            :renderer-tavolo:publish \
+            :renderer-opengl:publish \
+            --build-cache \
+            --parallel
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v4
