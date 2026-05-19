@@ -8,7 +8,7 @@ object Versions {
     const val SKIKO = "0.9.30"
     const val JAVAFX = "17.0.12"
     const val LWJGL = "3.3.6"
-    const val TAVOLO = "2.0.0-SNAPSHOT"
+    const val TAVOLO = "2.1.0"
     const val VANNIKTECH_MAVEN_PUBLISH = "0.36.0"
 }
 

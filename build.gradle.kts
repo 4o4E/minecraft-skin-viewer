@@ -113,6 +113,7 @@ val publishVersion = providers.provider {
 val projectUrl = "https://github.com/4o4E/mc-skin-render"
 val nexusSnapshotsUrl = "https://nexus.e404.top:3443/repository/maven-snapshots/"
 val nexusReleasesUrl = "https://nexus.e404.top:3443/repository/maven-releases/"
+val sonatypeSnapshotsUrl = "https://central.sonatype.com/repository/maven-snapshots/"
 val shouldConfigureMavenCentral = isCi.get() && !publishVersion.get().endsWith("-SNAPSHOT")
 
 fun nexusCredential(propertyName: String, ciSecretEnvName: String): Provider<String> =
@@ -141,7 +142,9 @@ allprojects {
 
     repositories {
         mavenLocal()
+        maven(nexusReleasesUrl)
         maven("https://nexus.e404.top:3443/repository/maven-snapshots/")
+        maven(sonatypeSnapshotsUrl)
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
         mavenCentral()
     }
