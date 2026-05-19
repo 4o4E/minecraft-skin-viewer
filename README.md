@@ -67,7 +67,7 @@ repositories {
 }
 
 dependencies {
-    implementation("top.e404.mcsk:http-client:2.3.0")
+    implementation("top.e404.mcsk:http-client:2.4.0")
 }
 ```
 
@@ -87,5 +87,4 @@ repositories {
 
 - Tavolo CPU 渲染：[compose 部署参考](http-server-tavolo-linux/docker-compose.yml)
 - OpenGL + Xvfb 渲染：[compose 部署参考](http-server-opengl-linux/docker-compose.yml)
-
 
