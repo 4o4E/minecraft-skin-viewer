@@ -1,5 +1,5 @@
 object Versions {
-    const val GROUP = "top.e404.mcsk"
+    const val GROUP = "top.e404.minecraftskinviewer"
     const val VERSION = "2.3.0"
     const val KOTLIN = "2.2.21"
     const val LOG4J = "2.25.2"
@@ -9,6 +9,7 @@ object Versions {
     const val JAVAFX = "17.0.12"
     const val LWJGL = "3.3.6"
     const val TAVOLO = "2.0.0-SNAPSHOT"
+    const val VANNIKTECH_MAVEN_PUBLISH = "0.36.0"
 }
 
 fun kotlinx(id: String, version: String) = "org.jetbrains.kotlinx:kotlinx-$id:$version"

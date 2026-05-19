@@ -1,12 +1,15 @@
 import java.net.URI
 import org.gradle.api.component.AdhocComponentWithVariants
+import org.gradle.api.artifacts.repositories.PasswordCredentials
 import org.gradle.api.publish.PublishingExtension
-import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.plugins.signing.SigningExtension
+import com.vanniktech.maven.publish.MavenPublishBaseExtension
 
 plugins {
     kotlin("jvm") version Versions.KOTLIN
     kotlin("plugin.serialization") version Versions.KOTLIN
     id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("com.vanniktech.maven.publish") version Versions.VANNIKTECH_MAVEN_PUBLISH apply false
     application
 }
 
@@ -90,15 +93,47 @@ val manualTestMaxParallelForks: Int = parsePositiveInt(
         ?: providers.gradleProperty("manualTestMaxParallelForks").orNull,
     "manualTest.maxParallelForks"
 ) ?: 1
+val isCi = providers.environmentVariable("GITHUB_ACTIONS")
+    .map { it.equals("true", ignoreCase = true) }
+    .orElse(false)
+val isCiTag = providers.environmentVariable("GITHUB_REF_TYPE")
+    .map { it == "tag" }
+    .orElse(providers.environmentVariable("GITHUB_REF").map { it.startsWith("refs/tags/") })
+    .orElse(false)
+val localSnapshotVersion = Versions.VERSION.removeSuffix("-SNAPSHOT") + "-SNAPSHOT"
+val publishVersion = providers.provider {
+    if (isCi.get() && isCiTag.get()) {
+        providers.environmentVariable("GITHUB_REF_NAME").orNull
+            ?.takeIf { it.isNotBlank() }
+            ?: localSnapshotVersion
+    } else {
+        localSnapshotVersion
+    }
+}
+val projectUrl = "https://github.com/4o4E/minecraft-skin-viewer"
+val nexusSnapshotsUrl = "https://nexus.e404.top:3443/repository/maven-snapshots/"
+val nexusReleasesUrl = "https://nexus.e404.top:3443/repository/maven-releases/"
+val shouldConfigureMavenCentral = isCi.get() && !publishVersion.get().endsWith("-SNAPSHOT")
+
+fun nexusCredential(propertyName: String, ciSecretEnvName: String): Provider<String> =
+    if (isCi.get()) providers.environmentVariable(ciSecretEnvName) else providers.gradleProperty(propertyName)
 
 kotlin {
-    jvmToolchain(11)
+    jvmToolchain(17)
+}
+
+tasks.register("printVersion") {
+    description = "输出当前项目版本，供 CI 发布流程判断 release 或 snapshot。"
+    group = "help"
+    doLast {
+        println(version)
+    }
 }
 
 allprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
     group = Versions.GROUP
-    version = Versions.VERSION
+    version = publishVersion.get()
 
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
@@ -135,7 +170,6 @@ allprojects {
 }
 
 subprojects {
-    apply(plugin = "org.gradle.maven-publish")
     apply(plugin = "org.gradle.java-library")
     apply(plugin = "org.gradle.application")
     apply(plugin = "org.jetbrains.kotlin.jvm")
@@ -144,51 +178,84 @@ subprojects {
     extensions.configure<org.gradle.api.plugins.JavaPluginExtension> {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-        if (shouldPublishMavenPackage(project.name)) {
-            withSourcesJar()
-        }
     }
 
     if (shouldPublishMavenPackage(project.name)) {
+        apply(plugin = "com.vanniktech.maven.publish")
+
         (components["java"] as AdhocComponentWithVariants).withVariantsFromConfiguration(configurations["shadowRuntimeElements"]) {
             skip()
         }
 
-        extensions.configure<PublishingExtension> {
-            publications {
-                create<MavenPublication>("mavenJava") {
-                    from(components["java"])
-                    pom {
-                        name.set(project.name)
-                        description.set("Minecraft skin viewer ${project.name} module")
-                        url.set("https://github.com/4o4E/minecraft-skin-viewer")
-                        licenses {
-                            license {
-                                name.set("GNU General Public License v3.0")
-                                url.set("https://www.gnu.org/licenses/gpl-3.0.txt")
-                            }
-                        }
-                        scm {
-                            url.set("https://github.com/4o4E/minecraft-skin-viewer")
-                            connection.set("scm:git:https://github.com/4o4E/minecraft-skin-viewer.git")
-                        }
+        extensions.configure<MavenPublishBaseExtension> {
+            coordinates(rootProject.group.toString(), project.name, rootProject.version.toString())
+
+            if (shouldConfigureMavenCentral) {
+                publishToMavenCentral()
+                signAllPublications()
+                val signingKey = providers.gradleProperty("signingInMemoryKey").orNull
+                val signingPassword = providers.gradleProperty("signingInMemoryKeyPassword").orNull
+                if (!signingKey.isNullOrBlank()) {
+                    extensions.configure<SigningExtension> {
+                        useInMemoryPgpKeys(signingKey, signingPassword)
                     }
                 }
             }
+
+            pom {
+                name.set(project.name)
+                description.set("Minecraft skin viewer ${project.name} module")
+                url.set(projectUrl)
+                licenses {
+                    license {
+                        name.set("GNU General Public License v3.0")
+                        url.set("https://www.gnu.org/licenses/gpl-3.0.txt")
+                        distribution.set("repo")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("4o4E")
+                        name.set("4o4E")
+                        email.set("869951226@qq.com")
+                        organization.set("4o4E")
+                        organizationUrl.set("https://github.com/4o4E")
+                    }
+                }
+                scm {
+                    url.set(projectUrl)
+                    connection.set("scm:git:$projectUrl.git")
+                    developerConnection.set("scm:git:$projectUrl.git")
+                }
+            }
+        }
+
+        extensions.configure<PublishingExtension> {
             repositories {
                 maven {
-                    name = "GitHubPackages"
-                    val githubRepository = providers.gradleProperty("githubPackagesRepository")
-                        .orElse(System.getenv("GITHUB_REPOSITORY") ?: "4o4E/minecraft-skin-viewer")
-                    url = uri("https://maven.pkg.github.com/${githubRepository.get()}")
-                    credentials {
-                        username = providers.gradleProperty("gpr.user")
-                            .orElse(System.getenv("GITHUB_ACTOR") ?: "")
-                            .get()
-                        password = providers.gradleProperty("gpr.key")
-                            .orElse(System.getenv("GITHUB_TOKEN") ?: "")
-                            .get()
+                    name = "Nexus"
+                    url = uri(if (version.toString().endsWith("-SNAPSHOT")) nexusSnapshotsUrl else nexusReleasesUrl)
+                    credentials(PasswordCredentials::class) {
+                        username = nexusCredential("nexus.username", "NEXUS_USERNAME").orNull
+                        password = nexusCredential("nexus.password", "NEXUS_PASSWORD").orNull
                     }
+                }
+            }
+        }
+
+        if (!shouldConfigureMavenCentral) {
+            tasks.register("publishToMavenCentral") {
+                description = "本地或 SNAPSHOT 版本禁止发布 Maven Central"
+                group = "publishing"
+                doFirst {
+                    error("Maven Central 只允许在 CI 中发布非 SNAPSHOT 版本；本地请使用 publishAllPublicationsToNexusRepository 或 publishToMavenLocal。")
+                }
+            }
+            tasks.register("publishAndReleaseToMavenCentral") {
+                description = "本地或 SNAPSHOT 版本禁止发布 Maven Central"
+                group = "publishing"
+                doFirst {
+                    error("Maven Central 只允许在 CI 中发布非 SNAPSHOT 版本；本地请使用 publishAllPublicationsToNexusRepository 或 publishToMavenLocal。")
                 }
             }
         }

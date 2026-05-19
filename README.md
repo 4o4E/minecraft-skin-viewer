@@ -57,6 +57,30 @@ renderCache:
 
 [http-client模块](http-client)提供了基于 Ktor HttpClient 的类型化客户端，可直接调用渲染、头像、刷新和数据接口，并支持复用下游传入的 `HttpClient`。
 
+## Maven 依赖
+
+正式版本发布到 Maven Central，可直接使用 `mavenCentral()` 引入：
+
+```kotlin
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation("top.e404.minecraftskinviewer:http-client:2.3.0")
+}
+```
+
+`-SNAPSHOT` 版本发布到 Sonatype snapshot 仓库：
+
+```kotlin
+repositories {
+    maven("https://central.sonatype.com/repository/maven-snapshots/")
+}
+```
+
+内部联调优先使用自建 Nexus；版本号以 `-SNAPSHOT` 结尾时发布到 snapshots 仓库，正式版本发布到 releases 仓库。
+
 ## Docker 部署
 
 支持使用 Docker 进行部署, 镜像不包含 mysql：
