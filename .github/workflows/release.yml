@@ -165,9 +165,6 @@ jobs:
           fi
 
           CENTRAL_TASK="publishAndReleaseToMavenCentral"
-          if [[ "$VERSION" == *-SNAPSHOT ]]; then
-            CENTRAL_TASK="publishToMavenCentral"
-          fi
 
           bash ./gradlew \
             :core:publishAllPublicationsToNexusRepository \
@@ -177,13 +174,17 @@ jobs:
             --build-cache \
             --parallel
 
-          bash ./gradlew \
-            :core:${CENTRAL_TASK} \
-            :http-client:${CENTRAL_TASK} \
-            :renderer-tavolo:${CENTRAL_TASK} \
-            :renderer-opengl:${CENTRAL_TASK} \
-            --build-cache \
-            --parallel
+          if [[ "$VERSION" == *-SNAPSHOT ]]; then
+            echo "Snapshot version only publishes to Nexus"
+          else
+            bash ./gradlew \
+              :core:${CENTRAL_TASK} \
+              :http-client:${CENTRAL_TASK} \
+              :renderer-tavolo:${CENTRAL_TASK} \
+              :renderer-opengl:${CENTRAL_TASK} \
+              --build-cache \
+              --parallel
+          fi
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v4
