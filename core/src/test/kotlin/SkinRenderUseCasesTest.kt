@@ -1,4 +1,4 @@
-package top.e404.skin.core.test
+package top.e404.mcsk.core.test
 
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -11,15 +11,15 @@ import kotlin.coroutines.startCoroutine
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import top.e404.skin.core.BodyPart
-import top.e404.skin.core.SkinLightingMode
-import top.e404.skin.core.SkinOverlayMode
-import top.e404.skin.core.SkinPngRenderer
-import top.e404.skin.core.SkinRenderOptions
-import top.e404.skin.core.SkinRenderRequest
-import top.e404.skin.core.SkinTransform
-import top.e404.skin.core.SkinRenderUseCases
-import top.e404.skin.core.SkinRenderVec3
+import top.e404.mcsk.core.BodyPart
+import top.e404.mcsk.core.SkinLightingMode
+import top.e404.mcsk.core.SkinOverlayMode
+import top.e404.mcsk.core.SkinPngRenderer
+import top.e404.mcsk.core.SkinRenderOptions
+import top.e404.mcsk.core.SkinRenderRequest
+import top.e404.mcsk.core.SkinTransform
+import top.e404.mcsk.core.SkinRenderUseCases
+import top.e404.mcsk.core.SkinRenderVec3
 
 class SkinRenderUseCasesTest {
     @Test

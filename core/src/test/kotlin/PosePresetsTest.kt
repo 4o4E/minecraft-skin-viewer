@@ -1,11 +1,11 @@
-package top.e404.skin.core.test
+package top.e404.mcsk.core.test
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import top.e404.skin.core.BodyPart
-import top.e404.skin.core.PosePresets
-import top.e404.skin.core.SkinTransform
+import top.e404.mcsk.core.BodyPart
+import top.e404.mcsk.core.PosePresets
+import top.e404.mcsk.core.SkinTransform
 
 class PosePresetsTest {
     @Test

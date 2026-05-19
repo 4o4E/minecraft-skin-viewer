@@ -1,10 +1,10 @@
-package top.e404.skin.test
+package top.e404.mcsk.test
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
-import top.e404.skin.server.Mojang
+import top.e404.mcsk.server.Mojang
 import java.util.Base64
 
 class MojangApiTest {

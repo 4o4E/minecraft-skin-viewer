@@ -5,7 +5,7 @@ plugins {
 }
 
 application {
-    mainClass.set("top.e404.skin.benchmark.RenderImageBenchmarkKt")
+    mainClass.set("top.e404.mcsk.benchmark.RenderImageBenchmarkKt")
 }
 
 val benchmark by sourceSets.creating {
@@ -52,9 +52,9 @@ dependencies {
 
 tasks.register<JavaExec>("openglCubeDemo") {
     dependsOn(rootProject.tasks.named("prepareRunAssets"))
-    description = "生成 OpenGL 方块、半透明外壳和阴�?demo"
+    description = "生成 OpenGL 方块、半透明外壳和阴�?demo"
     group = "verification"
-    mainClass.set("top.e404.skin.benchmark.OpenGlCubeDemoKt")
+    mainClass.set("top.e404.mcsk.benchmark.OpenGlCubeDemoKt")
     classpath = sourceSets["main"].runtimeClasspath
     workingDir = rootDir.resolve("run")
     jvmArgs("-Dfile.encoding=UTF-8")
@@ -86,7 +86,7 @@ tasks.register<JavaExec>("javafxQualityDemo") {
     dependsOn(rootProject.tasks.named("prepareRunAssets"))
     description = "Generate JavaFX transparency and shadow quality demo"
     group = "verification"
-    mainClass.set("top.e404.skin.benchmark.JavaFxQualityDemoKt")
+    mainClass.set("top.e404.mcsk.benchmark.JavaFxQualityDemoKt")
     classpath = sourceSets["main"].runtimeClasspath
     workingDir = rootDir.resolve("run")
     jvmArgs(

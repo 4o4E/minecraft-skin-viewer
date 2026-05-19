@@ -1,4 +1,4 @@
-rootProject.name = "minecraft-skin-viewer"
+rootProject.name = "mc-skin-render"
 include(
     "core",
     "http-client",

@@ -1,1 +1,1 @@
-package top.e404.skin.core
+package top.e404.mcsk.core

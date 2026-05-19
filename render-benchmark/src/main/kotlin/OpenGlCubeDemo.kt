@@ -1,4 +1,4 @@
-package top.e404.skin.benchmark
+package top.e404.mcsk.benchmark
 
 import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR
@@ -106,9 +106,9 @@ import org.lwjgl.opengl.GL30.glRenderbufferStorage
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Color as SkiaColor
 import org.jetbrains.skia.Image as SkiaImage
-import top.e404.skin.core.SkinMesh
-import top.e404.skin.core.SkinMeshFace
-import top.e404.skin.core.createMinecraftPlayerMeshes
+import top.e404.mcsk.core.SkinMesh
+import top.e404.mcsk.core.SkinMeshFace
+import top.e404.mcsk.core.createMinecraftPlayerMeshes
 import java.awt.image.BufferedImage
 import java.io.File
 import java.nio.ByteBuffer

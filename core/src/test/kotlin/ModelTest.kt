@@ -1,15 +1,15 @@
-package top.e404.skin.core.test
+package top.e404.mcsk.core.test
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import top.e404.skin.core.BodyPart
-import top.e404.skin.core.PlayerModel
-import top.e404.skin.core.SkinCube
-import top.e404.skin.core.SkinFace
-import top.e404.skin.core.SkinUvRect
-import top.e404.skin.core.SkinVec3
+import top.e404.mcsk.core.BodyPart
+import top.e404.mcsk.core.PlayerModel
+import top.e404.mcsk.core.SkinCube
+import top.e404.mcsk.core.SkinFace
+import top.e404.mcsk.core.SkinUvRect
+import top.e404.mcsk.core.SkinVec3
 
 class ModelTest {
     @Test

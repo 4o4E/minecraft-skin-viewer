@@ -1,5 +1,5 @@
 object Versions {
-    const val GROUP = "top.e404.minecraftskinviewer"
+    const val GROUP = "top.e404.mcsk"
     const val VERSION = "2.3.0"
     const val KOTLIN = "2.2.21"
     const val LOG4J = "2.25.2"

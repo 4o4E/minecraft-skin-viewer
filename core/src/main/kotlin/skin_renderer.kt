@@ -1,4 +1,4 @@
-package top.e404.skin.core
+package top.e404.mcsk.core
 
 data class SkinRenderVec3(val x: Float, val y: Float, val z: Float) {
     operator fun plus(other: SkinRenderVec3): SkinRenderVec3 = SkinRenderVec3(x + other.x, y + other.y, z + other.z)

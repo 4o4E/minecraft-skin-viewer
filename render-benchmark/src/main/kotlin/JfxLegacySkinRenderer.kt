@@ -1,4 +1,4 @@
-package top.e404.skin.benchmark
+package top.e404.mcsk.benchmark
 
 import javafx.application.Platform
 import javafx.scene.AmbientLight
@@ -22,10 +22,10 @@ import javafx.scene.transform.Affine
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Color as SkiaColor
 import org.jetbrains.skia.Image as SkiaImage
-import top.e404.skin.core.SkinMesh
-import top.e404.skin.core.SkinMeshFace
-import top.e404.skin.core.createMinecraftPlayerMeshes
-import top.e404.skin.core.createSkinPlatform
+import top.e404.mcsk.core.SkinMesh
+import top.e404.mcsk.core.SkinMeshFace
+import top.e404.mcsk.core.createMinecraftPlayerMeshes
+import top.e404.mcsk.core.createSkinPlatform
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.CountDownLatch

@@ -1,4 +1,4 @@
-package top.e404.skin.benchmark
+package top.e404.mcsk.benchmark
 
 import javafx.application.Platform
 import javafx.scene.AmbientLight
@@ -25,12 +25,12 @@ import org.jetbrains.skia.Color as SkiaColor
 import org.jetbrains.skia.EncodedImageFormat
 import org.jetbrains.skia.IRect
 import org.jetbrains.skia.Image as SkiaImage
-import top.e404.skin.core.SkinMesh
-import top.e404.skin.core.SkinMeshFace
-import top.e404.skin.core.SkinRenderVec3
-import top.e404.skin.core.createMinecraftPlayerMeshes
-import top.e404.skin.core.createSkinPlatform
-import top.e404.skin.renderer.tavolo.renderMinecraftViewTavolo
+import top.e404.mcsk.core.SkinMesh
+import top.e404.mcsk.core.SkinMeshFace
+import top.e404.mcsk.core.SkinRenderVec3
+import top.e404.mcsk.core.createMinecraftPlayerMeshes
+import top.e404.mcsk.core.createSkinPlatform
+import top.e404.mcsk.renderer.tavolo.renderMinecraftViewTavolo
 import top.e404.tavolo.draw.render3d.OrbitCamera
 import top.e404.tavolo.draw.render3d.RenderConfig
 import top.e404.tavolo.draw.render3d.Vec3

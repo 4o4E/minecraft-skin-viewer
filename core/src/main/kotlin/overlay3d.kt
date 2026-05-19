@@ -1,4 +1,4 @@
-package top.e404.skin.core
+package top.e404.mcsk.core
 
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Color
@@ -115,15 +115,15 @@ private fun isAdjacentTransparent(
 }
 
 /**
- * 创建一�?D覆盖层网格，根据皮肤贴图的透明像素生成体素化的覆盖层效�?
+ * 创建一�?D覆盖层网格，根据皮肤贴图的透明像素生成体素化的覆盖层效�?
  *
  * @param skin 皮肤贴图
  * @param dims 覆盖层对应的基础模型尺寸
  * @param overlayDepth 覆盖层的厚度
  * @param faceUVs 每个面对应的UV坐标矩形区域
- * @param textureWidth 皮肤贴图的总宽�?
- * @param textureHeight 皮肤贴图的总高�?
- * @return 返回生成的Mesh对象，包含顶点和面信�?
+ * @param textureWidth 皮肤贴图的总宽�?
+ * @param textureHeight 皮肤贴图的总高�?
+ * @return 返回生成的Mesh对象，包含顶点和面信�?
  */
 fun create3DOverlay(
     skin: Bitmap,

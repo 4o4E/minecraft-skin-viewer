@@ -1,1 +1,1 @@
-package top.e404.skin.test
+package top.e404.mcsk.test

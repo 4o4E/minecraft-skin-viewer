@@ -1,4 +1,4 @@
-package top.e404.skin.benchmark
+package top.e404.mcsk.benchmark
 
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Canvas
@@ -6,14 +6,14 @@ import org.jetbrains.skia.Color
 import org.jetbrains.skia.EncodedImageFormat
 import org.jetbrains.skia.Image
 import org.jetbrains.skia.IRect
-import top.e404.skin.core.SkinLightingMode
-import top.e404.skin.core.SkinOverlayMode
-import top.e404.skin.core.SkinPngRenderer
-import top.e404.skin.core.SkinRenderRequest
-import top.e404.skin.core.SkinRenderSettings
-import top.e404.skin.core.SkinRenderVec3
-import top.e404.skin.renderer.opengl.OpenGlSkinPngRenderer
-import top.e404.skin.renderer.tavolo.TavoloSkinPngRenderer
+import top.e404.mcsk.core.SkinLightingMode
+import top.e404.mcsk.core.SkinOverlayMode
+import top.e404.mcsk.core.SkinPngRenderer
+import top.e404.mcsk.core.SkinRenderRequest
+import top.e404.mcsk.core.SkinRenderSettings
+import top.e404.mcsk.core.SkinRenderVec3
+import top.e404.mcsk.renderer.opengl.OpenGlSkinPngRenderer
+import top.e404.mcsk.renderer.tavolo.TavoloSkinPngRenderer
 import java.io.File
 import java.util.Locale
 import kotlin.system.measureNanoTime

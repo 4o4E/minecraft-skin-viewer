@@ -1,7 +1,7 @@
-package top.e404.skin.core
+package top.e404.mcsk.core
 
 /**
- * 预设的玩家姿�?
+ * 预设的玩家姿�?
  */
 object PosePresets {
     val WALKING = mapOf(

@@ -36,8 +36,8 @@ ENV LANG="en_US.UTF-8" \
     DISPLAY=":99" \
     JAVA_TOOL_OPTIONS="-Djava.awt.headless=true" \
     LIBGL_ALWAYS_SOFTWARE="1" \
-    SKIN_RENDERER_CLASS="top.e404.skin.renderer.opengl.OpenGlSkinPngRenderer" \
-    SKIN_RENDERER_ID="opengl-lwjgl-fbo-xvfb"
+    MCSK_RENDERER_CLASS="top.e404.mcsk.renderer.opengl.OpenGlSkinPngRenderer" \
+    MCSK_RENDERER_ID="opengl-lwjgl-fbo-xvfb"
 
 COPY enterpoint.sh /enterpoint.sh
 RUN chmod +x /enterpoint.sh && \

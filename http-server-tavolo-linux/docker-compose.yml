@@ -1,9 +1,9 @@
 services:
-  minecraft-skin-viewer-tavolo:
-    container_name: minecraft-skin-viewer-tavolo
+  mc-skin-render-tavolo:
+    container_name: mc-skin-render-tavolo
     build:
       context: .
-    image: minecraft-skin-viewer:tavolo-linux
+    image: mc-skin-render:tavolo-linux
     environment:
       DB_URL: jdbc:mysql://172.17.0.1:3306/skin?useSSL=false
       DB_USERNAME: root

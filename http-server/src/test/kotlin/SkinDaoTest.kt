@@ -1,4 +1,4 @@
-package top.e404.skin.test
+package top.e404.mcsk.test
 
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -6,9 +6,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.coroutines.runBlocking
 import org.h2.jdbcx.JdbcDataSource
-import top.e404.skin.server.sql.Database
-import top.e404.skin.server.sql.SkinDao
-import top.e404.skin.server.sql.pojo.SkinData
+import top.e404.mcsk.server.sql.Database
+import top.e404.mcsk.server.sql.SkinDao
+import top.e404.mcsk.server.sql.pojo.SkinData
 
 class SkinDaoTest {
     private lateinit var dataSource: JdbcDataSource

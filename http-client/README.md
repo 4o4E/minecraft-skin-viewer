@@ -5,14 +5,14 @@
 ## 基本用法
 
 ```kotlin
-import top.e404.skin.client.MinecraftSkinViewerClient
-import top.e404.skin.client.ModelOptions
-import top.e404.skin.client.OverlayMode
-import top.e404.skin.client.PlayerRef
-import top.e404.skin.client.RenderOptions
+import top.e404.mcsk.client.McSkinRenderClient
+import top.e404.mcsk.client.ModelOptions
+import top.e404.mcsk.client.OverlayMode
+import top.e404.mcsk.client.PlayerRef
+import top.e404.mcsk.client.RenderOptions
 
 suspend fun main() {
-    MinecraftSkinViewerClient("http://localhost:2345").use { client ->
+    McSkinRenderClient("http://localhost:2345").use { client ->
         val png = client.renderSkin(
             player = PlayerRef.name("404E"),
             render = RenderOptions(
@@ -27,16 +27,16 @@ suspend fun main() {
 
 ## 复用下游 HttpClient
 
-传入外部 `HttpClient` 时，`MinecraftSkinViewerClient.close()` 不会关闭该实例，生命周期由调用方管理。
+传入外部 `HttpClient` 时，`McSkinRenderClient.close()` 不会关闭该实例，生命周期由调用方管理。
 
 ```kotlin
 import io.ktor.client.HttpClient
 import io.ktor.http.Url
-import top.e404.skin.client.MinecraftSkinViewerClient
-import top.e404.skin.client.PlayerRef
+import top.e404.mcsk.client.McSkinRenderClient
+import top.e404.mcsk.client.PlayerRef
 
 suspend fun renderWithSharedClient(httpClient: HttpClient) {
-    val client = MinecraftSkinViewerClient(Url("http://localhost:2345"), httpClient)
+    val client = McSkinRenderClient(Url("http://localhost:2345"), httpClient)
     val gif = client.renderSkinRotate(PlayerRef.id("22df77dd37b0414b8f1e3c7d2585fc79"))
 }
 ```
@@ -46,10 +46,10 @@ suspend fun renderWithSharedClient(httpClient: HttpClient) {
 新增渲染模式时可以先用 `render(RenderRequest)` 调用，不需要马上增加便捷方法。
 
 ```kotlin
-import top.e404.skin.client.AnimationOptions
-import top.e404.skin.client.PlayerRef
-import top.e404.skin.client.RenderPosition
-import top.e404.skin.client.RenderRequest
+import top.e404.mcsk.client.AnimationOptions
+import top.e404.mcsk.client.PlayerRef
+import top.e404.mcsk.client.RenderPosition
+import top.e404.mcsk.client.RenderRequest
 
 val request = RenderRequest(
     player = PlayerRef.name("404E"),

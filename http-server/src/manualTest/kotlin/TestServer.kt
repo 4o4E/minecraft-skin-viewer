@@ -1,8 +1,8 @@
-package top.e404.skin.test
+package top.e404.mcsk.test
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import top.e404.skin.server.main as startServer
+import top.e404.mcsk.server.main as startServer
 
 /**
  * 手动启动 HTTP 服务。

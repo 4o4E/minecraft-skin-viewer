@@ -1,4 +1,4 @@
-package top.e404.skin.core
+package top.e404.mcsk.core
 
 /**
  * Minecraft 皮肤模板中的语义面方向。

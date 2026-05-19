@@ -1,10 +1,10 @@
-package top.e404.skin.test
+package top.e404.mcsk.test
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import top.e404.skin.server.Config
-import top.e404.skin.server.ConfigManager
-import top.e404.skin.server.RenderCacheConfig
+import top.e404.mcsk.server.Config
+import top.e404.mcsk.server.ConfigManager
+import top.e404.mcsk.server.RenderCacheConfig
 
 class ConfigTest {
     @Test

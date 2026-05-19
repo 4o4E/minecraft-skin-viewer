@@ -4,8 +4,8 @@ This module compares Minecraft skin PNG rendering performance.
 
 Renderer implementations are imported as normal dependencies:
 
-- `:renderer-tavolo` provides `top.e404.skin.renderer.tavolo.TavoloSkinPngRenderer`.
-- `:renderer-opengl` provides `top.e404.skin.renderer.opengl.OpenGlSkinPngRenderer`.
+- `:renderer-tavolo` provides `top.e404.mcsk.renderer.tavolo.TavoloSkinPngRenderer`.
+- `:renderer-opengl` provides `top.e404.mcsk.renderer.opengl.OpenGlSkinPngRenderer`.
 - `:core` owns `SkinPngRenderer`, `SkinRenderRequest`, neutral geometry, model definitions, and UV mapping.
 
 Run:

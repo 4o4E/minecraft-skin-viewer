@@ -1,4 +1,4 @@
-package top.e404.skin.core.test
+package top.e404.mcsk.core.test
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -8,8 +8,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Color
-import top.e404.skin.core.createMinecraftPlayerMeshes
-import top.e404.skin.core.createSkinPlatform
+import top.e404.mcsk.core.createMinecraftPlayerMeshes
+import top.e404.mcsk.core.createSkinPlatform
 
 class RenderStructureTest {
     @Test

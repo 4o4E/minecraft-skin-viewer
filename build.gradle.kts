@@ -40,8 +40,8 @@ fun lwjglNativeClassifier(os: String): String =
 
 fun rendererClassName(renderer: String): String =
     when (renderer) {
-        "tavolo" -> "top.e404.skin.renderer.tavolo.TavoloSkinPngRenderer"
-        "opengl" -> "top.e404.skin.renderer.opengl.OpenGlSkinPngRenderer"
+        "tavolo" -> "top.e404.mcsk.renderer.tavolo.TavoloSkinPngRenderer"
+        "opengl" -> "top.e404.mcsk.renderer.opengl.OpenGlSkinPngRenderer"
         else -> error("Unknown renderer $renderer")
     }
 
@@ -110,7 +110,7 @@ val publishVersion = providers.provider {
         localSnapshotVersion
     }
 }
-val projectUrl = "https://github.com/4o4E/minecraft-skin-viewer"
+val projectUrl = "https://github.com/4o4E/mc-skin-render"
 val nexusSnapshotsUrl = "https://nexus.e404.top:3443/repository/maven-snapshots/"
 val nexusReleasesUrl = "https://nexus.e404.top:3443/repository/maven-releases/"
 val shouldConfigureMavenCentral = isCi.get() && !publishVersion.get().endsWith("-SNAPSHOT")
@@ -204,7 +204,7 @@ subprojects {
 
             pom {
                 name.set(project.name)
-                description.set("Minecraft skin viewer ${project.name} module")
+                description.set("Minecraft skin render ${project.name} module")
                 url.set(projectUrl)
                 licenses {
                     license {
@@ -273,13 +273,13 @@ subprojects {
 
     application {
         val serverPackage = serverPackageSpec(project.name)
-        mainClass.set("top.e404.skin.server.App")
+        mainClass.set("top.e404.mcsk.server.App")
         applicationDefaultJvmArgs = listOf(
             "-Dio.netty.tryReflectionSetAccessible=true",
             "--add-opens",
             "java.base/jdk.internal.misc=ALL-UNNAMED",
         ) + if (serverPackage != null) {
-            listOf("-Dskin.renderer.class=${rendererClassName(serverPackage.renderer)}")
+            listOf("-Dmcsk.renderer.class=${rendererClassName(serverPackage.renderer)}")
         } else {
             emptyList()
         }

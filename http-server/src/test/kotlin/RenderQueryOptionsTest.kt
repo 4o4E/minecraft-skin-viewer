@@ -1,17 +1,17 @@
-package top.e404.skin.test
+package top.e404.mcsk.test
 
 import io.ktor.http.parametersOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
-import top.e404.skin.core.BodyPart
-import top.e404.skin.core.SkinLightingMode
-import top.e404.skin.core.SkinOverlayMode
-import top.e404.skin.core.SkinRenderUseCases
-import top.e404.skin.core.SkinRenderVec3
-import top.e404.skin.core.SkinTransform
-import top.e404.skin.server.plugin.renderOptions
+import top.e404.mcsk.core.BodyPart
+import top.e404.mcsk.core.SkinLightingMode
+import top.e404.mcsk.core.SkinOverlayMode
+import top.e404.mcsk.core.SkinRenderUseCases
+import top.e404.mcsk.core.SkinRenderVec3
+import top.e404.mcsk.core.SkinTransform
+import top.e404.mcsk.server.plugin.renderOptions
 
 class RenderQueryOptionsTest {
     @Test

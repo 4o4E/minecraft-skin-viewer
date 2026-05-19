@@ -1,4 +1,4 @@
-FROM 404e/minecraft-skin-viewer:1.5.0
+FROM 404e/mc-skin-render:1.5.0
 
 ENV JAVA_HOME=/usr/local/openjdk-11
 ENV LANG=C.UTF-8

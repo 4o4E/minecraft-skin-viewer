@@ -1,9 +1,9 @@
-package top.e404.skin.test
+package top.e404.mcsk.test
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
-import top.e404.skin.server.service.RenderFileCache
+import top.e404.mcsk.server.service.RenderFileCache
 
 class RenderFileCacheTest {
     @Test

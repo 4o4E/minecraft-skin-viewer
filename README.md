@@ -1,4 +1,4 @@
-# minecraft-skin-viewer
+# mc-skin-render
 
 用于生成我的世界玩家渲染图
 
@@ -15,7 +15,7 @@
 ### 使用
 
 1. 安装11或更高版本的[java](https://adoptium.net/)以及[mysql](https://downloads.mysql.com/archives/community/)
-2. 从[release](https://github.com/4o4E/minecraft-skin-viewer/releases/latest)下载对应渲染器和操作系统的 jar 文件
+2. 从[release](https://github.com/4o4E/mc-skin-render/releases/latest)下载对应渲染器和操作系统的 jar 文件
 3. 在控制台中使用 `java -jar http-server-tavolo-linux.jar` 或 `java -jar http-server-opengl-win.jar` 启动服务
 
 ### 测试
@@ -67,7 +67,7 @@ repositories {
 }
 
 dependencies {
-    implementation("top.e404.minecraftskinviewer:http-client:2.3.0")
+    implementation("top.e404.mcsk:http-client:2.3.0")
 }
 ```
 

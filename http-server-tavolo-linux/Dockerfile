@@ -21,8 +21,8 @@ ENV LANG="en_US.UTF-8" \
     LANGUAGE="en_US.UTF-8" \
     LC_ALL="C" \
     PATH="$JAVA_HOME/bin:$PATH" \
-    SKIN_RENDERER_CLASS="top.e404.skin.renderer.tavolo.TavoloSkinPngRenderer" \
-    SKIN_RENDERER_ID="tavolo-cpu-v1"
+    MCSK_RENDERER_CLASS="top.e404.mcsk.renderer.tavolo.TavoloSkinPngRenderer" \
+    MCSK_RENDERER_ID="tavolo-cpu-v1"
 
 COPY enterpoint.sh /enterpoint.sh
 RUN chmod +x /enterpoint.sh && \

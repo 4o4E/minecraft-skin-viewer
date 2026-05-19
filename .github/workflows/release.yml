@@ -57,12 +57,12 @@ jobs:
 
       - name: Build Docker smoke images
         run: |
-          docker build -t minecraft-skin-viewer:tavolo-smoke http-server-tavolo-linux
-          docker build -t minecraft-skin-viewer:opengl-smoke http-server-opengl-linux
+          docker build -t mc-skin-render:tavolo-smoke http-server-tavolo-linux
+          docker build -t mc-skin-render:opengl-smoke http-server-opengl-linux
 
       - name: Start Tavolo Docker image
         run: |
-          docker run -d --name msv-tavolo-smoke \
+          docker run -d --name msr-tavolo-smoke \
             -e SKIN_FIXTURE_FILE=/tmp/alex_skin.png \
             -e SKIN_FIXTURE_NAME=404E \
             -e SKIN_FIXTURE_SLIM=true \
@@ -70,7 +70,7 @@ jobs:
             -e SERVER_PORT=8080 \
             -v "$PWD/run/alex_skin.png:/tmp/alex_skin.png:ro" \
             -p 18080:8080 \
-            minecraft-skin-viewer:tavolo-smoke
+            mc-skin-render:tavolo-smoke
 
       - name: Wait for Tavolo Docker data endpoint
         run: |
@@ -95,12 +95,12 @@ jobs:
       - name: Stop Tavolo Docker image
         if: always()
         run: |
-          docker logs msv-tavolo-smoke 2>/dev/null || true
-          docker rm -f msv-tavolo-smoke 2>/dev/null || true
+          docker logs msr-tavolo-smoke 2>/dev/null || true
+          docker rm -f msr-tavolo-smoke 2>/dev/null || true
 
       - name: Start OpenGL Docker image
         run: |
-          docker run -d --name msv-opengl-smoke \
+          docker run -d --name msr-opengl-smoke \
             -e SKIN_FIXTURE_FILE=/tmp/alex_skin.png \
             -e SKIN_FIXTURE_NAME=404E \
             -e SKIN_FIXTURE_SLIM=true \
@@ -108,7 +108,7 @@ jobs:
             -e SERVER_PORT=8080 \
             -v "$PWD/run/alex_skin.png:/tmp/alex_skin.png:ro" \
             -p 18081:8080 \
-            minecraft-skin-viewer:opengl-smoke
+            mc-skin-render:opengl-smoke
 
       - name: Wait for OpenGL Docker data endpoint
         run: |
@@ -133,8 +133,8 @@ jobs:
       - name: Stop OpenGL Docker image
         if: always()
         run: |
-          docker logs msv-opengl-smoke 2>/dev/null || true
-          docker rm -f msv-opengl-smoke 2>/dev/null || true
+          docker logs msr-opengl-smoke 2>/dev/null || true
+          docker rm -f msr-opengl-smoke 2>/dev/null || true
 
       - name: Prepare release assets
         run: |
@@ -207,8 +207,8 @@ jobs:
           cache-from: type=gha,scope=tavolo-linux
           cache-to: type=gha,mode=max,scope=tavolo-linux
           tags: |
-            ghcr.io/${{ env.OWNER_LC }}/minecraft-skin-viewer-tavolo-linux:${{ github.ref_name }}
-            ghcr.io/${{ env.OWNER_LC }}/minecraft-skin-viewer-tavolo-linux:latest
+            ghcr.io/${{ env.OWNER_LC }}/mc-skin-render-tavolo-linux:${{ github.ref_name }}
+            ghcr.io/${{ env.OWNER_LC }}/mc-skin-render-tavolo-linux:latest
 
       - name: Build and push OpenGL Linux image
         uses: docker/build-push-action@v7
@@ -218,8 +218,8 @@ jobs:
           cache-from: type=gha,scope=opengl-linux
           cache-to: type=gha,mode=max,scope=opengl-linux
           tags: |
-            ghcr.io/${{ env.OWNER_LC }}/minecraft-skin-viewer-opengl-linux:${{ github.ref_name }}
-            ghcr.io/${{ env.OWNER_LC }}/minecraft-skin-viewer-opengl-linux:latest
+            ghcr.io/${{ env.OWNER_LC }}/mc-skin-render-opengl-linux:${{ github.ref_name }}
+            ghcr.io/${{ env.OWNER_LC }}/mc-skin-render-opengl-linux:latest
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3

@@ -1,4 +1,4 @@
-package top.e404.skin.core
+package top.e404.mcsk.core
 
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Color

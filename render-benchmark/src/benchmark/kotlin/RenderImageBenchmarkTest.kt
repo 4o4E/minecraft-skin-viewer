@@ -1,4 +1,4 @@
-package top.e404.skin.benchmark
+package top.e404.mcsk.benchmark
 
 import java.io.File
 import javax.imageio.ImageIO

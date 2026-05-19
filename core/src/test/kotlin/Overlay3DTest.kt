@@ -1,14 +1,14 @@
-package top.e404.skin.core.test
+package top.e404.mcsk.core.test
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Color
 import org.jetbrains.skia.IRect
-import top.e404.skin.core.SkinFaceDirection
-import top.e404.skin.core.SkinUvRect
-import top.e404.skin.core.SkinVec3
-import top.e404.skin.core.create3DOverlay
+import top.e404.mcsk.core.SkinFaceDirection
+import top.e404.mcsk.core.SkinUvRect
+import top.e404.mcsk.core.SkinVec3
+import top.e404.mcsk.core.create3DOverlay
 
 class Overlay3DTest {
     @Test
