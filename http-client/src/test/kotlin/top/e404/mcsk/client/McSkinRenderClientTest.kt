@@ -37,6 +37,7 @@ class McSkinRenderClientTest {
                 shadow = true,
                 overlay = OverlayMode.THREE_D,
                 platform = true,
+                cape = false,
             ),
             model = ModelOptions(slim = true, headScale = 1.5)
         )
@@ -49,6 +50,7 @@ class McSkinRenderClientTest {
         assertTrue(requestedUrl.contains("shadow=true"))
         assertTrue(requestedUrl.contains("overlay=3d"))
         assertTrue(requestedUrl.contains("platform=true"))
+        assertTrue(requestedUrl.contains("cape=false"))
         assertTrue(requestedUrl.contains("slim=true"))
         assertTrue(requestedUrl.contains("head=1.5"))
     }
@@ -67,7 +69,8 @@ class McSkinRenderClientTest {
                 pose = SkinPose(
                     mapOf(
                         BodyPart.BODY to listOf(PoseTransform.rotate(x = 30f)),
-                        BodyPart.HEAD to listOf(PoseTransform.translate(y = -1f, z = 2f))
+                        BodyPart.HEAD to listOf(PoseTransform.translate(y = -1f, z = 2f)),
+                        BodyPart.CAPE to listOf(PoseTransform.rotate(x = 8f))
                     )
                 )
             )
@@ -78,6 +81,7 @@ class McSkinRenderClientTest {
         assertTrue(requestedUrl.contains("%22body%22"))
         assertTrue(requestedUrl.contains("%22rotate%22"))
         assertTrue(requestedUrl.contains("%22head%22"))
+        assertTrue(requestedUrl.contains("%22cape%22"))
     }
 
     @Test
@@ -153,14 +157,14 @@ class McSkinRenderClientTest {
     fun `data parses skin data response`() = runBlocking {
         val client = testClient {
             respond(
-                content = """{"uuid":"u","name":"n","slim":true,"update":123,"hash":"h"}""",
+                content = """{"uuid":"u","name":"n","slim":true,"update":123,"hash":"h","capeHash":"c"}""",
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
         }
 
         val data = client.data(PlayerRef.name("404E"))
 
-        assertEquals(SkinData("u", "n", true, 123, "h"), data)
+        assertEquals(SkinData("u", "n", true, 123, "h", "c"), data)
     }
 
     @Test

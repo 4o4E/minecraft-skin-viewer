@@ -92,6 +92,7 @@ data class RenderOptions(
     val overlay: OverlayMode? = null,
     val modelYaw: Float? = null,
     val pose: SkinPose? = null,
+    val cape: Boolean? = null,
 ) {
     fun appendTo(parameters: MutableMap<String, String>) {
         backgroundColor?.let { parameters["bg"] = it.toQueryValue() }
@@ -108,6 +109,7 @@ data class RenderOptions(
         lighting?.let { parameters["lighting"] = it.queryValue }
         shadow?.let { parameters["shadow"] = it.toString() }
         platform?.let { parameters["platform"] = it.toString() }
+        cape?.let { parameters["cape"] = it.toString() }
         platformTopY?.let { parameters["platformTopY"] = it.toString() }
         platformThickness?.let { parameters["platformThickness"] = it.toString() }
         antiAliasingLevel?.let { parameters["aa"] = it.toString() }
@@ -177,6 +179,7 @@ data class SkinData(
     val slim: Boolean,
     val update: Long,
     val hash: String,
+    val capeHash: String? = null,
 )
 
 enum class BodyPart(val apiName: String) {
@@ -186,6 +189,7 @@ enum class BodyPart(val apiName: String) {
     LEFT_ARM("leftArm"),
     RIGHT_LEG("rightLeg"),
     LEFT_LEG("leftLeg"),
+    CAPE("cape"),
 }
 
 data class SkinPose(

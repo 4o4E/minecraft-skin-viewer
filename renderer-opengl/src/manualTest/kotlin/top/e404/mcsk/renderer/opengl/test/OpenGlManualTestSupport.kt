@@ -12,6 +12,7 @@ import top.e404.mcsk.core.SkinVec3
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
 import javax.imageio.IIOImage
 import javax.imageio.ImageIO
@@ -46,6 +47,7 @@ internal fun renderRequest(
     shadows: Boolean = true,
     showPlatform: Boolean = false,
     modelYaw: Float = 0f,
+    showCape: Boolean = true,
 ): SkinRenderRequest =
     SkinRenderRequest(
         skinPng = skinFile.readBytes(),
@@ -69,8 +71,38 @@ internal fun renderRequest(
         shadows = shadows,
         showPlatform = showPlatform,
         pose = pose,
-        modelYaw = modelYaw
+        modelYaw = modelYaw,
+        capePng = syntheticManualCapePng().takeIf { showCape }
     )
+
+internal fun syntheticManualCapePng(): ByteArray {
+    val image = BufferedImage(64, 32, BufferedImage.TYPE_INT_ARGB)
+    val graphics = image.createGraphics()
+    try {
+        // 按 Minecraft 披风 cuboid 的 uv=[0,0]、size=[10,16,1] 布局填满六个面。
+        graphics.color = java.awt.Color(0xFF5B21B6.toInt(), true)
+        graphics.fillRect(0, 1, 1, 16)
+        graphics.color = java.awt.Color(0xFF7B2CBF.toInt(), true)
+        graphics.fillRect(1, 1, 10, 16)
+        graphics.color = java.awt.Color(0xFF6D28D9.toInt(), true)
+        graphics.fillRect(11, 1, 1, 16)
+        graphics.color = java.awt.Color(0xFF4C1D95.toInt(), true)
+        graphics.fillRect(12, 1, 10, 16)
+        graphics.color = java.awt.Color(0xFF8B5CF6.toInt(), true)
+        graphics.fillRect(1, 0, 10, 1)
+        graphics.color = java.awt.Color(0xFF2E1065.toInt(), true)
+        graphics.fillRect(11, 0, 10, 1)
+        graphics.color = java.awt.Color(0xFFFFD166.toInt(), true)
+        graphics.fillRect(4, 3, 4, 10)
+        graphics.fillRect(15, 3, 4, 10)
+    } finally {
+        graphics.dispose()
+    }
+    return ByteArrayOutputStream().use {
+        ImageIO.write(image, "png", it)
+        it.toByteArray()
+    }
+}
 
 internal fun explodedPose(isSlim: Boolean, gap: Float): Map<BodyPart, List<SkinTransform>> {
     val model = PlayerModel(isSlim)
@@ -88,10 +120,11 @@ internal fun explodedPose(isSlim: Boolean, gap: Float): Map<BodyPart, List<SkinT
         BodyPart.LEFT_ARM to SkinVec3(bodyDims.x / 2 + gap + leftArmDims.x / 2, 10f, 0f),
         BodyPart.RIGHT_LEG to SkinVec3(-(gap / 2 + rightLegDims.x / 2), 10f - bodyDims.y / 2 - gap - rightLegDims.y / 2, 0f),
         BodyPart.LEFT_LEG to SkinVec3(gap / 2 + leftLegDims.x / 2, 10f - bodyDims.y / 2 - gap - leftLegDims.y / 2, 0f),
+        BodyPart.CAPE to SkinVec3(0f, 10f, -(bodyDims.z / 2 + gap + BodyPart.CAPE.getDims(isSlim).z / 2)),
     )
 
     return BodyPart.entries.associateWith { part ->
-        val current = model.parts.getValue(part).pos
+        val current = if (part == BodyPart.CAPE) model.cape.pos else model.parts.getValue(part).pos
         val target = desired.getValue(part)
         listOf(
             SkinTransform.Translate(

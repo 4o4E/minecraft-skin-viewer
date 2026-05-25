@@ -30,6 +30,7 @@ class SkinDaoTest {
                         `slim` BOOLEAN NOT NULL,
                         `update` BIGINT NOT NULL,
                         `hash` VARCHAR(64) NOT NULL,
+                        `cape_hash` VARCHAR(64) NULL,
                         INDEX `idx_skin_name` (`name`)
                     )
                     """.trimIndent()
@@ -53,7 +54,8 @@ class SkinDaoTest {
             name = "PvP",
             slim = true,
             update = 1683900897724,
-            hash = "b6f30602ff221c02262162c11b3f254bd6e8e83008fab67e920a68a447148f5d"
+            hash = "b6f30602ff221c02262162c11b3f254bd6e8e83008fab67e920a68a447148f5d",
+            capeHash = "cape"
         )
 
         SkinDao.add(skin)
@@ -69,9 +71,10 @@ class SkinDaoTest {
             name = "PvP",
             slim = true,
             update = 1,
-            hash = "old"
+            hash = "old",
+            capeHash = null
         )
-        val second = first.copy(name = "PvP2", slim = false, update = 2, hash = "new")
+        val second = first.copy(name = "PvP2", slim = false, update = 2, hash = "new", capeHash = "new-cape")
 
         SkinDao.add(first)
         SkinDao.add(second)

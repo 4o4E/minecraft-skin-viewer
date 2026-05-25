@@ -54,7 +54,8 @@ private fun smokeRequest(): SkinRenderRequest =
         overlayMode = SkinOverlayMode.THREE_D,
         lightingMode = SkinLightingMode.DIRECTIONAL,
         shadows = false,
-        showPlatform = true
+        showPlatform = true,
+        capePng = smokeCapePng()
     )
 
 private fun smokeSkinPng(): ByteArray {
@@ -69,6 +70,34 @@ private fun smokeSkinPng(): ByteArray {
         graphics.fillRect(20, 20, 8, 12)
         graphics.color = java.awt.Color(0xFF33AA55.toInt(), true)
         graphics.fillRect(44, 20, 4, 12)
+    } finally {
+        graphics.dispose()
+    }
+    return ByteArrayOutputStream().use {
+        ImageIO.write(image, "png", it)
+        it.toByteArray()
+    }
+}
+
+private fun smokeCapePng(): ByteArray {
+    val image = BufferedImage(64, 32, BufferedImage.TYPE_INT_ARGB)
+    val graphics = image.createGraphics()
+    try {
+        graphics.color = java.awt.Color(0xFF5B21B6.toInt(), true)
+        graphics.fillRect(0, 1, 1, 16)
+        graphics.color = java.awt.Color(0xFFAA33CC.toInt(), true)
+        graphics.fillRect(1, 1, 10, 16)
+        graphics.color = java.awt.Color(0xFF6D28D9.toInt(), true)
+        graphics.fillRect(11, 1, 1, 16)
+        graphics.color = java.awt.Color(0xFF4C1D95.toInt(), true)
+        graphics.fillRect(12, 1, 10, 16)
+        graphics.color = java.awt.Color(0xFF8B5CF6.toInt(), true)
+        graphics.fillRect(1, 0, 10, 1)
+        graphics.color = java.awt.Color(0xFF2E1065.toInt(), true)
+        graphics.fillRect(11, 0, 10, 1)
+        graphics.color = java.awt.Color(0xFFFFDD55.toInt(), true)
+        graphics.fillRect(4, 4, 4, 8)
+        graphics.fillRect(15, 4, 4, 8)
     } finally {
         graphics.dispose()
     }

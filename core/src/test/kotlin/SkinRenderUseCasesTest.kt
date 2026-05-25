@@ -45,13 +45,15 @@ class SkinRenderUseCasesTest {
             modelYaw = 45f,
             pose = mapOf(BodyPart.BODY to listOf(SkinTransform.Translate(z = 2f)))
         )
+        val capeBytes = testPng(width = 64, height = 32)
 
         SkinRenderUseCases.renderSkin(
             renderer = renderer,
             bytes = testPng(width = 64, height = 64),
             slim = true,
             headScale = 1.0,
-            options = options
+            options = options,
+            capeBytes = capeBytes
         )
 
         val request = renderer.requests.single()
@@ -71,6 +73,7 @@ class SkinRenderUseCasesTest {
         assertEquals(SkinLightingMode.DIRECTIONAL, request.lightingMode)
         assertEquals(true, request.shadows)
         assertEquals(true, request.showPlatform)
+        assertTrue(request.capePng?.contentEquals(capeBytes) == true)
         assertEquals(45f, request.modelYaw)
         assertEquals(listOf(SkinTransform.Translate(z = 2f)), request.pose.getValue(BodyPart.BODY))
     }

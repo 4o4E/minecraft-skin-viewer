@@ -124,6 +124,7 @@ import top.e404.mcsk.core.rotateY
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
+import java.util.IdentityHashMap
 import javax.imageio.ImageIO
 import kotlin.math.cos
 import kotlin.math.max
@@ -177,11 +178,11 @@ private class OpenGlSkinRenderer {
     ): ByteArray {
         startup()
         val prepared = prepareSkinScene(request)
-        val textureId = uploadTexture(prepared.skinBitmap)
+        val textureIds = uploadTextures(prepared.meshes)
         try {
-            return renderPngPrepared(request, prepared.meshes, textureId)
+            return renderPngPrepared(request, prepared.meshes, textureIds)
         } finally {
-            glDeleteTextures(textureId)
+            textureIds.values.forEach { glDeleteTextures(it) }
         }
     }
 
@@ -191,18 +192,18 @@ private class OpenGlSkinRenderer {
         if (!requests.canReusePreparedScene()) return requests.map(::renderPng)
 
         val prepared = prepareSkinScene(requests.first())
-        val textureId = uploadTexture(prepared.skinBitmap)
+        val textureIds = uploadTextures(prepared.meshes)
         try {
-            return requests.map { renderPngPrepared(it, prepared.meshes, textureId) }
+            return requests.map { renderPngPrepared(it, prepared.meshes, textureIds) }
         } finally {
-            glDeleteTextures(textureId)
+            textureIds.values.forEach { glDeleteTextures(it) }
         }
     }
 
     private fun renderPngPrepared(
         request: SkinRenderRequest,
         baseMeshes: List<SkinMesh>,
-        textureId: Int,
+        textureIds: Map<Bitmap, Int>,
     ): ByteArray {
         val settings = request.settings
         val colorSsaa = settings.colorSsaa()
@@ -218,7 +219,7 @@ private class OpenGlSkinRenderer {
         renderSkinScene(
             request = request,
             meshes = baseMeshes.map { if (request.modelYaw == 0f) it else it.rotateY(request.modelYaw) },
-            textureId = textureId
+            textureIds = textureIds
         )
         val image = readFramebuffer(targetWidth, targetHeight, settings.width, settings.height)
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
@@ -245,14 +246,15 @@ private class OpenGlSkinRenderer {
         startup()
         val skinImage = SkiaImage.makeFromEncoded(request.skinPng)
         val skinBitmap = Bitmap.makeFromImage(skinImage)
+        val capeBitmap = request.capePng?.let { Bitmap.makeFromImage(SkiaImage.makeFromEncoded(it)) }
         val use3DOverlay = request.overlayMode == SkinOverlayMode.THREE_D
         return PreparedSkinScene(
-            skinBitmap = skinBitmap,
             meshes = createMinecraftPlayerMeshes(
                 skin = skinBitmap,
                 isSlim = request.isSlim,
                 pose = request.pose,
-                use3DOverlay = use3DOverlay
+                use3DOverlay = use3DOverlay,
+                cape = capeBitmap
             )
         )
     }
@@ -260,7 +262,7 @@ private class OpenGlSkinRenderer {
     private fun renderSkinScene(
         request: SkinRenderRequest,
         meshes: List<SkinMesh>,
-        textureId: Int,
+        textureIds: Map<Bitmap, Int>,
     ) {
         val settings = request.settings
         val use3DOverlay = request.overlayMode == SkinOverlayMode.THREE_D
@@ -303,12 +305,10 @@ private class OpenGlSkinRenderer {
                 shadowTexture = floorShadow?.depthTexture ?: 0,
                 lightDir = lightDir,
                 receiveShadow = false,
-                useTexture = true,
-                skinTexture = textureId
+                useTexture = true
             )
             glEnable(GL_TEXTURE_2D)
-            glBindTexture(GL_TEXTURE_2D, textureId)
-            meshes.filter { it.texture != null }.forEach { drawTexturedMesh(it) }
+            drawTexturedMeshes(meshes, textureIds)
             glDisable(GL_TEXTURE_2D)
 
             // 角色本体只负责投影，避免 shadow map 自采样在模型表面形成旋转闪烁的三角色块。
@@ -428,6 +428,22 @@ private class OpenGlSkinRenderer {
         pixels.flip()
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bitmap.width, bitmap.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
         return textureId
+    }
+
+    private fun uploadTextures(meshes: List<SkinMesh>): Map<Bitmap, Int> {
+        val textureIds = IdentityHashMap<Bitmap, Int>()
+        meshes.mapNotNull { it.texture }.forEach { texture ->
+            if (!textureIds.containsKey(texture)) textureIds[texture] = uploadTexture(texture)
+        }
+        return textureIds
+    }
+
+    private fun drawTexturedMeshes(meshes: List<SkinMesh>, textureIds: Map<Bitmap, Int>) {
+        meshes.filter { it.texture != null }.forEach { mesh ->
+            val texture = mesh.texture ?: return@forEach
+            glBindTexture(GL_TEXTURE_2D, textureIds.getValue(texture))
+            drawTexturedMesh(mesh)
+        }
     }
 
     private fun drawTexturedMesh(mesh: SkinMesh) {
@@ -684,7 +700,6 @@ private fun readFramebuffer(sourceWidth: Int, sourceHeight: Int, outputWidth: In
 }
 
 private data class PreparedSkinScene(
-    val skinBitmap: Bitmap,
     val meshes: List<SkinMesh>,
 )
 
@@ -899,12 +914,16 @@ private fun SkinRenderSettings.colorSsaa(): Int =
 private fun List<SkinRenderRequest>.canReusePreparedScene(): Boolean {
     val first = first()
     return all {
-        it.skinPng.contentEquals(first.skinPng) &&
+            it.skinPng.contentEquals(first.skinPng) &&
+            it.capePng.contentEqualsNullable(first.capePng) &&
             it.isSlim == first.isSlim &&
             it.overlayMode == first.overlayMode &&
             it.pose == first.pose
     }
 }
+
+private fun ByteArray?.contentEqualsNullable(other: ByteArray?): Boolean =
+    if (this == null || other == null) this == other else contentEquals(other)
 
 private fun orbitEye(yawDegrees: Float, settings: SkinRenderSettings): GlVec3 {
     val yaw = Math.toRadians(yawDegrees.toDouble())

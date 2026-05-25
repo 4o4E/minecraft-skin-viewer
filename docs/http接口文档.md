@@ -46,6 +46,7 @@ url: `/render/{type}/{content}/{position}`
 | `platformThickness` | 地台厚度 | 默认 `2` |
 | `aa` | 抗锯齿等级 | 按模式决定；`antiAliasingLevel` 是别名 |
 | `overlay` | 外层皮肤模式 | `none`、`flat`、`3d`；`overlayMode` 是别名 |
+| `cape` | 是否渲染账号披风 | 默认 `true`；`showCape` 是别名，账号无披风时自动忽略 |
 | `modelYaw` | 模型自身水平旋转角度 | 静态图直接使用，旋转 gif 作为每帧旋转的起始偏移 |
 | `pose` | 额外姿态变换 | URL 编码后的 JSON，追加到当前模式内置姿态之后 |
 
@@ -68,7 +69,7 @@ GIF 的时间精度为 10ms。
 
 `pose` 是 JSON 对象，key 为身体部位，value 为变换数组。身体部位支持：
 
-`head`、`body`、`rightArm`、`leftArm`、`rightLeg`、`leftLeg`
+`head`、`body`、`rightArm`、`leftArm`、`rightLeg`、`leftLeg`、`cape`
 
 变换支持：
 
@@ -149,6 +150,7 @@ GET http://localhost:2345/data/name/404E
   "name": "404E",
   "slim": true,
   "update": 1683961680455,
-  "hash": "4daa024bc2d35de2b26025051817d04491ad586e5a2ab85f9dad608b009ac7d"
+  "hash": "4daa024bc2d35de2b26025051817d04491ad586e5a2ab85f9dad608b009ac7d",
+  "capeHash": null
 }
 ```

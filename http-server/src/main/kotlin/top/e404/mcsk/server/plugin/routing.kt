@@ -62,9 +62,11 @@ fun Application.routing() = routing {
                         "slim" to slim,
                         "head" to headScale,
                         "duration" to duration,
+                        "capeHash" to data.renderCapeHash(options),
                     )) {
                         SkinRendererService.renderSneak(
                             bytes = data.skinBytes,
+                            capeBytes = data.renderCapeBytes(options),
                             slim = slim,
                             headScale = headScale,
                             duration = duration,
@@ -80,9 +82,11 @@ fun Application.routing() = routing {
                     call.respondCachedRender(data, "sk", "png", ContentType.Image.PNG, options.cacheParams() + mapOf(
                         "slim" to slim,
                         "head" to headScale,
+                        "capeHash" to data.renderCapeHash(options),
                     )) {
                         SkinRendererService.renderSkin(
                             bytes = data.skinBytes,
+                            capeBytes = data.renderCapeBytes(options),
                             slim = slim,
                             headScale = headScale,
                             options = options
@@ -101,9 +105,11 @@ fun Application.routing() = routing {
                         "head" to headScale,
                         "frameCount" to frameCount,
                         "duration" to duration,
+                        "capeHash" to data.renderCapeHash(options),
                     )) {
                         SkinRendererService.renderSkinRotate(
                             bytes = data.skinBytes,
+                            capeBytes = data.renderCapeBytes(options),
                             slim = slim,
                             frameCount = frameCount,
                             headScale = headScale,
@@ -147,9 +153,11 @@ fun Application.routing() = routing {
                     call.respondCachedRender(data, "homo", "png", ContentType.Image.PNG, options.cacheParams() + mapOf(
                         "slim" to slim,
                         "head" to headScale,
+                        "capeHash" to data.renderCapeHash(options),
                     )) {
                         SkinRendererService.renderHomo(
                             bytes = data.skinBytes,
+                            capeBytes = data.renderCapeBytes(options),
                             slim = slim,
                             headScale = headScale,
                             options = options
@@ -290,6 +298,7 @@ internal fun Parameters.renderOptions(defaults: SkinRenderOptions): SkinRenderOp
         lightingMode = lightingMode,
         shadows = shadows,
         showPlatform = showPlatform,
+        showCape = firstValue("cape", "showCape")?.asBooleanParam() ?: defaults.showCape,
         modelYaw = floatParam(defaults.modelYaw, "modelYaw"),
         pose = this["pose"]?.asPose() ?: defaults.pose,
     )
@@ -313,9 +322,16 @@ internal fun SkinRenderOptions.cacheParams(): Map<String, Any?> =
         "lighting" to lightingMode.name.lowercase(),
         "shadow" to shadows,
         "platform" to showPlatform,
+        "cape" to showCape,
         "modelYaw" to modelYaw,
         "pose" to pose.cacheString()
     )
+
+private fun SkinData.renderCapeHash(options: SkinRenderOptions): String? =
+    if (options.showCape) capeHash else null
+
+private fun SkinData.renderCapeBytes(options: SkinRenderOptions): ByteArray? =
+    if (options.showCape) capeBytes else null
 
 private fun Parameters.slim(default: Boolean): Boolean =
     firstValue("slim", "t")?.asBooleanParam() ?: default
@@ -415,6 +431,7 @@ private fun String.asBodyPart(): BodyPart =
         "leftarm" -> BodyPart.LEFT_ARM
         "rightleg" -> BodyPart.RIGHT_LEG
         "leftleg" -> BodyPart.LEFT_LEG
+        "cape" -> BodyPart.CAPE
         else -> queryParameterError("Invalid body part: $this")
     }
 

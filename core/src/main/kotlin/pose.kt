@@ -30,6 +30,7 @@ object PosePresets {
         BodyPart.LEFT_ARM to listOf(SkinTransform.Scale(0f, 0f, 0f)),
         BodyPart.RIGHT_LEG to listOf(SkinTransform.Scale(0f, 0f, 0f)),
         BodyPart.LEFT_LEG to listOf(SkinTransform.Scale(0f, 0f, 0f)),
+        BodyPart.CAPE to listOf(SkinTransform.Scale(0f, 0f, 0f)),
     )
     fun withScale(
         isSlim: Boolean,

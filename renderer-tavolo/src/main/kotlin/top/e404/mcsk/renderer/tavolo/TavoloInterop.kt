@@ -29,9 +29,11 @@ fun renderMinecraftViewTavolo(
     pose: Map<BodyPart, List<SkinTransform>> = emptyMap(),
     use3DOverlay: Boolean = true,
     modelYaw: Float = 0f,
+    cape: Image? = null,
 ): Image {
     val skinBitmap = Bitmap.makeFromImage(skin)
-    val playerMeshes = createMinecraftPlayerMeshes(skinBitmap, isSlim, pose, use3DOverlay)
+    val capeBitmap = cape?.let { Bitmap.makeFromImage(it) }
+    val playerMeshes = createMinecraftPlayerMeshes(skinBitmap, isSlim, pose, use3DOverlay, capeBitmap)
     return renderMinecraftViewTavolo(
         playerMeshes = playerMeshes,
         renderConfig = renderConfig,
@@ -45,8 +47,9 @@ fun prepareMinecraftPlayerMeshesTavolo(
     isSlim: Boolean,
     pose: Map<BodyPart, List<SkinTransform>> = emptyMap(),
     use3DOverlay: Boolean = true,
+    cape: Image? = null,
 ): List<SkinMesh> =
-    createMinecraftPlayerMeshes(Bitmap.makeFromImage(skin), isSlim, pose, use3DOverlay)
+    createMinecraftPlayerMeshes(Bitmap.makeFromImage(skin), isSlim, pose, use3DOverlay, cape?.let { Bitmap.makeFromImage(it) })
 
 fun renderMinecraftViewTavolo(
     playerMeshes: List<SkinMesh>,

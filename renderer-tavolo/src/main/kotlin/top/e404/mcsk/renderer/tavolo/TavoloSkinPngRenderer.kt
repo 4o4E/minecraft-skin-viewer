@@ -26,8 +26,10 @@ class TavoloSkinPngRenderer : SkinPngRenderer {
 
         val first = requests.first()
         val skin = Image.makeFromEncoded(first.skinPng)
+        val cape = first.capePng?.let { Image.makeFromEncoded(it) }
         val playerMeshes = prepareMinecraftPlayerMeshesTavolo(
             skin = skin,
+            cape = cape,
             isSlim = first.isSlim,
             pose = first.pose,
             use3DOverlay = first.overlayMode == SkinOverlayMode.THREE_D
@@ -53,6 +55,7 @@ class TavoloSkinPngRenderer : SkinPngRenderer {
         val settings = request.settings
         val image = renderMinecraftViewTavolo(
             skin = skin,
+            cape = request.capePng?.let { Image.makeFromEncoded(it) },
             isSlim = request.isSlim,
             renderConfig = request.renderConfig(),
             backgroundMeshes = if (request.showPlatform) {
@@ -71,6 +74,7 @@ class TavoloSkinPngRenderer : SkinPngRenderer {
         val first = first()
         return all {
             it.skinPng.contentEquals(first.skinPng) &&
+                it.capePng.contentEqualsNullable(first.capePng) &&
                 it.isSlim == first.isSlim &&
                 it.overlayMode == first.overlayMode &&
                 it.pose == first.pose
@@ -110,3 +114,6 @@ class TavoloSkinPngRenderer : SkinPngRenderer {
         )
     }
 }
+
+private fun ByteArray?.contentEqualsNullable(other: ByteArray?): Boolean =
+    if (this == null || other == null) this == other else contentEquals(other)

@@ -7,6 +7,8 @@ import java.security.MessageDigest
 object FixtureSkin {
     private val filePath: String? = System.getProperty("skin.fixture.file")
         ?: System.getenv("SKIN_FIXTURE_FILE")
+    private val capeFilePath: String? = System.getProperty("skin.fixture.capeFile")
+        ?: System.getenv("SKIN_FIXTURE_CAPE_FILE")
     private val name: String = System.getProperty("skin.fixture.name")
         ?: System.getenv("SKIN_FIXTURE_NAME")
         ?: "Fixture"
@@ -37,16 +39,23 @@ object FixtureSkin {
         val source = File(requireNotNull(filePath) { "Fixture skin file is not configured" })
         require(source.isFile) { "Fixture skin file does not exist: ${source.absolutePath}" }
         val bytes = source.readBytes()
+        val capeBytes = capeFilePath?.let { path ->
+            File(path).also { require(it.isFile) { "Fixture cape file does not exist: ${it.absolutePath}" } }.readBytes()
+        }
         val data = SkinData(
             uuid = uuid,
             name = name,
             slim = slim,
             update = System.currentTimeMillis(),
-            hash = bytes.sha256()
+            hash = bytes.sha256(),
+            capeHash = capeBytes?.sha256()
         )
         data.skinFile.parentFile.mkdirs()
         if (!data.skinFile.isFile || !data.skinFile.readBytes().contentEquals(bytes)) {
             data.skinFile.writeBytes(bytes)
+        }
+        if (capeBytes != null && (!data.capeFile.isFile || !data.capeFile.readBytes().contentEquals(capeBytes))) {
+            data.capeFile.writeBytes(capeBytes)
         }
         return data
     }

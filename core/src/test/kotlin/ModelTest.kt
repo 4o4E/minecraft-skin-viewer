@@ -18,6 +18,7 @@ class ModelTest {
         assertEquals(SkinVec3(3f, 12f, 4f), BodyPart.RIGHT_ARM.getDims(true))
         assertEquals(SkinVec3(8f, 8f, 8f), BodyPart.HEAD.getDims(false))
         assertEquals(SkinVec3(8f, 8f, 8f), BodyPart.HEAD.getDims(true))
+        assertEquals(SkinVec3(10f, 16f, 1f), BodyPart.CAPE.getDims(false))
     }
 
     @Test
@@ -37,18 +38,33 @@ class ModelTest {
         val classic = PlayerModel(isSlim = false)
         val slim = PlayerModel(isSlim = true)
 
-        BodyPart.entries.forEach { part ->
+        BodyPart.entries.filter { it != BodyPart.CAPE }.forEach { part ->
             assertNotNull(classic.parts[part])
             assertNotNull(classic.overlays[part])
             assertNotNull(slim.parts[part])
             assertNotNull(slim.overlays[part])
         }
 
+        assertNotNull(classic.cape)
+        assertNull(classic.parts[BodyPart.CAPE])
+        assertNull(classic.overlays[BodyPart.CAPE])
         assertEquals(SkinVec3(-6f, 10f, 0f), classic.parts.getValue(BodyPart.RIGHT_ARM).pos)
         assertEquals(SkinVec3(-5.5f, 10f, 0f), slim.parts.getValue(BodyPart.RIGHT_ARM).pos)
         assertRect(0f, 20f, 4f, 12f, classic.parts.getValue(BodyPart.RIGHT_LEG).uvs.getValue(SkinFace.RIGHT))
         assertRect(8f, 20f, 4f, 12f, classic.parts.getValue(BodyPart.RIGHT_LEG).uvs.getValue(SkinFace.LEFT))
         assertNull(BodyPart.HEAD.slimDims)
+    }
+
+    @Test
+    fun `cape uses Minecraft cuboid UV layout`() {
+        val cape = PlayerModel(isSlim = false).cape
+
+        assertRect(0f, 1f, 1f, 16f, cape.uvs.getValue(SkinFace.RIGHT))
+        assertRect(11f, 1f, 1f, 16f, cape.uvs.getValue(SkinFace.LEFT))
+        assertRect(1f, 0f, 10f, 1f, cape.uvs.getValue(SkinFace.TOP))
+        assertRect(11f, 0f, 10f, 1f, cape.uvs.getValue(SkinFace.BOTTOM))
+        assertRect(1f, 1f, 10f, 16f, cape.uvs.getValue(SkinFace.FRONT))
+        assertRect(12f, 1f, 10f, 16f, cape.uvs.getValue(SkinFace.BACK))
     }
 
     private fun assertRect(

@@ -33,8 +33,9 @@ class RenderQueryOptionsTest {
             "lighting" to listOf("directional"),
             "shadow" to listOf("true"),
             "platform" to listOf("true"),
+            "cape" to listOf("false"),
             "modelYaw" to listOf("45"),
-            "pose" to listOf("""{"body":[{"type":"translate","z":2}]}""")
+            "pose" to listOf("""{"body":[{"type":"translate","z":2}],"cape":[{"type":"rotate","x":8}]}""")
         )
 
         val options = params.renderOptions(SkinRenderUseCases.skinOptions(0))
@@ -55,8 +56,10 @@ class RenderQueryOptionsTest {
         assertEquals(SkinLightingMode.DIRECTIONAL, options.lightingMode)
         assertTrue(options.shadows)
         assertTrue(options.showPlatform)
+        assertEquals(false, options.showCape)
         assertEquals(45f, options.modelYaw)
         assertEquals(listOf(SkinTransform.Translate(z = 2f)), options.pose.getValue(BodyPart.BODY))
+        assertEquals(listOf(SkinTransform.Rotate(x = 8f)), options.pose.getValue(BodyPart.CAPE))
     }
 
     @Test
@@ -94,5 +97,16 @@ class RenderQueryOptionsTest {
                 "lighting" to listOf("ambient")
             ).renderOptions(SkinRenderUseCases.skinOptions(0))
         }
+    }
+
+    @Test
+    fun `showCape alias controls cape rendering option`() {
+        val defaultOptions = parametersOf()
+            .renderOptions(SkinRenderUseCases.skinOptions(0))
+        val disabled = parametersOf("showCape" to listOf("false"))
+            .renderOptions(SkinRenderUseCases.skinOptions(0))
+
+        assertTrue(defaultOptions.showCape)
+        assertEquals(false, disabled.showCape)
     }
 }

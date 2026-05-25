@@ -13,6 +13,7 @@ import top.e404.tavolo.draw.render3d.Vec3
 import top.e404.tavolo.util.Colors
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
 import javax.imageio.IIOImage
 import javax.imageio.ImageIO
@@ -43,9 +44,11 @@ internal fun renderTavoloFile(
     shadows: Boolean = false,
     showPlatform: Boolean = false,
     modelYaw: Float = 0f,
+    showCape: Boolean = true,
 ): Image {
     assertTrue(file.isFile, "Put ${file.name} in the run directory first.")
     val skin = Image.makeFromEncoded(file.readBytes())
+    val cape = if (showCape) Image.makeFromEncoded(syntheticManualCapePng()) else null
     return renderMinecraftViewTavolo(
         skin = skin,
         isSlim = isSlim,
@@ -62,8 +65,38 @@ internal fun renderTavoloFile(
         backgroundMeshes = if (showPlatform) listOf(createSkinPlatform()) else emptyList(),
         pose = pose,
         use3DOverlay = true,
-        modelYaw = modelYaw
+        modelYaw = modelYaw,
+        cape = cape
     )
+}
+
+internal fun syntheticManualCapePng(): ByteArray {
+    val image = BufferedImage(64, 32, BufferedImage.TYPE_INT_ARGB)
+    val graphics = image.createGraphics()
+    try {
+        // 按 Minecraft 披风 cuboid 的 uv=[0,0]、size=[10,16,1] 布局填满六个面。
+        graphics.color = java.awt.Color(0xFF5B21B6.toInt(), true)
+        graphics.fillRect(0, 1, 1, 16)
+        graphics.color = java.awt.Color(0xFF7B2CBF.toInt(), true)
+        graphics.fillRect(1, 1, 10, 16)
+        graphics.color = java.awt.Color(0xFF6D28D9.toInt(), true)
+        graphics.fillRect(11, 1, 1, 16)
+        graphics.color = java.awt.Color(0xFF4C1D95.toInt(), true)
+        graphics.fillRect(12, 1, 10, 16)
+        graphics.color = java.awt.Color(0xFF8B5CF6.toInt(), true)
+        graphics.fillRect(1, 0, 10, 1)
+        graphics.color = java.awt.Color(0xFF2E1065.toInt(), true)
+        graphics.fillRect(11, 0, 10, 1)
+        graphics.color = java.awt.Color(0xFFFFD166.toInt(), true)
+        graphics.fillRect(4, 3, 4, 10)
+        graphics.fillRect(15, 3, 4, 10)
+    } finally {
+        graphics.dispose()
+    }
+    return ByteArrayOutputStream().use {
+        ImageIO.write(image, "png", it)
+        it.toByteArray()
+    }
 }
 
 internal fun writeGif(

@@ -52,7 +52,8 @@ enum class BodyPart(
     RIGHT_ARM(classicDims = SkinVec3(4f, 12f, 4f), slimDims = SkinVec3(3f, 12f, 4f)),
     LEFT_ARM(classicDims = SkinVec3(4f, 12f, 4f), slimDims = SkinVec3(3f, 12f, 4f)),
     RIGHT_LEG(SkinVec3(4f, 12f, 4f)),
-    LEFT_LEG(SkinVec3(4f, 12f, 4f));
+    LEFT_LEG(SkinVec3(4f, 12f, 4f)),
+    CAPE(SkinVec3(10f, 16f, 1f));
 
     /**
      * 根据模型类型获取身体部位的尺寸。
@@ -71,6 +72,13 @@ enum class BodyPart(
 class PlayerModel(val isSlim: Boolean) {
     val parts: Map<BodyPart, SkinCube>
     val overlays: Map<BodyPart, SkinCube>
+    val cape: SkinCube = SkinCube(
+        0f,
+        0f,
+        BodyPart.CAPE.getDims(isSlim),
+        SkinVec3(0f, 8f, -2.75f),
+        SkinVec3(0f, 8f, 0f)
+    )
 
     init {
         if (isSlim) {

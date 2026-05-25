@@ -61,6 +61,7 @@ data class SkinRenderOptions(
     val showPlatform: Boolean = false,
     val modelYaw: Float = 0f,
     val pose: Map<BodyPart, List<SkinTransform>> = emptyMap(),
+    val showCape: Boolean = true,
 )
 
 data class SkinRenderRequest(
@@ -74,6 +75,7 @@ data class SkinRenderRequest(
     val showPlatform: Boolean = false,
     val pose: Map<BodyPart, List<SkinTransform>> = emptyMap(),
     val modelYaw: Float = 0f,
+    val capePng: ByteArray? = null,
 )
 
 interface SkinPngRenderer : AutoCloseable {

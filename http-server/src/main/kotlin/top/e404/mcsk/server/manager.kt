@@ -50,7 +50,7 @@ object Mojang {
     internal fun parseProfileResponse(json: String, update: Long = System.currentTimeMillis()): SkinData? {
         if (json.isBlank()) return null
         val jo = json.let { Json.parseToJsonElement(it) }.jsonObject
-        val skinJson = jo["properties"]!!
+        val texturesJson = jo["properties"]!!
             .jsonArray
             .asSequence()
             .map { it.jsonObject }
@@ -61,8 +61,8 @@ object Mojang {
             .let { Base64.getDecoder().decode(it).toString(Charsets.UTF_8) }
             .let { Json.parseToJsonElement(it) }
             .jsonObject["textures"]!!
-            .jsonObject["SKIN"]!!
             .jsonObject
+        val skinJson = texturesJson["SKIN"]!!.jsonObject
         val slim = skinJson["metadata"]
             ?.jsonObject
             ?.get("model")
@@ -75,7 +75,13 @@ object Mojang {
             update,
             skinJson["url"]!!.jsonPrimitive.content
                 .removePrefix("http://textures.minecraft.net/texture/")
-                .removePrefix("https://textures.minecraft.net/texture/")
+                .removePrefix("https://textures.minecraft.net/texture/"),
+            texturesJson["CAPE"]?.jsonObject
+                ?.get("url")
+                ?.jsonPrimitive
+                ?.content
+                ?.removePrefix("http://textures.minecraft.net/texture/")
+                ?.removePrefix("https://textures.minecraft.net/texture/")
         )
     }
 
@@ -140,13 +146,16 @@ object Skin {
 
     private suspend fun clearSkinFilesAndRenderCache(old: SkinData?, data: SkinData, force: Boolean) {
         val hashChanged = old?.hash != null && old.hash != data.hash
+        val capeHashChanged = old?.capeHash != data.capeHash
         val uuidChanged = old?.uuid != null && old.uuid != data.uuid
-        if (force || hashChanged || uuidChanged) {
+        if (force || hashChanged || capeHashChanged || uuidChanged) {
             old?.uuid?.let { RenderFileCache.clearUuid(it) }
             if (old?.uuid != data.uuid) RenderFileCache.clearUuid(data.uuid)
             withContext(Dispatchers.IO) {
                 old?.skinFile?.delete()
+                old?.capeFile?.delete()
                 data.skinFile.delete()
+                data.capeFile.delete()
             }
         }
     }

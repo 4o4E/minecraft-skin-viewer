@@ -3,6 +3,8 @@ package top.e404.mcsk.core
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Color
 
+private const val CAPE_DEFAULT_BACKWARD_TILT_DEGREES = 6f
+
 /**
  * Builds the complete Minecraft player model from a skin bitmap.
  */
@@ -17,11 +19,13 @@ fun createMinecraftPlayerMeshes(
     skin: Bitmap,
     isSlim: Boolean,
     pose: Map<BodyPart, List<SkinTransform>> = emptyMap(),
-    use3DOverlay: Boolean = false
+    use3DOverlay: Boolean = false,
+    cape: Bitmap? = null,
 ): List<SkinMesh> {
     val texW = skin.width.toFloat()
     val texH = skin.height.toFloat()
     val texturedComponentMeshes = mutableListOf<SkinMesh>()
+    val separateTexturedMeshes = mutableListOf<SkinMesh>()
     val solidComponentMeshes = mutableListOf<SkinMesh>()
     val playerModel = PlayerModel(isSlim)
 
@@ -32,19 +36,7 @@ fun createMinecraftPlayerMeshes(
         val partDims = partId.getDims(isSlim)
         val partUvs = partCube.uvs.toGeometryFaceUvs()
 
-        val transform: (SkinVec3) -> SkinVec3 = { vertexPos ->
-            if (transformations.isNullOrEmpty()) {
-                vertexPos
-            } else {
-                transformations.fold(vertexPos) { currentPos, transformation ->
-                    when (transformation) {
-                        is SkinTransform.Rotate -> (currentPos - partCube.pivot).rotate(transformation) + partCube.pivot
-                        is SkinTransform.Scale -> (currentPos - partCube.pivot).scale(transformation) + partCube.pivot
-                        is SkinTransform.Translate -> currentPos.translate(transformation)
-                    }
-                }
-            }
-        }
+        val transform = partCube.transformer(transformations)
 
         val baseMesh = createMinecraftUVCuboid(partDims, partUvs, texW, texH)
         texturedComponentMeshes.add(baseMesh.copy(vertices = baseMesh.vertices.map {
@@ -67,7 +59,49 @@ fun createMinecraftPlayerMeshes(
             else texturedComponentMeshes.add(transformedOverlayMesh)
         }
     }
-    return listOf(combineSkinMeshes(texturedComponentMeshes, skin)) + solidComponentMeshes
+
+    cape?.let {
+        // 披风使用独立贴图，不能合并进皮肤贴图 mesh。
+        separateTexturedMeshes.add(createMinecraftCapeMesh(it, playerModel.cape, pose[BodyPart.CAPE]))
+    }
+
+    return listOf(combineSkinMeshes(texturedComponentMeshes, skin)) + separateTexturedMeshes + solidComponentMeshes
+}
+
+private fun createMinecraftCapeMesh(
+    cape: Bitmap,
+    capeCube: SkinCube,
+    transformations: List<SkinTransform>?,
+): SkinMesh {
+    val capeDims = BodyPart.CAPE.getDims(false)
+    val capeMesh = createMinecraftUVCuboid(
+        dims = capeDims,
+        faceUVs = capeCube.uvs.toGeometryFaceUvs(),
+        textureWidth = cape.width.toFloat(),
+        textureHeight = cape.height.toFloat()
+    )
+    // 披风默认从肩部略微向后倾斜，额外 pose 会在默认姿态之后继续叠加。
+    val transform = capeCube.transformer(listOf(SkinTransform.Rotate(x = CAPE_DEFAULT_BACKWARD_TILT_DEGREES)) + transformations.orEmpty())
+    return capeMesh.copy(
+        texture = cape,
+        vertices = capeMesh.vertices.map { vertex ->
+            SkinVertex(transform(vertex.position) + capeCube.pos, vertex.uv)
+        }
+    )
+}
+
+private fun SkinCube.transformer(transformations: List<SkinTransform>?): (SkinVec3) -> SkinVec3 = { vertexPos ->
+    if (transformations.isNullOrEmpty()) {
+        vertexPos
+    } else {
+        transformations.fold(vertexPos) { currentPos, transformation ->
+            when (transformation) {
+                is SkinTransform.Rotate -> (currentPos - pivot).rotate(transformation) + pivot
+                is SkinTransform.Scale -> (currentPos - pivot).scale(transformation) + pivot
+                is SkinTransform.Translate -> currentPos.translate(transformation)
+            }
+        }
+    }
 }
 
 fun createSkinPlatform(topY: Float = -8.2f, thickness: Float = 2f): SkinMesh =

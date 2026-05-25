@@ -16,19 +16,36 @@ object SkinDao {
                     `slim`   BOOLEAN         NOT NULL COMMENT '是否为 slim 模型',
                     `update` BIGINT UNSIGNED NOT NULL COMMENT '最后更新时间',
                     `hash`   CHAR(64)        NOT NULL COMMENT '皮肤材质 hash',
+                    `cape_hash` CHAR(64)     NULL COMMENT '披风材质 hash',
                     INDEX `idx_skin_name` (`name`)
                 ) ENGINE InnoDB
                   DEFAULT CHARSET UTF8MB4
                 """.trimIndent()
             )
         }
+        ensureCapeHashColumn(connection)
+    }
+
+    private fun ensureCapeHashColumn(connection: Connection) {
+        val hasColumn = sequenceOf("skin", "SKIN").any { table ->
+            connection.metaData.getColumns(null, null, table, null).use { columns ->
+                generateSequence {
+                    if (columns.next()) columns.getString("COLUMN_NAME") else null
+                }.any { it.equals("cape_hash", ignoreCase = true) }
+            }
+        }
+        if (!hasColumn) {
+            connection.createStatement().use {
+                it.executeUpdate("ALTER TABLE skin ADD COLUMN `cape_hash` CHAR(64) NULL COMMENT '披风材质 hash'")
+            }
+        }
     }
 
     suspend fun add(data: SkinData) = Database.withConnection { connection ->
         connection.prepareStatement(
             """
-            REPLACE INTO skin (`uuid`, `name`, `slim`, `update`, `hash`)
-            VALUES (?, ?, ?, ?, ?)
+            REPLACE INTO skin (`uuid`, `name`, `slim`, `update`, `hash`, `cape_hash`)
+            VALUES (?, ?, ?, ?, ?, ?)
             """.trimIndent()
         ).use {
             it.setString(1, data.uuid)
@@ -36,13 +53,14 @@ object SkinDao {
             it.setBoolean(3, data.slim)
             it.setLong(4, data.update)
             it.setString(5, data.hash)
+            it.setString(6, data.capeHash)
             it.executeUpdate()
         }
     }
 
     suspend fun getByName(name: String): SkinData? = Database.withConnection { connection ->
         connection.prepareStatement(
-            "SELECT uuid, name, slim, `update`, hash FROM skin WHERE name = ?"
+            "SELECT uuid, name, slim, `update`, hash, cape_hash FROM skin WHERE name = ?"
         ).use {
             it.setString(1, name)
             it.executeQuery().use { rs -> rs.toSkinDataOrNull() }
@@ -51,7 +69,7 @@ object SkinDao {
 
     suspend fun getById(id: String): SkinData? = Database.withConnection { connection ->
         connection.prepareStatement(
-            "SELECT uuid, name, slim, `update`, hash FROM skin WHERE uuid = ?"
+            "SELECT uuid, name, slim, `update`, hash, cape_hash FROM skin WHERE uuid = ?"
         ).use {
             it.setString(1, id)
             it.executeQuery().use { rs -> rs.toSkinDataOrNull() }
@@ -65,7 +83,8 @@ object SkinDao {
             name = getString("name"),
             slim = getBoolean("slim"),
             update = getLong("update"),
-            hash = getString("hash")
+            hash = getString("hash"),
+            capeHash = getString("cape_hash")
         )
     }
 }

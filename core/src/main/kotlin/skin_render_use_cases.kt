@@ -164,10 +164,12 @@ object SkinRenderUseCases {
         lightIntensity: Float?,
         headScale: Double,
         showPlatform: Boolean = false,
+        capeBytes: ByteArray? = null,
     ): ByteArray =
         renderSkin(
             renderer = renderer,
             bytes = bytes,
+            capeBytes = capeBytes,
             slim = slim,
             headScale = headScale,
             options = skinOptions(
@@ -183,10 +185,12 @@ object SkinRenderUseCases {
         slim: Boolean,
         headScale: Double,
         options: SkinRenderOptions,
+        capeBytes: ByteArray? = null,
     ): ByteArray =
         renderer.renderPng(
             request = request(
                 skinPng = bytes.formatSkinPng(),
+                capePng = capeBytes?.takeIf { options.showCape },
                 slim = slim,
                 options = options,
                 pose = headScalePose(slim, headScale),
@@ -204,10 +208,12 @@ object SkinRenderUseCases {
         headScale: Double,
         duration: Int,
         showPlatform: Boolean = true,
+        capeBytes: ByteArray? = null,
     ): ByteArray =
         renderSkinRotate(
             renderer = renderer,
             bytes = bytes,
+            capeBytes = capeBytes,
             slim = slim,
             frameCount = frameCount,
             headScale = headScale,
@@ -227,10 +233,12 @@ object SkinRenderUseCases {
         headScale: Double,
         duration: Int,
         options: SkinRenderOptions,
+        capeBytes: ByteArray? = null,
     ): ByteArray =
         renderRotate(
             renderer = renderer,
             skinPng = bytes.formatSkinPng(),
+            capePng = capeBytes?.takeIf { options.showCape },
             slim = slim,
             frameCount = frameCount,
             duration = duration,
@@ -301,6 +309,7 @@ object SkinRenderUseCases {
         renderRotate(
             renderer = renderer,
             skinPng = bytes.formatSkinPng(),
+            capePng = null,
             slim = false,
             frameCount = frameCount,
             duration = duration,
@@ -317,10 +326,12 @@ object SkinRenderUseCases {
         headScale: Double,
         duration: Int = SNEAK_FRAME_DURATION_MS,
         showPlatform: Boolean = false,
+        capeBytes: ByteArray? = null,
     ): ByteArray {
         return renderSneak(
             renderer = renderer,
             bytes = bytes,
+            capeBytes = capeBytes,
             slim = slim,
             headScale = headScale,
             duration = duration,
@@ -339,20 +350,24 @@ object SkinRenderUseCases {
         headScale: Double,
         duration: Int = SNEAK_FRAME_DURATION_MS,
         options: SkinRenderOptions,
+        capeBytes: ByteArray? = null,
     ): ByteArray {
         val skinPng = bytes.formatSkinPng()
+        val capePng = capeBytes?.takeIf { options.showCape }
         val normalPose = headScalePose(slim, headScale)
         val sneakPose = mergePose(normalPose, sneakPose())
         val pngs = renderer.renderPngBatch(
             listOf(
                 request(
                     skinPng = skinPng,
+                    capePng = capePng,
                     slim = slim,
                     options = options,
                     pose = normalPose
                 ),
                 request(
                     skinPng = skinPng,
+                    capePng = capePng,
                     slim = slim,
                     options = options,
                     pose = sneakPose
@@ -381,10 +396,12 @@ object SkinRenderUseCases {
         lightIntensity: Float?,
         headScale: Double,
         showPlatform: Boolean = false,
+        capeBytes: ByteArray? = null,
     ): ByteArray =
         renderHomo(
             renderer = renderer,
             bytes = bytes,
+            capeBytes = capeBytes,
             slim = slim,
             headScale = headScale,
             options = homoOptions(
@@ -400,10 +417,12 @@ object SkinRenderUseCases {
         slim: Boolean,
         headScale: Double,
         options: SkinRenderOptions,
+        capeBytes: ByteArray? = null,
     ): ByteArray =
         renderer.renderPng(
             request = request(
                 skinPng = bytes.formatSkinPng(),
+                capePng = capeBytes?.takeIf { options.showCape },
                 slim = slim,
                 options = options,
                 pose = PosePresets.withScale(slim, headScale = headScale.toFloat()),
@@ -413,6 +432,7 @@ object SkinRenderUseCases {
     private suspend fun renderRotate(
         renderer: SkinPngRenderer,
         skinPng: ByteArray,
+        capePng: ByteArray?,
         slim: Boolean,
         frameCount: Int,
         duration: Int,
@@ -424,6 +444,7 @@ object SkinRenderUseCases {
             val modelYaw = options.modelYaw + 360f * index / frames
             request(
                 skinPng = skinPng,
+                capePng = capePng,
                 slim = slim,
                 options = options,
                 pose = pose,
@@ -443,6 +464,7 @@ object SkinRenderUseCases {
 
     private fun request(
         skinPng: ByteArray,
+        capePng: ByteArray? = null,
         slim: Boolean,
         options: SkinRenderOptions,
         pose: Map<BodyPart, List<SkinTransform>>,
@@ -451,6 +473,7 @@ object SkinRenderUseCases {
         val camera = SkinCamera(options.target, yaw = options.yaw, pitch = options.pitch, distance = options.distance)
         return SkinRenderRequest(
             skinPng = skinPng,
+            capePng = capePng,
             isSlim = slim,
             yaw = camera.yaw,
             settings = SkinRenderSettings(

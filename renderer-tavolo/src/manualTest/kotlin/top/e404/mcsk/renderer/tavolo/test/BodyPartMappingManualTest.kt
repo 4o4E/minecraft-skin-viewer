@@ -28,6 +28,7 @@ class BodyPartMappingManualTest {
 
         outputDir.mkdirs()
         val skin = Image.makeFromEncoded(skinFile.readBytes())
+        val cape = Image.makeFromEncoded(syntheticManualCapePng())
         val pose = explodedPose(isSlim = true, gap = 4f)
         val renderedViews = pitches.flatMap { pitch ->
             yaws.map { yaw ->
@@ -44,7 +45,8 @@ class BodyPartMappingManualTest {
                         antiAliasingLevel = 2
                     ),
                     pose = pose,
-                    use3DOverlay = false
+                    use3DOverlay = false,
+                    cape = cape
                 )
             }
         }
@@ -72,10 +74,11 @@ class BodyPartMappingManualTest {
             BodyPart.LEFT_ARM to SkinVec3(bodyDims.x / 2 + gap + leftArmDims.x / 2, 10f, 0f),
             BodyPart.RIGHT_LEG to SkinVec3(-(gap / 2 + rightLegDims.x / 2), 10f - bodyDims.y / 2 - gap - rightLegDims.y / 2, 0f),
             BodyPart.LEFT_LEG to SkinVec3(gap / 2 + leftLegDims.x / 2, 10f - bodyDims.y / 2 - gap - leftLegDims.y / 2, 0f),
+            BodyPart.CAPE to SkinVec3(0f, 10f, -(bodyDims.z / 2 + gap + BodyPart.CAPE.getDims(isSlim).z / 2)),
         )
 
         return BodyPart.entries.associateWith { part ->
-            val current = model.parts.getValue(part).pos
+            val current = if (part == BodyPart.CAPE) model.cape.pos else model.parts.getValue(part).pos
             val target = desired.getValue(part)
             listOf(
                 SkinTransform.Translate(

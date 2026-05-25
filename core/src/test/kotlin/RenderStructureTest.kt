@@ -38,4 +38,25 @@ class RenderStructureTest {
             assertNull(mesh.texture)
         }
     }
+
+    @Test
+    fun `cape is emitted as a separate textured mesh`() {
+        val skin = Bitmap().apply {
+            allocN32Pixels(64, 64)
+            erase(Color.TRANSPARENT)
+        }
+        val cape = Bitmap().apply {
+            allocN32Pixels(64, 32)
+            erase(Color.WHITE)
+        }
+
+        val meshes = createMinecraftPlayerMeshes(skin, isSlim = false, use3DOverlay = false, cape = cape)
+
+        assertEquals(2, meshes.size)
+        assertNotNull(meshes[0].texture)
+        assertEquals(skin, meshes[0].texture)
+        assertEquals(cape, meshes[1].texture)
+        assertTrue(meshes[1].vertices.minOf { it.position.z } < -4f)
+        assertEquals(-2.2527f, meshes[1].vertices.maxOf { it.position.z }, 0.0001f)
+    }
 }

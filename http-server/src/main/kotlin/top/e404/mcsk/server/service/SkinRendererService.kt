@@ -27,8 +27,9 @@ object SkinRendererService {
         slim: Boolean,
         headScale: Double,
         options: SkinRenderOptions,
+        capeBytes: ByteArray? = null,
     ): ByteArray = withRenderer {
-        SkinRenderUseCases.renderSkin(it, bytes, slim, headScale, options)
+        SkinRenderUseCases.renderSkin(it, bytes, slim, headScale, options, capeBytes)
     }
 
     suspend fun renderSkinRotate(
@@ -38,10 +39,12 @@ object SkinRendererService {
         headScale: Double,
         duration: Int,
         options: SkinRenderOptions,
+        capeBytes: ByteArray? = null,
     ): ByteArray = withRenderer {
         SkinRenderUseCases.renderSkinRotate(
             renderer = it,
             bytes = bytes,
+            capeBytes = capeBytes,
             slim = slim,
             frameCount = frameCount,
             headScale = headScale,
@@ -78,8 +81,9 @@ object SkinRendererService {
         headScale: Double,
         duration: Int = SkinRenderUseCases.SNEAK_FRAME_DURATION_MS,
         options: SkinRenderOptions,
+        capeBytes: ByteArray? = null,
     ): ByteArray = withRenderer {
-        SkinRenderUseCases.renderSneak(it, bytes, slim, headScale, duration, options)
+        SkinRenderUseCases.renderSneak(it, bytes, slim, headScale, duration, options, capeBytes)
     }
 
     suspend fun renderHomo(
@@ -87,8 +91,9 @@ object SkinRendererService {
         slim: Boolean,
         headScale: Double,
         options: SkinRenderOptions,
+        capeBytes: ByteArray? = null,
     ): ByteArray = withRenderer {
-        SkinRenderUseCases.renderHomo(it, bytes, slim, headScale, options)
+        SkinRenderUseCases.renderHomo(it, bytes, slim, headScale, options, capeBytes)
     }
 
     fun shutdown() {
