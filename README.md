@@ -67,8 +67,17 @@ repositories {
 }
 
 dependencies {
-    implementation("top.e404.mcsk:http-client:2.4.0")
+    implementation("top.e404.mcsk:http-client:2.5.0")
 }
+```
+
+可发布模块：
+
+```kotlin
+implementation("top.e404.mcsk:core:2.5.0")
+implementation("top.e404.mcsk:http-client:2.5.0")
+implementation("top.e404.mcsk:renderer-tavolo:2.5.0")
+implementation("top.e404.mcsk:renderer-opengl:2.5.0")
 ```
 
 `-SNAPSHOT` 版本发布到 Sonatype snapshot 仓库：
@@ -85,6 +94,5 @@ repositories {
 
 支持使用 Docker 进行部署, 镜像不包含 mysql：
 
-- Tavolo CPU 渲染：[compose 部署参考](http-server-tavolo-linux/docker-compose.yml)
-- OpenGL + Xvfb 渲染：[compose 部署参考](http-server-opengl-linux/docker-compose.yml)
-
+- Tavolo CPU 渲染：`ghcr.io/4o4e/mc-skin-render-tavolo-linux:2.5.0`，[compose 部署参考](http-server-tavolo-linux/docker-compose.yml)
+- OpenGL + Xvfb 渲染：`ghcr.io/4o4e/mc-skin-render-opengl-linux:2.5.0`，[compose 部署参考](http-server-opengl-linux/docker-compose.yml)

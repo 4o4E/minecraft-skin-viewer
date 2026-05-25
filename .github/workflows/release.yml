@@ -143,6 +143,34 @@ jobs:
           cp http-server-tavolo-linux/build/libs/http-server-tavolo-linux.jar release-assets/
           cp http-server-opengl-win/build/libs/http-server-opengl-win.jar release-assets/
           cp http-server-opengl-linux/build/libs/http-server-opengl-linux.jar release-assets/
+          cat > release-assets/release-notes.md <<EOF
+          ## 发布产物
+
+          ### Jar
+
+          - http-server-tavolo-win.jar
+          - http-server-tavolo-linux.jar
+          - http-server-opengl-win.jar
+          - http-server-opengl-linux.jar
+
+          ### Docker 镜像
+
+          - ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/mc-skin-render-tavolo-linux:${GITHUB_REF_NAME}
+          - ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/mc-skin-render-tavolo-linux:latest
+          - ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/mc-skin-render-opengl-linux:${GITHUB_REF_NAME}
+          - ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/mc-skin-render-opengl-linux:latest
+
+          ### Maven 依赖
+
+          正式版本已发布到 Maven Central 和自建 Nexus：
+
+          \`\`\`kotlin
+          implementation("top.e404.mcsk:core:${GITHUB_REF_NAME}")
+          implementation("top.e404.mcsk:http-client:${GITHUB_REF_NAME}")
+          implementation("top.e404.mcsk:renderer-tavolo:${GITHUB_REF_NAME}")
+          implementation("top.e404.mcsk:renderer-opengl:${GITHUB_REF_NAME}")
+          \`\`\`
+          EOF
 
       - name: Publish Maven packages
         env:
@@ -226,4 +254,5 @@ jobs:
         with:
           name: ${{ github.ref_name }}
           files: release-assets/*.jar
+          body_path: release-assets/release-notes.md
           generate_release_notes: true
