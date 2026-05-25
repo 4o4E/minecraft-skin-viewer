@@ -9,10 +9,10 @@ import top.e404.mcsk.core.SkinRenderSettings
 import top.e404.mcsk.core.SkinRenderVec3
 import top.e404.mcsk.core.SkinTransform
 import top.e404.mcsk.core.SkinVec3
+import kotlin.test.assertTrue
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.io.File
 import javax.imageio.IIOImage
 import javax.imageio.ImageIO
@@ -30,6 +30,7 @@ internal val shadowGridYaws = listOf(0f, 45f, 90f, 135f, 180f, 225f, 270f, 315f)
 internal val shadowGridPitches = listOf(30f, 10f, -10f)
 internal const val GIF_FRAME_COUNT = 20
 internal const val GIF_FRAME_DURATION_MS = 40
+private val wikiCapeTextureFile = File("wiki_cape_texture.png")
 
 internal fun renderRequest(
     skinFile: File,
@@ -72,36 +73,16 @@ internal fun renderRequest(
         showPlatform = showPlatform,
         pose = pose,
         modelYaw = modelYaw,
-        capePng = syntheticManualCapePng().takeIf { showCape }
+        capePng = wikiManualCapePng().takeIf { showCape }
     )
 
-internal fun syntheticManualCapePng(): ByteArray {
-    val image = BufferedImage(64, 32, BufferedImage.TYPE_INT_ARGB)
-    val graphics = image.createGraphics()
-    try {
-        // 按 Minecraft 披风 cuboid 的 uv=[0,0]、size=[10,16,1] 布局填满六个面。
-        graphics.color = java.awt.Color(0xFF5B21B6.toInt(), true)
-        graphics.fillRect(0, 1, 1, 16)
-        graphics.color = java.awt.Color(0xFF7B2CBF.toInt(), true)
-        graphics.fillRect(1, 1, 10, 16)
-        graphics.color = java.awt.Color(0xFF6D28D9.toInt(), true)
-        graphics.fillRect(11, 1, 1, 16)
-        graphics.color = java.awt.Color(0xFF4C1D95.toInt(), true)
-        graphics.fillRect(12, 1, 10, 16)
-        graphics.color = java.awt.Color(0xFF8B5CF6.toInt(), true)
-        graphics.fillRect(1, 0, 10, 1)
-        graphics.color = java.awt.Color(0xFF2E1065.toInt(), true)
-        graphics.fillRect(11, 0, 10, 1)
-        graphics.color = java.awt.Color(0xFFFFD166.toInt(), true)
-        graphics.fillRect(4, 3, 4, 10)
-        graphics.fillRect(15, 3, 4, 10)
-    } finally {
-        graphics.dispose()
+internal fun wikiManualCapePng(): ByteArray {
+    assertTrue(wikiCapeTextureFile.isFile, "Run prepareRunAssets before manualTest to download ${wikiCapeTextureFile.name}.")
+    val image = requireNotNull(ImageIO.read(wikiCapeTextureFile)) { "${wikiCapeTextureFile.name} must be a readable PNG." }
+    require(image.width == 64 && image.height == 32) {
+        "${wikiCapeTextureFile.name} must use Minecraft cape texture size 64x32, but was ${image.width}x${image.height}."
     }
-    return ByteArrayOutputStream().use {
-        ImageIO.write(image, "png", it)
-        it.toByteArray()
-    }
+    return wikiCapeTextureFile.readBytes()
 }
 
 internal fun explodedPose(isSlim: Boolean, gap: Float): Map<BodyPart, List<SkinTransform>> {

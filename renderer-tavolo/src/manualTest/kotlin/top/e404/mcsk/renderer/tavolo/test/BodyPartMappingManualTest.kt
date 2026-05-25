@@ -28,7 +28,7 @@ class BodyPartMappingManualTest {
 
         outputDir.mkdirs()
         val skin = Image.makeFromEncoded(skinFile.readBytes())
-        val cape = Image.makeFromEncoded(syntheticManualCapePng())
+        val cape = Image.makeFromEncoded(wikiManualCapePng())
         val pose = explodedPose(isSlim = true, gap = 4f)
         val renderedViews = pitches.flatMap { pitch ->
             yaws.map { yaw ->

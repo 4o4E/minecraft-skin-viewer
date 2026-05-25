@@ -29,7 +29,7 @@ class OpenGlUseCaseRegressionManualTest {
                     headScale = 1.0,
                     duration = GIF_FRAME_DURATION_MS,
                     showPlatform = true,
-                    capeBytes = syntheticManualCapePng()
+                    capeBytes = wikiManualCapePng()
                 )
                 outputDir.resolve("use_case_ambient_rotate_${file.nameWithoutExtension}.gif").writeBytes(gif)
             }
@@ -54,7 +54,7 @@ class OpenGlUseCaseRegressionManualTest {
                     lightIntensity = null,
                     headScale = 1.0,
                     showPlatform = false,
-                    capeBytes = syntheticManualCapePng()
+                    capeBytes = wikiManualCapePng()
                 )
                 outputDir.resolve("use_case_sneak_pose_${file.nameWithoutExtension}.gif").writeBytes(gif)
             }

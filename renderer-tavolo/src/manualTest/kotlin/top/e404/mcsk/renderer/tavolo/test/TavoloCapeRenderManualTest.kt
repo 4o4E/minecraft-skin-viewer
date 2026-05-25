@@ -16,13 +16,13 @@ import kotlin.test.assertTrue
 
 class TavoloCapeRenderManualTest {
     @Test
-    fun renderSyntheticCapeComparison() {
+    fun renderWikiCapeComparison() {
         val outputDir = File("manual-test-output/tavolo/render").apply { mkdirs() }
-        val output = outputDir.resolve("cape_synthetic_compare.png")
+        val output = outputDir.resolve("cape_wiki_compare.png")
 
         TavoloSkinPngRenderer().use { renderer ->
             val withoutCape = renderer.renderPng(syntheticRequest(capePng = null))
-            val withCape = renderer.renderPng(syntheticRequest(capePng = syntheticManualCapePng()))
+            val withCape = renderer.renderPng(syntheticRequest(capePng = wikiManualCapePng()))
             output.writeBytes(stitchComparison(withoutCape, withCape))
         }
 

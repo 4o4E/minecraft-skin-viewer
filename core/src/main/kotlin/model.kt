@@ -21,12 +21,13 @@ class SkinCube(
     dims: SkinVec3,
     val pos: SkinVec3,
     val pivot: SkinVec3 = SkinVec3(0f, 0f, 0f),
+    uvsOverride: Map<SkinFace, SkinUvRect>? = null,
 ) {
     val uvs: Map<SkinFace, SkinUvRect>
 
     init {
         val (w, h, d) = dims
-        uvs = mapOf(
+        uvs = uvsOverride ?: mapOf(
             SkinFace.RIGHT to SkinUvRect.makeXYWH(u, v + d, d, h),
             SkinFace.LEFT to SkinUvRect.makeXYWH(u + d + w, v + d, d, h),
             SkinFace.TOP to SkinUvRect.makeXYWH(u + d, v, w, d),
@@ -77,7 +78,8 @@ class PlayerModel(val isSlim: Boolean) {
         0f,
         BodyPart.CAPE.getDims(isSlim),
         SkinVec3(0f, 8f, -2.75f),
-        SkinVec3(0f, 8f, 0f)
+        SkinVec3(0f, 8f, 0f),
+        uvsOverride = capeUvs(0f, 0f, BodyPart.CAPE.getDims(isSlim))
     )
 
     init {
@@ -119,4 +121,17 @@ class PlayerModel(val isSlim: Boolean) {
             )
         }
     }
+}
+
+private fun capeUvs(u: Float, v: Float, dims: SkinVec3): Map<SkinFace, SkinUvRect> {
+    val (w, h, d) = dims
+    return mapOf(
+        SkinFace.RIGHT to SkinUvRect.makeXYWH(u, v + d, d, h),
+        SkinFace.LEFT to SkinUvRect.makeXYWH(u + d + w, v + d, d, h),
+        SkinFace.TOP to SkinUvRect.makeXYWH(u + d, v, w, d),
+        SkinFace.BOTTOM to SkinUvRect.makeXYWH(u + d + w, v, w, d),
+        // Minecraft Wiki 的披风模板把带图案的大面放在左侧区域；该面是玩家背后的外侧。
+        SkinFace.BACK to SkinUvRect.makeXYWH(u + d, v + d, w, h),
+        SkinFace.FRONT to SkinUvRect.makeXYWH(u + d + w + d, v + d, w, h)
+    )
 }

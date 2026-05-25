@@ -56,15 +56,15 @@ class ModelTest {
     }
 
     @Test
-    fun `cape uses Minecraft cuboid UV layout`() {
+    fun `cape maps Wiki outside face to player back`() {
         val cape = PlayerModel(isSlim = false).cape
 
         assertRect(0f, 1f, 1f, 16f, cape.uvs.getValue(SkinFace.RIGHT))
         assertRect(11f, 1f, 1f, 16f, cape.uvs.getValue(SkinFace.LEFT))
         assertRect(1f, 0f, 10f, 1f, cape.uvs.getValue(SkinFace.TOP))
         assertRect(11f, 0f, 10f, 1f, cape.uvs.getValue(SkinFace.BOTTOM))
-        assertRect(1f, 1f, 10f, 16f, cape.uvs.getValue(SkinFace.FRONT))
-        assertRect(12f, 1f, 10f, 16f, cape.uvs.getValue(SkinFace.BACK))
+        assertRect(12f, 1f, 10f, 16f, cape.uvs.getValue(SkinFace.FRONT))
+        assertRect(1f, 1f, 10f, 16f, cape.uvs.getValue(SkinFace.BACK))
     }
 
     private fun assertRect(
