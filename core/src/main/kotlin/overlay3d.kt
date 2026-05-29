@@ -131,7 +131,8 @@ fun create3DOverlay(
     overlayDepth: Float,
     faceUVs: Map<SkinFaceDirection, SkinUvRect>,
     textureWidth: Float,
-    textureHeight: Float
+    textureHeight: Float,
+    opaqueOnly: Boolean = false,
 ): SkinMesh {
     val vertices = mutableListOf<SkinVertex>()
     val faces = mutableListOf<SkinMeshFace>()
@@ -144,7 +145,8 @@ fun create3DOverlay(
         for (px in 0 until uvW) {
             for (py in 0 until uvH) {
                 val pixelColor = skin.getColor(uvRect.left.toInt() + px, uvRect.top.toInt() + py)
-                if (Color.getA(pixelColor) <= 0) continue
+                val alpha = Color.getA(pixelColor)
+                if (alpha <= 0 || (opaqueOnly && alpha < 255)) continue
 
                 val pixelUV = SkinVec2(
                     (uvRect.left + px + 0.5f) / textureWidth,

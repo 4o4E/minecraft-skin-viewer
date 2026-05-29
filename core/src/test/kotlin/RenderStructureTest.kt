@@ -8,6 +8,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Color
+import org.jetbrains.skia.IRect
 import top.e404.mcsk.core.SkinVec2
 import top.e404.mcsk.core.createMinecraftPlayerMeshes
 import top.e404.mcsk.core.createSkinPlatform
@@ -38,6 +39,24 @@ class RenderStructureTest {
         meshes.drop(1).forEach { mesh ->
             assertNull(mesh.texture)
         }
+    }
+
+    @Test
+    fun `3D overlay keeps translucent pixels as flat texture`() {
+        val skin = Bitmap().apply {
+            allocN32Pixels(64, 64)
+            erase(Color.TRANSPARENT)
+            erase(Color.makeARGB(128, 120, 30, 220), IRect.makeXYWH(40, 8, 1, 1))
+        }
+
+        val meshes = createMinecraftPlayerMeshes(skin, isSlim = false, use3DOverlay = true)
+        val texturedMeshes = meshes.filter { it.texture != null }
+
+        assertEquals(2, texturedMeshes.size)
+        assertEquals(skin, texturedMeshes[0].texture)
+        assertNotNull(texturedMeshes[1].texture)
+        assertTrue(texturedMeshes[1].faces.isNotEmpty())
+        assertEquals(0, meshes.filter { it.texture == null }.sumOf { it.faces.size })
     }
 
     @Test

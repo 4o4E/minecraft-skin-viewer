@@ -2,6 +2,7 @@ package top.e404.mcsk.core
 
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Color
+import org.jetbrains.skia.IRect
 
 private const val CAPE_DEFAULT_BACKWARD_TILT_DEGREES = 6f
 
@@ -47,7 +48,7 @@ fun createMinecraftPlayerMeshes(
             val overlayUvs = it.uvs.toGeometryFaceUvs()
             val overlayMesh = if (use3DOverlay) {
                 val overlayDepth = if (partId == BodyPart.HEAD) 0.5f else 0.25f
-                create3DOverlay(skin, partDims, overlayDepth, overlayUvs, texW, texH)
+                create3DOverlay(skin, partDims, overlayDepth, overlayUvs, texW, texH, opaqueOnly = true)
             } else {
                 val overlaySize = if (partId == BodyPart.HEAD) 1.0f else 0.5f
                 createMinecraftUVCuboid(partDims + SkinVec3(overlaySize, overlaySize, overlaySize), overlayUvs, texW, texH)
@@ -55,8 +56,24 @@ fun createMinecraftPlayerMeshes(
             val transformedOverlayMesh = overlayMesh.copy(vertices = overlayMesh.vertices.map { vertex ->
                 SkinVertex(transform(vertex.position) + partCube.pos, vertex.uv)
             })
-            if (use3DOverlay) solidComponentMeshes.add(transformedOverlayMesh)
-            else texturedComponentMeshes.add(transformedOverlayMesh)
+            if (use3DOverlay) {
+                createTranslucentOverlayTexture(skin, overlayUvs)?.let { overlayTexture ->
+                    val overlaySize = if (partId == BodyPart.HEAD) 1.0f else 0.5f
+                    val translucentOverlayMesh = createMinecraftUVCuboid(
+                        partDims + SkinVec3(overlaySize, overlaySize, overlaySize),
+                        overlayUvs,
+                        texW,
+                        texH
+                    )
+                    separateTexturedMeshes.add(translucentOverlayMesh.copy(
+                        texture = overlayTexture,
+                        vertices = translucentOverlayMesh.vertices.map { vertex ->
+                            SkinVertex(transform(vertex.position) + partCube.pos, vertex.uv)
+                        }
+                    ))
+                }
+                solidComponentMeshes.add(transformedOverlayMesh)
+            } else texturedComponentMeshes.add(transformedOverlayMesh)
         }
     }
 
@@ -66,6 +83,31 @@ fun createMinecraftPlayerMeshes(
     }
 
     return listOf(combineSkinMeshes(texturedComponentMeshes, skin)) + separateTexturedMeshes + solidComponentMeshes
+}
+
+private fun createTranslucentOverlayTexture(
+    skin: Bitmap,
+    faceUVs: Map<SkinFaceDirection, SkinUvRect>,
+): Bitmap? {
+    val texture = Bitmap().apply {
+        allocN32Pixels(skin.width, skin.height)
+        erase(Color.TRANSPARENT)
+    }
+    var hasTranslucentPixel = false
+    faceUVs.values.forEach { uvRect ->
+        for (x in uvRect.left.toInt() until uvRect.right.toInt()) {
+            for (y in uvRect.top.toInt() until uvRect.bottom.toInt()) {
+                val color = skin.getColor(x, y)
+                val alpha = Color.getA(color)
+                if (alpha in 1..254) {
+                    // 半透明外层保持平面渲染，避免 3D 体素把整层拆成网格。
+                    texture.erase(color, IRect.makeXYWH(x, y, 1, 1))
+                    hasTranslucentPixel = true
+                }
+            }
+        }
+    }
+    return if (hasTranslucentPixel) texture else null
 }
 
 private fun createMinecraftCapeMesh(

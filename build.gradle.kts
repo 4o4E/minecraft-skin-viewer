@@ -60,7 +60,7 @@ fun parsePositiveInt(value: String?, propertyName: String): Int? =
 val runDir = rootDir.resolve("run")
 val runSkinAssets = mapOf(
     "alex_skin.png" to "https://textures.minecraft.net/texture/4daa024bc2d35de2b26025051817d04491ad586e5a2ab85f9dad608b009ac7d",
-    "steve_skin.png" to "https://textures.minecraft.net/texture/1a4af718455d4aab528e7a61f86fa25e6a369d1768dcb13f7df319a713eb810b",
+    "steve_skin.png" to "https://textures.minecraft.net/texture/9a8da9c6fe258850b493f6d2f66af9b7b4c221b26fe3c46ae6c347a662dc62e9",
     "wiki_cape_texture.png" to "https://minecraft.wiki/images/MINECON_2016_Cape_%28texture%29.png?e7f5e",
 )
 

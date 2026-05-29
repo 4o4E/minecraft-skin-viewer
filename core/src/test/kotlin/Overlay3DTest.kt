@@ -73,4 +73,25 @@ class Overlay3DTest {
         assertEquals(6, mesh.faces.size)
         mesh.faces.forEach { face -> assertEquals(expectedColor, face.baseColor) }
     }
+
+    @Test
+    fun `opaque only mode skips translucent pixels`() {
+        val skin = Bitmap().apply {
+            allocN32Pixels(1, 1)
+            erase(Color.makeARGB(128, 120, 30, 220))
+        }
+
+        val mesh = create3DOverlay(
+            skin = skin,
+            dims = SkinVec3(1f, 1f, 1f),
+            overlayDepth = 0.25f,
+            faceUVs = mapOf(SkinFaceDirection.FRONT to SkinUvRect.makeXYWH(0f, 0f, 1f, 1f)),
+            textureWidth = 1f,
+            textureHeight = 1f,
+            opaqueOnly = true
+        )
+
+        assertEquals(0, mesh.vertices.size)
+        assertEquals(0, mesh.faces.size)
+    }
 }
