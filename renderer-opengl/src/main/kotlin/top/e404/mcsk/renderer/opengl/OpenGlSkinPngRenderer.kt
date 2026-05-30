@@ -30,6 +30,7 @@ import org.lwjgl.opengl.GL11.GL_LEQUAL
 import org.lwjgl.opengl.GL11.GL_MODELVIEW
 import org.lwjgl.opengl.GL11.GL_NEAREST
 import org.lwjgl.opengl.GL11.GL_NONE
+import org.lwjgl.opengl.GL11.GL_ONE
 import org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA
 import org.lwjgl.opengl.GL11.GL_POLYGON_OFFSET_FILL
 import org.lwjgl.opengl.GL11.GL_PROJECTION
@@ -45,7 +46,6 @@ import org.lwjgl.opengl.GL11.GL_TRIANGLES
 import org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE
 import org.lwjgl.opengl.GL11.glBegin
 import org.lwjgl.opengl.GL11.glBindTexture
-import org.lwjgl.opengl.GL11.glBlendFunc
 import org.lwjgl.opengl.GL11.glClear
 import org.lwjgl.opengl.GL11.glClearColor
 import org.lwjgl.opengl.GL11.glColor4f
@@ -74,6 +74,7 @@ import org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE
 import org.lwjgl.opengl.GL13.GL_TEXTURE0
 import org.lwjgl.opengl.GL13.GL_TEXTURE1
 import org.lwjgl.opengl.GL13.glActiveTexture
+import org.lwjgl.opengl.GL14.glBlendFuncSeparate
 import org.lwjgl.opengl.GL20.GL_COMPILE_STATUS
 import org.lwjgl.opengl.GL20.GL_FRAGMENT_SHADER
 import org.lwjgl.opengl.GL20.GL_LINK_STATUS
@@ -345,14 +346,15 @@ private class OpenGlSkinRenderer {
             SkiaColor.getR(settings.backgroundColor) / 255f,
             SkiaColor.getG(settings.backgroundColor) / 255f,
             SkiaColor.getB(settings.backgroundColor) / 255f,
-            1f
+            SkiaColor.getA(settings.backgroundColor) / 255f
         )
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
 
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(GL_LEQUAL)
         glEnable(GL_BLEND)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        // 透明底图合成需要保留覆盖后的真实 alpha，不能让 alpha 再乘一次自身。
+        glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA)
         glDisable(GL_CULL_FACE)
 
         glMatrixMode(GL_PROJECTION)

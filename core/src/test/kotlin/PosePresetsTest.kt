@@ -29,6 +29,26 @@ class PosePresetsTest {
         assertTrue(slim.getValue(BodyPart.RIGHT_ARM).containsTranslate(x = -0.3f))
     }
 
+    @Test
+    fun `homo pose maps legacy jfx sitting transforms`() {
+        val pose = PosePresets.homo(isSlim = false)
+
+        assertEquals(
+            listOf(SkinTransform.Rotate(y = 30f), SkinTransform.Scale(1f, 1f, 1f), SkinTransform.Translate()),
+            pose.getValue(BodyPart.HEAD)
+        )
+        assertEquals(listOf(SkinTransform.Rotate(x = -15f), SkinTransform.Translate(z = -2f)), pose.getValue(BodyPart.RIGHT_ARM))
+        assertEquals(listOf(SkinTransform.Rotate(x = -15f), SkinTransform.Translate(z = -2f)), pose.getValue(BodyPart.LEFT_ARM))
+        assertEquals(
+            listOf(SkinTransform.Rotate(x = -80f, z = -15f), SkinTransform.Translate(x = -1.6f, y = -1.5f)),
+            pose.getValue(BodyPart.RIGHT_LEG)
+        )
+        assertEquals(
+            listOf(SkinTransform.Rotate(x = -80f, z = 15f), SkinTransform.Translate(x = 1.6f, y = -1.5f)),
+            pose.getValue(BodyPart.LEFT_LEG)
+        )
+    }
+
     private fun List<SkinTransform>.containsTranslate(
         x: Float = 0f,
         y: Float = 0f,

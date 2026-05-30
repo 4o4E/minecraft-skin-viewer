@@ -9,6 +9,29 @@ import java.io.File
 
 class TavoloUseCaseRegressionManualTest {
     @Test
+    fun renderHomoPngs() {
+        val outputDir = tavoloRenderOutputDir.apply { mkdirs() }
+        TavoloSkinPngRenderer().use { renderer ->
+            renderer.startup()
+            for ((fileName, isSlim) in manualSkinFiles) {
+                val file = File(fileName)
+                assertTrue(file.isFile, "Put $fileName in the run directory first.")
+
+                val png = SkinRenderUseCases.renderHomo(
+                    renderer = renderer,
+                    bytes = file.readBytes(),
+                    slim = isSlim,
+                    backgroundColor = DEFAULT_BG,
+                    lightIntensity = null,
+                    headScale = 1.0,
+                    capeBytes = wikiManualCapePng()
+                )
+                outputDir.resolve("use_case_homo_${file.nameWithoutExtension}.png").writeBytes(png)
+            }
+        }
+    }
+
+    @Test
     fun renderAmbientRotateGifs() = runBlocking {
         val outputDir = tavoloRenderOutputDir.apply { mkdirs() }
         TavoloSkinPngRenderer().use { renderer ->

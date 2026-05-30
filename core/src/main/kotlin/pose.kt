@@ -1,7 +1,7 @@
 package top.e404.mcsk.core
 
 /**
- * 预设的玩家姿�?
+ * 预设的玩家姿态
  */
 object PosePresets {
     val WALKING = mapOf(
@@ -17,11 +17,17 @@ object PosePresets {
         BodyPart.LEFT_LEG to listOf(SkinTransform.Rotate(x = -80f, z = 20f)),
     )
     val HOMO = mapOf(
-        BodyPart.HEAD to listOf(SkinTransform.Rotate(y = -30f)),
-        BodyPart.RIGHT_ARM to listOf(SkinTransform.Rotate(x = -30f)),
-        BodyPart.LEFT_ARM to listOf(SkinTransform.Rotate(x = -30f)),
-        BodyPart.RIGHT_LEG to listOf(SkinTransform.Rotate(x = -80f, z = -20f)),
-        BodyPart.LEFT_LEG to listOf(SkinTransform.Rotate(x = -80f, z = 20f)),
+        BodyPart.HEAD to listOf(SkinTransform.Rotate(y = 30f)),
+        BodyPart.RIGHT_ARM to listOf(SkinTransform.Rotate(x = -15f), SkinTransform.Translate(z = -2f)),
+        BodyPart.LEFT_ARM to listOf(SkinTransform.Rotate(x = -15f), SkinTransform.Translate(z = -2f)),
+        BodyPart.RIGHT_LEG to listOf(
+            SkinTransform.Rotate(x = -80f, z = -15f),
+            SkinTransform.Translate(x = -1.6f, y = -1.5f)
+        ),
+        BodyPart.LEFT_LEG to listOf(
+            SkinTransform.Rotate(x = -80f, z = 15f),
+            SkinTransform.Translate(x = 1.6f, y = -1.5f)
+        ),
     )
     val HEAD_ONLY = mapOf(
         BodyPart.HEAD to listOf(),
@@ -66,4 +72,12 @@ object PosePresets {
             SkinTransform.Translate(y = -BodyPart.LEFT_LEG.getDims(isSlim).y.let { it * (llScale - 1) / 2 }),
         ),
     )
+
+    fun homo(isSlim: Boolean, headScale: Float = 1f): Map<BodyPart, List<SkinTransform>> =
+        HOMO + mapOf(
+            BodyPart.HEAD to HOMO.getValue(BodyPart.HEAD) + listOf(
+                SkinTransform.Scale(headScale, headScale, headScale),
+                SkinTransform.Translate(y = BodyPart.HEAD.getDims(isSlim).y.let { it * (headScale - 1) / 2 }),
+            )
+        )
 }

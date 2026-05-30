@@ -19,7 +19,7 @@ url: `/render/{type}/{content}/{position}`
 | `dsk` | gif | 600 | 900 | `0,10,0` | 45 | 20 | 65 | 1 | `directional` | `true` | `true` | 0 |
 | `head` | png | 400 | 400 | `0,20,0` | 45 | 15 | 30 | 2 | `directional` | `true` | `true` | 0 |
 | `dhead` | gif | 400 | 400 | `0,20,0` | 45 | 20 | 30 | 1 | `directional` | `true` | `true` | 0 |
-| `homo` | png | 1024 | 768 | `0,8,0` | 30 | 0 | 80 | 2 | `directional` | `true` | `true` | 0 |
+| `homo` | png | 1024 | 768 | `5,9.2,0` | 0 | 0 | 53.5 | 2 | `directional` | `false` | `false` | 30 |
 
 ### 通用渲染参数
 
@@ -27,7 +27,7 @@ url: `/render/{type}/{content}/{position}`
 
 | 请求参数 | 含义 | 默认值或说明 |
 |---|---|---|
-| `bg` | 背景颜色 | 默认 `#1F1B1D`，支持 `#rgb`、`#argb`、`#rrggbb`、`#aarrggbb` |
+| `bg` | 背景颜色 | 默认 `#1F1B1D`，支持 `#rgb`、`#argb`、`#rrggbb`、`#aarrggbb`；`homo` 模式会在该颜色上合成内置背景图 |
 | `width` | 输出宽度 | 按模式决定 |
 | `height` | 输出高度 | 按模式决定 |
 | `target` | 相机目标点 | 三个数字，用逗号分隔，例如 `0,10,0` |
@@ -50,7 +50,7 @@ url: `/render/{type}/{content}/{position}`
 | `modelYaw` | 模型自身水平旋转角度 | 静态图直接使用，旋转 gif 作为每帧旋转的起始偏移 |
 | `pose` | 额外姿态变换 | URL 编码后的 JSON，追加到当前模式内置姿态之后 |
 
-`shadow=true` 表示启用“方向光照 + 影子”。接口默认启用 `shadow=true`、`platform=true` 和 `overlay=3d`，保证 3D 外层、地台和地面投影默认可见。`shadow=true&lighting=ambient` 会返回 `400 Bad Request`，因为环境光模式没有方向光投影；如需环境光渲染，需要同时传 `shadow=false&lighting=ambient`。
+`shadow=true` 表示启用“方向光照 + 影子”。除 `homo` 模式为了还原内置背景图默认关闭地台和投影外，接口默认启用 `shadow=true`、`platform=true` 和 `overlay=3d`，保证 3D 外层、地台和地面投影默认可见。`shadow=true&lighting=ambient` 会返回 `400 Bad Request`，因为环境光模式没有方向光投影；如需环境光渲染，需要同时传 `shadow=false&lighting=ambient`。
 
 ### 模式参数
 

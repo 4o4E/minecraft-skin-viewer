@@ -10,6 +10,8 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.startCoroutine
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import top.e404.mcsk.core.BodyPart
 import top.e404.mcsk.core.SkinLightingMode
@@ -32,6 +34,17 @@ class SkinRenderUseCasesTest {
         assertTrue(options.showPlatform)
         assertEquals(SkinRenderUseCases.DEFAULT_PLATFORM_TOP_Y, options.platformTopY)
         assertEquals(SkinRenderUseCases.DEFAULT_PLATFORM_THICKNESS, options.platformThickness)
+    }
+
+    @Test
+    fun `homo defaults keep legacy background scene without platform`() {
+        val options = SkinRenderUseCases.homoOptions(0xFF1F1B1D.toInt())
+
+        assertEquals(SkinRenderVec3(5f, 9.2f, 0f), options.target)
+        assertEquals(53.5f, options.distance)
+        assertEquals(30f, options.modelYaw)
+        assertFalse(options.shadows)
+        assertFalse(options.showPlatform)
     }
 
     @Test
@@ -88,6 +101,36 @@ class SkinRenderUseCasesTest {
         assertTrue(request.capePng?.contentEquals(capeBytes) == true)
         assertEquals(45f, request.modelYaw)
         assertEquals(listOf(SkinTransform.Translate(z = 2f)), request.pose.getValue(BodyPart.BODY))
+    }
+
+    @Test
+    fun `homo render composites bundled background behind transparent foreground`() {
+        val markerColor = 0xFFFF0044.toInt()
+        val renderer = RecordingRenderer { request ->
+            transparentPngWithPixel(
+                width = request.settings.width,
+                height = request.settings.height,
+                x = 16,
+                y = 16,
+                color = markerColor
+            )
+        }
+
+        val png = SkinRenderUseCases.renderHomo(
+            renderer = renderer,
+            bytes = testPng(width = 64, height = 64),
+            slim = false,
+            headScale = 1.0,
+            options = SkinRenderUseCases.homoOptions(0xFF010203.toInt(), showPlatform = false)
+        )
+
+        val request = renderer.requests.single()
+        assertEquals(0, request.settings.backgroundColor)
+        val image = ImageIO.read(ByteArrayInputStream(png))
+        assertEquals(SkinRenderUseCases.HOMO_WIDTH, image.width)
+        assertEquals(SkinRenderUseCases.HOMO_HEIGHT, image.height)
+        assertNotEquals(0xFF010203.toInt(), image.getRGB(0, 0))
+        assertEquals(markerColor, image.getRGB(16, 16))
     }
 
     @Test
@@ -155,7 +198,11 @@ class SkinRenderUseCasesTest {
     }
 }
 
-private class RecordingRenderer : SkinPngRenderer {
+private class RecordingRenderer(
+    private val render: (SkinRenderRequest) -> ByteArray = { request ->
+        testPng(request.settings.width, request.settings.height)
+    }
+) : SkinPngRenderer {
     val batchSizes = mutableListOf<Int>()
     val requests = mutableListOf<SkinRenderRequest>()
 
@@ -165,13 +212,13 @@ private class RecordingRenderer : SkinPngRenderer {
 
     override fun renderPng(request: SkinRenderRequest): ByteArray {
         requests += request
-        return testPng(request.settings.width, request.settings.height)
+        return render(request)
     }
 
     override fun renderPngBatch(requests: List<SkinRenderRequest>): List<ByteArray> {
         batchSizes += requests.size
         this.requests += requests
-        return requests.map { testPng(it.settings.width, it.settings.height) }
+        return requests.map(render)
     }
 }
 
@@ -184,6 +231,15 @@ private fun testPng(width: Int, height: Int): ByteArray {
     } finally {
         graphics.dispose()
     }
+    return ByteArrayOutputStream().use {
+        ImageIO.write(image, "png", it)
+        it.toByteArray()
+    }
+}
+
+private fun transparentPngWithPixel(width: Int, height: Int, x: Int, y: Int, color: Int): ByteArray {
+    val image = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+    image.setRGB(x, y, color)
     return ByteArrayOutputStream().use {
         ImageIO.write(image, "png", it)
         it.toByteArray()

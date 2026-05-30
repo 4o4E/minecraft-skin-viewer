@@ -5,8 +5,11 @@ import org.jetbrains.skia.Color
 import org.jetbrains.skia.EncodedImageFormat
 import org.jetbrains.skia.Image
 import org.jetbrains.skia.IRect
+import org.jetbrains.skia.Rect
+import org.jetbrains.skia.Surface
 import top.e404.tavolo.frame.Frame
 import top.e404.tavolo.frame.encodeToBytes
+import java.security.MessageDigest
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -22,6 +25,7 @@ object SkinRenderUseCases {
     const val DEFAULT_PLATFORM_TOP_Y = -8.2f
     const val DEFAULT_PLATFORM_THICKNESS = 2f
     const val SNEAK_MODEL_YAW = 270f
+    val homoBackgroundCacheKey: String by lazy { homoBackgroundPng.sha256Hex() }
 
     fun skinOptions(
         backgroundColor: Int,
@@ -142,15 +146,15 @@ object SkinRenderUseCases {
     fun homoOptions(
         backgroundColor: Int,
         lightIntensity: Float = DEFAULT_LIGHT_INTENSITY,
-        showPlatform: Boolean = true,
+        showPlatform: Boolean = false,
     ): SkinRenderOptions =
         SkinRenderOptions(
             width = HOMO_WIDTH,
             height = HOMO_HEIGHT,
-            target = SkinRenderVec3(0f, 8f, 0f),
-            yaw = 30f,
+            target = SkinRenderVec3(5f, 9.2f, 0f),
+            yaw = 0f,
             pitch = 0f,
-            distance = 80f,
+            distance = 53.5f,
             backgroundColor = backgroundColor,
             lightIntensity = lightIntensity,
             platformTopY = DEFAULT_PLATFORM_TOP_Y,
@@ -158,8 +162,9 @@ object SkinRenderUseCases {
             antiAliasingLevel = 2,
             overlayMode = SkinOverlayMode.THREE_D,
             lightingMode = SkinLightingMode.DIRECTIONAL,
-            shadows = true,
-            showPlatform = showPlatform
+            shadows = showPlatform,
+            showPlatform = showPlatform,
+            modelYaw = 30f
         )
 
     fun renderSkin(
@@ -401,7 +406,7 @@ object SkinRenderUseCases {
         backgroundColor: Int,
         lightIntensity: Float?,
         headScale: Double,
-        showPlatform: Boolean = true,
+        showPlatform: Boolean = false,
         capeBytes: ByteArray? = null,
     ): ByteArray =
         renderHomo(
@@ -424,16 +429,18 @@ object SkinRenderUseCases {
         headScale: Double,
         options: SkinRenderOptions,
         capeBytes: ByteArray? = null,
-    ): ByteArray =
-        renderer.renderPng(
+    ): ByteArray {
+        val foregroundPng = renderer.renderPng(
             request = request(
                 skinPng = bytes.formatSkinPng(),
                 capePng = capeBytes?.takeIf { options.showCape },
                 slim = slim,
-                options = options,
-                pose = PosePresets.withScale(slim, headScale = headScale.toFloat()),
+                options = options.copy(backgroundColor = Color.TRANSPARENT),
+                pose = PosePresets.homo(slim, headScale = headScale.toFloat()),
             )
         )
+        return foregroundPng.compositeOverHomoBackground(options.backgroundColor)
+    }
 
     private suspend fun renderRotate(
         renderer: SkinPngRenderer,
@@ -574,6 +581,27 @@ private data class SkinCamera(
 
 private data class SkinAnimationFrame(val durationMs: Int, val png: ByteArray)
 
+private const val HOMO_BACKGROUND_RESOURCE = "homo.png"
+
+private val homoBackgroundPng: ByteArray by lazy {
+    requireNotNull(SkinRenderUseCases::class.java.classLoader.getResourceAsStream(HOMO_BACKGROUND_RESOURCE)) {
+        "Missing classpath resource: $HOMO_BACKGROUND_RESOURCE"
+    }.use { it.readBytes() }
+}
+
+private fun ByteArray.compositeOverHomoBackground(backgroundColor: Int): ByteArray {
+    val foreground = Image.makeFromEncoded(this)
+    val background = Image.makeFromEncoded(homoBackgroundPng)
+    val surface = Surface.makeRasterN32Premul(foreground.width, foreground.height)
+    surface.canvas.apply {
+        // 先保留调用方背景色，再铺固定底图；未来底图若有透明像素也能继承 bg 语义。
+        clear(backgroundColor)
+        drawImageRect(background, Rect.makeWH(foreground.width.toFloat(), foreground.height.toFloat()))
+        drawImage(foreground, 0f, 0f)
+    }
+    return surface.makeImageSnapshot().encodeToData(EncodedImageFormat.PNG)!!.bytes
+}
+
 private fun ByteArray.formatSkinPng(): ByteArray {
     val image = Image.makeFromEncoded(this)
     if (image.width == image.height) return this
@@ -606,3 +634,8 @@ private fun encodeGif(frames: List<SkinAnimationFrame>): ByteArray {
         Frame(frame.durationMs, Image.makeFromEncoded(frame.png))
     }.encodeToBytes()
 }
+
+private fun ByteArray.sha256Hex(): String =
+    MessageDigest.getInstance("SHA-256")
+        .digest(this)
+        .joinToString("") { "%02x".format(it.toInt() and 0xff) }

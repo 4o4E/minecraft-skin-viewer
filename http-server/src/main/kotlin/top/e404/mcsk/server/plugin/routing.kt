@@ -154,6 +154,7 @@ fun Application.routing() = routing {
                         "slim" to slim,
                         "head" to headScale,
                         "capeHash" to data.renderCapeHash(options),
+                        "homoBackground" to SkinRenderUseCases.homoBackgroundCacheKey,
                     )) {
                         SkinRendererService.renderHomo(
                             bytes = data.skinBytes,
