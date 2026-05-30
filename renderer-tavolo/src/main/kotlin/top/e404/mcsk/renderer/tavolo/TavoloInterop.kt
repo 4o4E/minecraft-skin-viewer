@@ -68,7 +68,7 @@ fun renderMinecraftViewTavolo(
 fun SkinMesh.toTavoloMesh(): Mesh =
     Mesh(
         vertices = vertices.map { it.toTavoloVertex() },
-        faces = faces.map { it.toTavoloFace() },
+        faces = faces.map { it.toTavoloFace(this) },
         texture = texture,
         castsShadow = castsShadow,
         receivesShadow = receivesShadow
@@ -83,7 +83,82 @@ fun OrbitCamera.cameraRelativeUpperLeftLight(): Vec3 {
 
 private fun SkinVertex.toTavoloVertex(): Vertex = Vertex(position.toTavoloVec3(), uv.toTavoloVec2())
 
-private fun SkinMeshFace.toTavoloFace(): Face = Face(indices, baseColor)
+private fun SkinMeshFace.toTavoloFace(mesh: SkinMesh): Face =
+    Face(stableTavoloIndices(mesh), baseColor)
+
+private fun SkinMeshFace.stableTavoloIndices(mesh: SkinMesh): List<Int> {
+    if (!mesh.shouldUseVoxelStableNormal() || indices.size < 4) return indices
+
+    val targetNormal = voxelStableNormal(mesh)
+    if (targetNormal.length() <= 0f) return indices
+
+    // Tavolo 只能从面的前三个点推导法线，旋转索引可避免非平面体素面选到错误三角形。
+    return sequence {
+        for (offset in indices.indices) yield(indices.rotate(offset))
+        val reversed = indices.asReversed()
+        for (offset in reversed.indices) yield(reversed.rotate(offset))
+    }.maxByOrNull { candidate ->
+        candidate.faceNormal(mesh).dot(targetNormal)
+    } ?: indices
+}
+
+private fun SkinMesh.shouldUseVoxelStableNormal(): Boolean =
+    texture == null && vertices.size >= 8 && vertices.size % 8 == 0 && faces.size >= 6
+
+private fun SkinMeshFace.voxelStableNormal(mesh: SkinMesh): SkinVec3 {
+    val center = center(mesh)
+    val normalCenter = voxelBoundsCenter(mesh)
+    val outward = (center - normalCenter).normalized()
+    return if (outward.length() > 0f) outward else indices.faceNormal(mesh)
+}
+
+private fun SkinMeshFace.center(mesh: SkinMesh): SkinVec3 {
+    var x = 0f
+    var y = 0f
+    var z = 0f
+    indices.forEach { index ->
+        val position = mesh.vertices[index].position
+        x += position.x
+        y += position.y
+        z += position.z
+    }
+    val count = indices.size.toFloat()
+    return SkinVec3(x / count, y / count, z / count)
+}
+
+private fun SkinMeshFace.voxelBoundsCenter(mesh: SkinMesh): SkinVec3 {
+    val firstIndex = indices.minOrNull() ?: return center(mesh)
+    val voxelBaseIndex = (firstIndex / 8) * 8
+    if (voxelBaseIndex + 7 >= mesh.vertices.size) return center(mesh)
+
+    var minX = Float.POSITIVE_INFINITY
+    var minY = Float.POSITIVE_INFINITY
+    var minZ = Float.POSITIVE_INFINITY
+    var maxX = Float.NEGATIVE_INFINITY
+    var maxY = Float.NEGATIVE_INFINITY
+    var maxZ = Float.NEGATIVE_INFINITY
+    for (index in voxelBaseIndex until voxelBaseIndex + 8) {
+        val position = mesh.vertices[index].position
+        minX = minOf(minX, position.x)
+        minY = minOf(minY, position.y)
+        minZ = minOf(minZ, position.z)
+        maxX = maxOf(maxX, position.x)
+        maxY = maxOf(maxY, position.y)
+        maxZ = maxOf(maxZ, position.z)
+    }
+    return SkinVec3((minX + maxX) / 2f, (minY + maxY) / 2f, (minZ + maxZ) / 2f)
+}
+
+private fun List<Int>.rotate(offset: Int): List<Int> =
+    drop(offset) + take(offset)
+
+private fun List<Int>.faceNormal(mesh: SkinMesh): SkinVec3 {
+    if (size < 3) return SkinVec3(0f, 0f, 0f)
+    val p0 = mesh.vertices[this[0]].position
+    val p1 = mesh.vertices[this[1]].position
+    val p2 = mesh.vertices[this[2]].position
+    return (p1 - p0).cross(p2 - p0).normalized()
+}
 
 private fun SkinVec3.toTavoloVec3(): Vec3 = Vec3(x, y, z)
 

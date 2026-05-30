@@ -1,10 +1,15 @@
 package top.e404.mcsk.renderer.tavolo
 
 import top.e404.mcsk.core.SkinLightingMode
+import top.e404.mcsk.core.SkinMesh
+import top.e404.mcsk.core.SkinMeshFace
 import top.e404.mcsk.core.SkinOverlayMode
 import top.e404.mcsk.core.SkinRenderRequest
 import top.e404.mcsk.core.SkinRenderSettings
 import top.e404.mcsk.core.SkinRenderVec3
+import top.e404.mcsk.core.SkinVec2
+import top.e404.mcsk.core.SkinVec3
+import top.e404.mcsk.core.SkinVertex
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -34,6 +39,35 @@ class TavoloRendererSmokeTest {
         assertEquals(2, bytes.size)
         bytes.forEach { assertRenderedPng(it, width = 160, height = 240) }
     }
+
+    @Test
+    fun `converts voxel faces with stable tavolo normals`() {
+        val uv = SkinVec2(0f, 0f)
+        val vertices = listOf(
+            SkinVertex(SkinVec3(-1f, -1f, -1f), uv),
+            SkinVertex(SkinVec3(1f, -1f, -1f), uv),
+            SkinVertex(SkinVec3(1f, 0f, -1f), uv),
+            SkinVertex(SkinVec3(-1f, 0f, -1f), uv),
+            SkinVertex(SkinVec3(-1f, -1f, 1f), uv),
+            SkinVertex(SkinVec3(1f, -1f, 1f), uv),
+            SkinVertex(SkinVec3(1f, 1f, 1f), uv),
+            SkinVertex(SkinVec3(-1f, 1f, 1f), uv)
+        )
+        val nonPlanarTopFace = SkinMeshFace(listOf(7, 3, 2, 6), 0xFFFFFFFF.toInt())
+        val mesh = SkinMesh(vertices, List(6) { nonPlanarTopFace })
+
+        val indices = mesh.toTavoloMesh().faces.first().indices
+        val normal = faceNormal(indices, vertices)
+
+        assertTrue(normal.dot(SkinVec3(0f, 1f, 0f)) > 0.8f)
+    }
+}
+
+private fun faceNormal(indices: List<Int>, vertices: List<SkinVertex>): SkinVec3 {
+    val p0 = vertices[indices[0]].position
+    val p1 = vertices[indices[1]].position
+    val p2 = vertices[indices[2]].position
+    return (p1 - p0).cross(p2 - p0).normalized()
 }
 
 private fun smokeRequest(): SkinRenderRequest =
