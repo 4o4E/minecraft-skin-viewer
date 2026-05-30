@@ -26,7 +26,7 @@ object SkinRenderUseCases {
     fun skinOptions(
         backgroundColor: Int,
         lightIntensity: Float = DEFAULT_LIGHT_INTENSITY,
-        showPlatform: Boolean = false,
+        showPlatform: Boolean = true,
     ): SkinRenderOptions =
         SkinRenderOptions(
             width = FULL_WIDTH,
@@ -42,6 +42,7 @@ object SkinRenderUseCases {
             antiAliasingLevel = 2,
             overlayMode = SkinOverlayMode.THREE_D,
             lightingMode = SkinLightingMode.DIRECTIONAL,
+            shadows = true,
             showPlatform = showPlatform
         )
 
@@ -63,14 +64,15 @@ object SkinRenderUseCases {
             platformThickness = DEFAULT_PLATFORM_THICKNESS,
             antiAliasingLevel = 1,
             overlayMode = SkinOverlayMode.THREE_D,
-            lightingMode = SkinLightingMode.AMBIENT,
+            lightingMode = SkinLightingMode.DIRECTIONAL,
+            shadows = true,
             showPlatform = showPlatform
         )
 
     fun headOptions(
         backgroundColor: Int,
         lightIntensity: Float = DEFAULT_LIGHT_INTENSITY,
-        showPlatform: Boolean = false,
+        showPlatform: Boolean = true,
     ): SkinRenderOptions =
         SkinRenderOptions(
             width = HEAD_SIZE,
@@ -86,13 +88,14 @@ object SkinRenderUseCases {
             antiAliasingLevel = 2,
             overlayMode = SkinOverlayMode.THREE_D,
             lightingMode = SkinLightingMode.DIRECTIONAL,
+            shadows = true,
             showPlatform = showPlatform
         )
 
     fun headRotateOptions(
         backgroundColor: Int,
         lightIntensity: Float = DEFAULT_LIGHT_INTENSITY,
-        showPlatform: Boolean = false,
+        showPlatform: Boolean = true,
     ): SkinRenderOptions =
         SkinRenderOptions(
             width = HEAD_SIZE,
@@ -107,14 +110,15 @@ object SkinRenderUseCases {
             platformThickness = DEFAULT_PLATFORM_THICKNESS,
             antiAliasingLevel = 1,
             overlayMode = SkinOverlayMode.THREE_D,
-            lightingMode = SkinLightingMode.AMBIENT,
+            lightingMode = SkinLightingMode.DIRECTIONAL,
+            shadows = true,
             showPlatform = showPlatform
         )
 
     fun sneakOptions(
         backgroundColor: Int,
         lightIntensity: Float = DEFAULT_LIGHT_INTENSITY,
-        showPlatform: Boolean = false,
+        showPlatform: Boolean = true,
     ): SkinRenderOptions =
         SkinRenderOptions(
             width = FULL_WIDTH,
@@ -130,6 +134,7 @@ object SkinRenderUseCases {
             antiAliasingLevel = 1,
             overlayMode = SkinOverlayMode.THREE_D,
             lightingMode = SkinLightingMode.DIRECTIONAL,
+            shadows = true,
             showPlatform = showPlatform,
             modelYaw = SNEAK_MODEL_YAW
         )
@@ -137,7 +142,7 @@ object SkinRenderUseCases {
     fun homoOptions(
         backgroundColor: Int,
         lightIntensity: Float = DEFAULT_LIGHT_INTENSITY,
-        showPlatform: Boolean = false,
+        showPlatform: Boolean = true,
     ): SkinRenderOptions =
         SkinRenderOptions(
             width = HOMO_WIDTH,
@@ -153,6 +158,7 @@ object SkinRenderUseCases {
             antiAliasingLevel = 2,
             overlayMode = SkinOverlayMode.THREE_D,
             lightingMode = SkinLightingMode.DIRECTIONAL,
+            shadows = true,
             showPlatform = showPlatform
         )
 
@@ -163,7 +169,7 @@ object SkinRenderUseCases {
         backgroundColor: Int,
         lightIntensity: Float?,
         headScale: Double,
-        showPlatform: Boolean = false,
+        showPlatform: Boolean = true,
         capeBytes: ByteArray? = null,
     ): ByteArray =
         renderSkin(
@@ -251,7 +257,7 @@ object SkinRenderUseCases {
         bytes: ByteArray,
         backgroundColor: Int,
         lightIntensity: Float?,
-        showPlatform: Boolean = false,
+        showPlatform: Boolean = true,
     ): ByteArray =
         renderHead(
             renderer = renderer,
@@ -285,7 +291,7 @@ object SkinRenderUseCases {
         pitchAmplitude: Int,
         lightIntensity: Float?,
         duration: Int,
-        showPlatform: Boolean = false,
+        showPlatform: Boolean = true,
     ): ByteArray =
         renderHeadRotate(
             renderer = renderer,
@@ -325,7 +331,7 @@ object SkinRenderUseCases {
         lightIntensity: Float?,
         headScale: Double,
         duration: Int = SNEAK_FRAME_DURATION_MS,
-        showPlatform: Boolean = false,
+        showPlatform: Boolean = true,
         capeBytes: ByteArray? = null,
     ): ByteArray {
         return renderSneak(
@@ -395,7 +401,7 @@ object SkinRenderUseCases {
         backgroundColor: Int,
         lightIntensity: Float?,
         headScale: Double,
-        showPlatform: Boolean = false,
+        showPlatform: Boolean = true,
         capeBytes: ByteArray? = null,
     ): ByteArray =
         renderHomo(

@@ -53,7 +53,6 @@ class TavoloUseCaseRegressionManualTest {
                     backgroundColor = DEFAULT_BG,
                     lightIntensity = null,
                     headScale = 1.0,
-                    showPlatform = false,
                     capeBytes = wikiManualCapePng()
                 )
                 outputDir.resolve("use_case_sneak_pose_${file.nameWithoutExtension}.gif").writeBytes(gif)

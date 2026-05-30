@@ -2,8 +2,7 @@ package top.e404.mcsk.renderer.opengl.test
 
 import kotlin.test.Test
 import kotlin.test.assertTrue
-import top.e404.mcsk.core.SkinOverlayMode
-import top.e404.mcsk.core.SkinRenderVec3
+import top.e404.mcsk.core.SkinRenderUseCases
 import top.e404.mcsk.renderer.opengl.OpenGlSkinPngRenderer
 import java.io.File
 
@@ -18,21 +17,14 @@ class OpenGlBasicRenderManualTest {
             for ((fileName, isSlim) in manualSkinFiles) {
                 val file = File(fileName)
                 assertTrue(file.isFile, "Put $fileName in the run directory first.")
-                val bytes = renderer.renderPng(
-                    renderRequest(
-                        skinFile = file,
-                        slim = isSlim,
-                        width = 800,
-                        height = 1200,
-                        target = SkinRenderVec3(0f, 10f, 0f),
-                        yaw = 45f,
-                        pitch = 20f,
-                        distance = 50f,
-                        lightDirection = SkinRenderVec3(.5f, .3f, .3f).normalized(),
-                        lightIntensity = .7f,
-                        overlayMode = SkinOverlayMode.THREE_D,
-                        shadows = false
-                    )
+                val bytes = SkinRenderUseCases.renderSkin(
+                    renderer = renderer,
+                    bytes = file.readBytes(),
+                    slim = isSlim,
+                    backgroundColor = DEFAULT_BG,
+                    lightIntensity = null,
+                    headScale = 1.0,
+                    capeBytes = wikiManualCapePng()
                 )
                 outputDir.resolve("rendered_$fileName").writeBytes(bytes)
             }

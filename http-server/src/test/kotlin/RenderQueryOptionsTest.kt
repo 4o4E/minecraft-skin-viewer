@@ -81,7 +81,7 @@ class RenderQueryOptionsTest {
 
     @Test
     fun `shadow query enables directional lighting and visible platform by default`() {
-        val options = parametersOf("shadow" to listOf("true"))
+        val options = parametersOf()
             .renderOptions(SkinRenderUseCases.skinRotateOptions(0))
 
         assertTrue(options.shadows)

@@ -23,6 +23,18 @@ import top.e404.mcsk.core.SkinRenderVec3
 
 class SkinRenderUseCasesTest {
     @Test
+    fun `skin default options match api render defaults`() {
+        val options = SkinRenderUseCases.skinOptions(0xFF1F1B1D.toInt())
+
+        assertEquals(SkinOverlayMode.THREE_D, options.overlayMode)
+        assertEquals(SkinLightingMode.DIRECTIONAL, options.lightingMode)
+        assertTrue(options.shadows)
+        assertTrue(options.showPlatform)
+        assertEquals(SkinRenderUseCases.DEFAULT_PLATFORM_TOP_Y, options.platformTopY)
+        assertEquals(SkinRenderUseCases.DEFAULT_PLATFORM_THICKNESS, options.platformThickness)
+    }
+
+    @Test
     fun `render options are forwarded to renderer request`() {
         val renderer = RecordingRenderer()
         val options = SkinRenderOptions(
@@ -97,7 +109,9 @@ class SkinRenderUseCasesTest {
         }
 
         assertEquals(listOf(3), renderer.batchSizes)
-        assertTrue(renderer.requests.all { it.lightingMode == SkinLightingMode.AMBIENT })
+        assertTrue(renderer.requests.all { it.lightingMode == SkinLightingMode.DIRECTIONAL })
+        assertTrue(renderer.requests.all { it.shadows })
+        assertTrue(renderer.requests.all { it.showPlatform })
         assertTrue(gif.isNotEmpty())
     }
 
