@@ -40,11 +40,11 @@ class PosePresetsTest {
         assertEquals(listOf(SkinTransform.Rotate(x = -15f), SkinTransform.Translate(z = -2f)), pose.getValue(BodyPart.RIGHT_ARM))
         assertEquals(listOf(SkinTransform.Rotate(x = -15f), SkinTransform.Translate(z = -2f)), pose.getValue(BodyPart.LEFT_ARM))
         assertEquals(
-            listOf(SkinTransform.Rotate(x = -80f, z = -15f), SkinTransform.Translate(x = -1.6f, y = -1.5f)),
+            listOf(SkinTransform.Rotate(x = -80f, z = -15f), SkinTransform.Translate(y = -1.5f)),
             pose.getValue(BodyPart.RIGHT_LEG)
         )
         assertEquals(
-            listOf(SkinTransform.Rotate(x = -80f, z = 15f), SkinTransform.Translate(x = 1.6f, y = -1.5f)),
+            listOf(SkinTransform.Rotate(x = -80f, z = 15f), SkinTransform.Translate(y = -1.5f)),
             pose.getValue(BodyPart.LEFT_LEG)
         )
     }

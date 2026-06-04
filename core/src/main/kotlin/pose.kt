@@ -22,11 +22,11 @@ object PosePresets {
         BodyPart.LEFT_ARM to listOf(SkinTransform.Rotate(x = -15f), SkinTransform.Translate(z = -2f)),
         BodyPart.RIGHT_LEG to listOf(
             SkinTransform.Rotate(x = -80f, z = -15f),
-            SkinTransform.Translate(x = -1.6f, y = -1.5f)
+            SkinTransform.Translate(y = -1.5f)
         ),
         BodyPart.LEFT_LEG to listOf(
             SkinTransform.Rotate(x = -80f, z = 15f),
-            SkinTransform.Translate(x = 1.6f, y = -1.5f)
+            SkinTransform.Translate(y = -1.5f)
         ),
     )
     val HEAD_ONLY = mapOf(
