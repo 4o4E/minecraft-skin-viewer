@@ -23,20 +23,36 @@ fi
 
 chown -R java /app
 
-rm -f /tmp/.X99-lock
-Xvfb "${DISPLAY:-:99}" -screen 0 "${XVFB_SCREEN:-1024x768x24}" +extension GLX +render -noreset -ac &
-XVFB_PID=$!
-trap 'kill "$XVFB_PID" 2>/dev/null || true' EXIT
-for i in {1..30}; do
-  if gosu java glxinfo -B >/dev/null 2>&1; then
-    break
-  fi
-  if [ "$i" -eq 30 ]; then
-    echo "Xvfb/GLX did not become ready" >&2
+case "${MCSK_GL_BACKEND:-xvfb}" in
+  xvfb|glfw)
+    export DISPLAY="${DISPLAY:-:99}"
+    export LIBGL_ALWAYS_SOFTWARE="${LIBGL_ALWAYS_SOFTWARE:-1}"
+    export MCSK_RENDERER_ID="${MCSK_RENDERER_ID:-opengl-lwjgl-fbo-xvfb}"
+    rm -f /tmp/.X99-lock
+    Xvfb "$DISPLAY" -screen 0 "${XVFB_SCREEN:-1024x768x24}" +extension GLX +render -noreset -ac &
+    XVFB_PID=$!
+    trap 'kill "$XVFB_PID" 2>/dev/null || true' EXIT
+    for i in {1..30}; do
+      if gosu java glxinfo -B >/dev/null 2>&1; then
+        break
+      fi
+      if [ "$i" -eq 30 ]; then
+        echo "Xvfb/GLX did not become ready" >&2
+        exit 1
+      fi
+      sleep 0.2
+    done
+    ;;
+  egl|nvidia)
+    unset DISPLAY
+    unset LIBGL_ALWAYS_SOFTWARE
+    export MCSK_RENDERER_ID="${MCSK_RENDERER_ID:-opengl-lwjgl-fbo-egl}"
+    ;;
+  *)
+    echo "Unsupported MCSK_GL_BACKEND: $MCSK_GL_BACKEND" >&2
     exit 1
-  fi
-  sleep 0.2
-done
+    ;;
+esac
 
 if [ -z "$START_CMD" ]; then
   START_CMD="java -jar app.jar"

@@ -1,0 +1,9 @@
+services:
+  mc-skin-render-opengl:
+    gpus: all
+    environment:
+      MCSK_GL_BACKEND: egl
+      MCSK_GL_REQUIRE_HARDWARE: "true"
+      MCSK_GL_EXPECT_VENDOR: NVIDIA
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: graphics,utility

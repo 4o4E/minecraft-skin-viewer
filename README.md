@@ -95,4 +95,38 @@ repositories {
 支持使用 Docker 进行部署, 镜像不包含 mysql：
 
 - Tavolo CPU 渲染：`ghcr.io/4o4e/mc-skin-render-tavolo-linux:2.5.4`，[compose 部署参考](http-server-tavolo-linux/docker-compose.yml)
-- OpenGL + Xvfb 渲染：`ghcr.io/4o4e/mc-skin-render-opengl-linux:2.5.4`，[compose 部署参考](http-server-opengl-linux/docker-compose.yml)
+- OpenGL 渲染：`ghcr.io/4o4e/mc-skin-render-opengl-linux:2.5.4`。同一镜像支持 Xvfb/Mesa 软件渲染和 NVIDIA EGL 硬件渲染。
+
+默认使用 Xvfb/Mesa：
+
+```bash
+docker compose -f http-server-opengl-linux/docker-compose.yml up -d
+```
+
+NVIDIA 模式要求宿主机已安装 NVIDIA 驱动和 NVIDIA Container Toolkit，使用 Compose 覆盖文件启用 GPU 和 EGL：
+
+```bash
+docker compose \
+  -f http-server-opengl-linux/docker-compose.yml \
+  -f http-server-opengl-linux/docker-compose.nvidia.yml \
+  up -d
+```
+
+启动日志必须显示 `backend=egl`，并且 `vendor`/`renderer` 应为 NVIDIA 和实际显卡型号；出现 `llvmpipe` 或 `softpipe` 表示仍在使用软件渲染。
+
+部署前可以只初始化渲染器探针，不启动 HTTP 服务或访问数据库：
+
+```bash
+# Xvfb/Mesa
+docker compose -f http-server-opengl-linux/docker-compose.yml run --rm \
+  -e START_CMD='java -cp app.jar top.e404.mcsk.renderer.opengl.OpenGlBackendProbe' \
+  mc-skin-render-opengl
+
+# NVIDIA/EGL
+docker compose \
+  -f http-server-opengl-linux/docker-compose.yml \
+  -f http-server-opengl-linux/docker-compose.nvidia.yml \
+  run --rm \
+  -e START_CMD='java -cp app.jar top.e404.mcsk.renderer.opengl.OpenGlBackendProbe' \
+  mc-skin-render-opengl
+```

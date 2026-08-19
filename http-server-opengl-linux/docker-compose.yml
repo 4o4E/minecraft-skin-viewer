@@ -11,6 +11,7 @@ services:
       PROXY_TYPE: HTTP
       PROXY_HOST: 172.17.0.1
       PROXY_PORT: 7890
+      MCSK_GL_BACKEND: xvfb
       LIBGL_ALWAYS_SOFTWARE: "1"
       XVFB_SCREEN: 1024x768x24
     volumes:

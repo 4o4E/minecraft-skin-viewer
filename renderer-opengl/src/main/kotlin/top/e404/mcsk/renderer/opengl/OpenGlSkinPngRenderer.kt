@@ -4,17 +4,6 @@ import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Color as SkiaColor
 import org.jetbrains.skia.Image as SkiaImage
 import org.lwjgl.BufferUtils
-import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR
-import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR
-import org.lwjgl.glfw.GLFW.GLFW_FALSE
-import org.lwjgl.glfw.GLFW.GLFW_VISIBLE
-import org.lwjgl.glfw.GLFW.glfwCreateWindow
-import org.lwjgl.glfw.GLFW.glfwDefaultWindowHints
-import org.lwjgl.glfw.GLFW.glfwDestroyWindow
-import org.lwjgl.glfw.GLFW.glfwInit
-import org.lwjgl.glfw.GLFW.glfwMakeContextCurrent
-import org.lwjgl.glfw.GLFW.glfwTerminate
-import org.lwjgl.glfw.GLFW.glfwWindowHint
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.GL_BACK
 import org.lwjgl.opengl.GL11.GL_BLEND
@@ -44,6 +33,9 @@ import org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_S
 import org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_T
 import org.lwjgl.opengl.GL11.GL_TRIANGLES
 import org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE
+import org.lwjgl.opengl.GL11.GL_VENDOR
+import org.lwjgl.opengl.GL11.GL_RENDERER
+import org.lwjgl.opengl.GL11.GL_VERSION
 import org.lwjgl.opengl.GL11.glBegin
 import org.lwjgl.opengl.GL11.glBindTexture
 import org.lwjgl.opengl.GL11.glClear
@@ -59,6 +51,7 @@ import org.lwjgl.opengl.GL11.glEnable
 import org.lwjgl.opengl.GL11.glEnd
 import org.lwjgl.opengl.GL11.glGenTextures
 import org.lwjgl.opengl.GL11.glGetInteger
+import org.lwjgl.opengl.GL11.glGetString
 import org.lwjgl.opengl.GL11.glLoadMatrixf
 import org.lwjgl.opengl.GL11.glMatrixMode
 import org.lwjgl.opengl.GL11.glNormal3f
@@ -157,21 +150,45 @@ class OpenGlSkinPngRenderer : SkinPngRenderer {
 }
 
 private class OpenGlSkinRenderer {
-    private var window = 0L
+    private var context: GlContext? = null
     private var colorTarget: GlColorTarget? = null
     private val shaders = mutableMapOf<GlShaderKey, GlShadowShader>()
 
     fun startup() {
-        if (window != 0L) return
-        check(glfwInit()) { "Failed to initialize GLFW" }
-        glfwDefaultWindowHints()
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE)
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0)
-        window = glfwCreateWindow(1, 1, "OpenGL Skin Renderer", 0, 0)
-        check(window != 0L) { "Failed to create GLFW window/OpenGL context" }
-        glfwMakeContextCurrent(window)
-        GL.createCapabilities()
+        if (context != null) return
+        val createdContext = GlContext.createConfigured()
+        try {
+            createdContext.makeCurrent()
+            GL.createCapabilities()
+            context = createdContext
+            val vendor = glGetString(GL_VENDOR).orEmpty()
+            val renderer = glGetString(GL_RENDERER).orEmpty()
+            val version = glGetString(GL_VERSION).orEmpty()
+            verifyConfiguredGlDriver(vendor, renderer)
+            println(
+                "OpenGL initialized: backend=${createdContext.backendName}, " +
+                    "vendor=$vendor, renderer=$renderer, version=$version"
+            )
+        } catch (error: Throwable) {
+            createdContext.close()
+            throw error
+        }
+    }
+
+    private fun verifyConfiguredGlDriver(vendor: String, renderer: String) {
+        val softwareRenderer = listOf("llvmpipe", "softpipe", "swrast").any {
+            renderer.contains(it, ignoreCase = true)
+        }
+        if (System.getenv("MCSK_GL_REQUIRE_HARDWARE").toBoolean() && softwareRenderer) {
+            error("Hardware OpenGL is required, but software renderer was selected: $renderer")
+        }
+        System.getenv("MCSK_GL_EXPECT_VENDOR")
+            ?.takeIf { it.isNotBlank() }
+            ?.let { expected ->
+                check(vendor.contains(expected, ignoreCase = true)) {
+                    "Expected OpenGL vendor $expected, but selected $vendor ($renderer)"
+                }
+            }
     }
 
     fun renderPng(
@@ -236,11 +253,11 @@ private class OpenGlSkinRenderer {
         colorTarget = null
         shaders.values.forEach { it.close() }
         shaders.clear()
-        if (window != 0L) {
-            glfwDestroyWindow(window)
-            window = 0L
-            glfwTerminate()
+        context?.let {
+            GL.setCapabilities(null)
+            it.close()
         }
+        context = null
     }
 
     private fun prepareSkinScene(request: SkinRenderRequest): PreparedSkinScene {

@@ -3,8 +3,11 @@ FROM ubuntu:24.04
 
 ENV TZ="Asia/Shanghai"
 
-RUN sed -i s/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/i /etc/apt/sources.list.d/ubuntu.sources && \
-    sed -i s/security.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/i /etc/apt/sources.list.d/ubuntu.sources && \
+ARG UBUNTU_MIRROR=""
+
+RUN if [ -n "$UBUNTU_MIRROR" ]; then \
+        sed -Ei "s#https?://(archive|security).ubuntu.com#$UBUNTU_MIRROR#g" /etc/apt/sources.list.d/ubuntu.sources; \
+    fi && \
     DEBIAN_FRONTEND=noninteractive \
     apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -12,7 +15,10 @@ RUN sed -i s/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/i /etc/apt/sources.
     ca-certificates \
     fontconfig libfreetype6 \
     xvfb \
+    libegl1 \
     libgl1 \
+    libglvnd0 \
+    libopengl0 \
     libglx-mesa0 \
     libgl1-mesa-dri \
     libx11-6 \
@@ -33,11 +39,9 @@ ENV LANG="en_US.UTF-8" \
     LANGUAGE="en_US.UTF-8" \
     LC_ALL="C" \
     PATH="$JAVA_HOME/bin:$PATH" \
-    DISPLAY=":99" \
     JAVA_TOOL_OPTIONS="-Djava.awt.headless=true" \
-    LIBGL_ALWAYS_SOFTWARE="1" \
-    MCSK_RENDERER_CLASS="top.e404.mcsk.renderer.opengl.OpenGlSkinPngRenderer" \
-    MCSK_RENDERER_ID="opengl-lwjgl-fbo-xvfb"
+    MCSK_GL_BACKEND="xvfb" \
+    MCSK_RENDERER_CLASS="top.e404.mcsk.renderer.opengl.OpenGlSkinPngRenderer"
 
 COPY enterpoint.sh /enterpoint.sh
 RUN chmod +x /enterpoint.sh && \

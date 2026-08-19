@@ -5,6 +5,7 @@ plugins {
 dependencies {
     api(project(":core"))
     implementation("org.lwjgl:lwjgl:${Versions.LWJGL}")
+    implementation("org.lwjgl:lwjgl-egl:${Versions.LWJGL}")
     implementation("org.lwjgl:lwjgl-glfw:${Versions.LWJGL}")
     implementation("org.lwjgl:lwjgl-opengl:${Versions.LWJGL}")
     testRuntimeOnly(skiko("linux-x64"))
