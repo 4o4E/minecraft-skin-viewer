@@ -1,6 +1,6 @@
 object Versions {
     const val GROUP = "top.e404.mcsk"
-    const val VERSION = "2.5.4-SNAPSHOT"
+    const val VERSION = "2.5.5-SNAPSHOT"
     const val KOTLIN = "2.2.21"
     const val LOG4J = "2.25.2"
     const val KTOR = "2.3.13"
@@ -8,7 +8,7 @@ object Versions {
     const val SKIKO = "0.9.30"
     const val JAVAFX = "17.0.12"
     const val LWJGL = "3.3.6"
-    const val TAVOLO = "2.1.0"
+    const val TAVOLO = "2.7.2"
     const val VANNIKTECH_MAVEN_PUBLISH = "0.36.0"
 }
 
