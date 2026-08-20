@@ -1,6 +1,8 @@
 *
 !Dockerfile
 !enterpoint.sh
+!nvidia/
+!nvidia/10_nvidia.json
 !build/
 !build/libs/
 !build/libs/http-server-opengl-linux.jar

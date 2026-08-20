@@ -1,6 +1,6 @@
 object Versions {
     const val GROUP = "top.e404.mcsk"
-    const val VERSION = "2.5.5-SNAPSHOT"
+    const val VERSION = "2.5.6-SNAPSHOT"
     const val KOTLIN = "2.2.21"
     const val LOG4J = "2.25.2"
     const val KTOR = "2.3.13"

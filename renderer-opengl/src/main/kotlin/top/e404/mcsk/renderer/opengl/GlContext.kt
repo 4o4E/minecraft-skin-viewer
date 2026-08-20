@@ -28,6 +28,7 @@ import org.lwjgl.egl.EGL10.EGL_NO_SURFACE
 import org.lwjgl.egl.EGL10.EGL_PBUFFER_BIT
 import org.lwjgl.egl.EGL10.EGL_RED_SIZE
 import org.lwjgl.egl.EGL10.EGL_SURFACE_TYPE
+import org.lwjgl.egl.EGL10.EGL_VENDOR
 import org.lwjgl.egl.EGL10.EGL_WIDTH
 import org.lwjgl.egl.EGL10.eglChooseConfig
 import org.lwjgl.egl.EGL10.eglCreateContext
@@ -38,6 +39,7 @@ import org.lwjgl.egl.EGL10.eglGetDisplay
 import org.lwjgl.egl.EGL10.eglGetError
 import org.lwjgl.egl.EGL10.eglInitialize
 import org.lwjgl.egl.EGL10.eglMakeCurrent
+import org.lwjgl.egl.EGL10.eglQueryString
 import org.lwjgl.egl.EGL10.eglTerminate
 import org.lwjgl.egl.EGL12.eglBindAPI
 import org.lwjgl.egl.EGL12.EGL_RENDERABLE_TYPE
@@ -169,6 +171,7 @@ private class EglGlContext(
          * NVIDIA 无头环境没有默认显示器，优先通过 EGLDevice 选择显卡，再回退默认显示器。
          */
         private fun initializeDisplay(stack: MemoryStack): InitializedDisplay {
+            val expectedVendor = System.getenv("MCSK_GL_EXPECT_VENDOR")?.takeIf { it.isNotBlank() }
             val clientCapabilities = EGL.getCapabilities()
             if (clientCapabilities.EGL_EXT_device_enumeration && clientCapabilities.EGL_EXT_platform_device) {
                 val devices = stack.mallocPointer(16)
@@ -176,23 +179,32 @@ private class EglGlContext(
                 if (eglQueryDevicesEXT(devices, deviceCount)) {
                     for (index in 0 until minOf(deviceCount[0], devices.capacity())) {
                         val display = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT, devices[index], null as IntArray?)
-                        val initialized = tryInitializeDisplay(stack, display)
+                        val initialized = tryInitializeDisplay(stack, display, expectedVendor)
                         if (initialized != null) return initialized
                     }
                 }
             }
 
             val display = eglGetDisplay(EGL_DEFAULT_DISPLAY)
-            return requireNotNull(tryInitializeDisplay(stack, display)) {
+            return requireNotNull(tryInitializeDisplay(stack, display, expectedVendor)) {
                 "Failed to initialize EGL display: ${eglError()}"
             }
         }
 
-        private fun tryInitializeDisplay(stack: MemoryStack, display: Long): InitializedDisplay? {
+        private fun tryInitializeDisplay(
+            stack: MemoryStack,
+            display: Long,
+            expectedVendor: String?,
+        ): InitializedDisplay? {
             if (display == EGL_NO_DISPLAY) return null
             val major = stack.mallocInt(1)
             val minor = stack.mallocInt(1)
             if (!eglInitialize(display, major, minor)) return null
+            val vendor = eglQueryString(display, EGL_VENDOR).orEmpty()
+            if (expectedVendor != null && !vendor.contains(expectedVendor, ignoreCase = true)) {
+                eglTerminate(display)
+                return null
+            }
             return InitializedDisplay(display, major[0], minor[0])
         }
 

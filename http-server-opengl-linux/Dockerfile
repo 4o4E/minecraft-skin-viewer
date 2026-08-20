@@ -43,8 +43,10 @@ ENV LANG="en_US.UTF-8" \
     MCSK_GL_BACKEND="xvfb" \
     MCSK_RENDERER_CLASS="top.e404.mcsk.renderer.opengl.OpenGlSkinPngRenderer"
 
+COPY nvidia/10_nvidia.json /usr/share/glvnd/egl_vendor.d/10_nvidia.json
 COPY enterpoint.sh /enterpoint.sh
-RUN chmod +x /enterpoint.sh && \
+RUN chmod 0644 /usr/share/glvnd/egl_vendor.d/10_nvidia.json && \
+    chmod +x /enterpoint.sh && \
     useradd --shell /bin/bash -u 1001 -m java
 
 WORKDIR /app
